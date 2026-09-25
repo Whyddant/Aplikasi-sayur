@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Sayur App</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Zilla+Slab:wght@500;600;700&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --green:#2F5233; --green-dk:#20391F; --green-lt:#E4EBDD;
+  --rust:#BF4E30; --rust-dk:#973B24;
+  --paper:#F6F5EF; --card:#FFFEFB; --ink:#25261F; --ink-soft:#5B5C50;
+  --line:#DEDACB;
+  color-scheme: light;
+}
+*{box-sizing:border-box;}
+html{scroll-padding-top:env(safe-area-inset-top,0px);}
+body{
+  margin:0; background:var(--paper); font-family:'Work Sans',sans-serif; color:var(--ink);
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+  min-height:100vh;
+}
+h1,h2,h3{font-family:'Zilla Slab',serif; margin:0;}
+.topbar{
+  padding:16px 20px 14px; background:var(--green); color:#fff;
+  display:flex; align-items:baseline; justify-content:space-between;
+  position:sticky; top:0; z-index:5;
+}
+.topbar h1{font-size:19px; font-weight:700;}
+.topbar span{font-size:12px; color:#D9E3CE;}
+.screen{display:none; padding:18px 18px 90px; max-width:480px; margin:0 auto;}
+.screen.active{display:block;}
+
+.field{margin-bottom:14px;}
+.field label{font-size:11.5px; color:var(--ink-soft); display:block; margin-bottom:5px;}
+.field input{
+  width:100%; padding:10px 12px; border:1px solid var(--line); border-radius:7px;
+  font-family:'Work Sans',sans-serif; font-size:14.5px; background:var(--card); color:var(--ink);
+}
+.field.readonly input{color:var(--ink-soft); background:var(--green-lt); border-color:transparent;}
+.btn{
+  width:100%; padding:12px; border:none; border-radius:8px; background:var(--rust); color:#fff;
+  font-family:'Work Sans',sans-serif; font-weight:600; font-size:14.5px; margin-top:4px;
+}
+.btn:active{background:var(--rust-dk);}
+
+.ledger-item{
+  display:flex; justify-content:space-between; align-items:center;
+  padding:12px 0; border-bottom:1px solid var(--line);
+}
+.ledger-item:last-child{border-bottom:none;}
+.ledger-item .name{font-size:14.5px; font-weight:500;}
+.ledger-item .sub{font-size:11.5px; color:var(--ink-soft); margin-top:1px;}
+.ledger-item .amt{font-family:'Zilla Slab',serif; font-weight:600; font-size:15px;}
+.ledger-item .del{background:none; border:none; color:var(--rust); font-size:12px; margin-left:10px;}
+.section-head{
+  display:flex; justify-content:space-between; align-items:baseline; margin:4px 0 4px;
+}
+.section-head h2{font-size:15px;}
+.section-head .date{font-size:11.5px; color:var(--ink-soft);}
+.total-bar{
+  margin-top:14px; display:flex; justify-content:space-between; align-items:center;
+  background:var(--green-lt); border-radius:8px; padding:12px 16px;
+}
+.total-bar .lbl{font-size:12px; color:var(--ink-soft);}
+.total-bar .val{font-family:'Zilla Slab',serif; font-size:20px; font-weight:700; color:var(--green);}
+.empty-note{font-size:12.5px; color:var(--ink-soft); padding:14px 0; text-align:center;}
+
+.navbar{
+  display:flex; border-top:1px solid var(--line); background:var(--card);
+  padding:9px 6px calc(9px + env(safe-area-inset-bottom,0px));
+  position:fixed; bottom:0; left:0; right:0; max-width:480px; margin:0 auto;
+}
+.navbar button{
+  flex:1; background:none; border:none; display:flex; flex-direction:column; align-items:center;
+  gap:4px; color:var(--ink-soft); padding:4px 0;
+}
+.navbar button svg{width:22px; height:22px; stroke:currentColor; fill:none; stroke-width:1.8;}
+.navbar button.active{color:var(--green);}
+.navbar button .dot{width:4px; height:4px; border-radius:50%; background:transparent;}
+.navbar button.active .dot{background:var(--rust);}
+.toast{
+  position:fixed; left:50%; transform:translateX(-50%); bottom:80px; background:var(--ink);
+  color:#fff; padding:10px 18px; border-radius:20px; font-size:13px; opacity:0; transition:opacity .25s;
+  pointer-events:none; z-index:20;
+}
+.toast.show{opacity:1;}
+</style>
+</head>
+<body>
+<div class="topbar"><h1>Sayur App</h1><span id="todayLabel"></span></div>
+
+<!-- DASHBOARD -->
+<div class="screen active" id="dashboard">
+  <div style="background:var(--rust); color:#fff; border-radius:8px; padding:16px 18px; margin-bottom:16px;">
+    <div style="font-size:11px; text-transform:uppercase; letter-spacing:1.2px; opacity:.85;">Laba bersih hari ini</div>
+    <div style="font-family:'Zilla Slab',serif; font-size:28px; font-weight:700;" id="dash_laba">Rp 0</div>
+  </div>
+  <div style="display:flex; gap:10px; margin-bottom:16px;">
+    <div style="flex:1; background:var(--card); border:1px solid var(--line); border-radius:8px; padding:10px 12px;">
+      <div style="font-size:10.5px; color:var(--ink-soft);">Omzet</div>
+      <div style="font-family:'Zilla Slab',serif; font-size:16px; font-weight:600;" id="dash_omzet">Rp 0</div>
+    </div>
+    <div style="flex:1; background:var(--card); border:1px solid var(--line); border-radius:8px; padding:10px 12px;">
+      <div style="font-size:10.5px; color:var(--ink-soft);">Modal (kemarin)</div>
+      <div style="font-family:'Zilla Slab',serif; font-size:16px; font-weight:600;" id="dash_modal">Rp 0</div>
+    </div>
+    <div style="flex:1; background:var(--card); border:1px solid var(--line); border-radius:8px; padding:10px 12px;">
+      <div style="font-size:10.5px; color:var(--ink-soft);">Operasional</div>
+      <div style="font-family:'Zilla Slab',serif; font-size:16px; font-weight:600;" id="dash_ops">Rp 0</div>
+    </div>
+  </div>
+  <div class="section-head"><h2>Rincian Operasional</h2></div>
+  <div id="dash_opslist"><div class="empty-note">Memuat data…</div></div>
+</div>
+
+<!-- BELANJA (form input) -->
+<div class="screen" id="belanja">
+  <div class="section-head"><h2>Input Belanja</h2></div>
+  <div class="field"><label>Nama Barang</label><input id="b_nama" type="text" placeholder="mis. Wortel"></div>
+  <div class="field"><label>Qty</label><input id="b_qty" type="number" placeholder="mis. 5"></div>
+  <div class="field"><label>Satuan</label><input id="b_satuan" type="text" placeholder="kg / ikat"></div>
+  <div class="field"><label>Harga Beli (per satuan)</label><input id="b_harga" type="number" placeholder="mis. 12000"></div>
+  <button class="btn" id="b_submit">Simpan</button>
+
+  <div class="section-head" style="margin-top:22px;"><h2>Belanja Hari Ini</h2></div>
+  <div id="b_list"><div class="empty-note">Memuat data…</div></div>
+  <div class="total-bar"><span class="lbl">Total modal hari ini</span><span class="val" id="b_total">Rp 0</span></div>
+</div>
+
+<!-- DAFTAR BELANJA (tampilan ringkas, sumber data sama dgn Belanja) -->
+<div class="screen" id="daftar">
+  <div class="section-head"><h2>Daftar Belanja</h2><span class="date" id="d_date"></span></div>
+  <div id="d_list"><div class="empty-note">Memuat data…</div></div>
+  <div class="total-bar"><span class="lbl">Total</span><span class="val" id="d_total">Rp 0</span></div>
+</div>
+
+<!-- HARGA JUAL -->
+<div class="screen" id="hargajual">
+  <div class="section-head"><h2>Harga Jual</h2><span class="date">Edit yg berubah</span></div>
+  <div id="hj_list"><div class="empty-note">Memuat data…</div></div>
+</div>
+
+<!-- TUTUP HARI (Omzet + Biaya Operasional) -->
+<div class="screen" id="tutup">
+  <div class="section-head"><h2>Tutup Hari</h2></div>
+  <div class="field"><label>Total Omzet Hari Ini</label><input id="t_omzet" type="number" placeholder="mis. 700000"></div>
+  <div class="field"><label>Biaya Pasar (tetap)</label><input id="t_pasar" type="number"></div>
+  <div class="field"><label>Bensin (tetap)</label><input id="t_bensin" type="number"></div>
+  <div class="field"><label>Konsumsi</label><input id="t_konsumsi" type="number" placeholder="0"></div>
+  <div class="field"><label>Kresek + Karet</label><input id="t_kresek" type="number" placeholder="0"></div>
+  <button class="btn" id="t_submit">Simpan Tutup Hari</button>
+</div>
+
+<!-- LAPORAN -->
+<div class="screen" id="laporan">
+  <div class="section-head"><h2>Laporan</h2><span class="date">Riwayat</span></div>
+  <div id="l_list"><div class="empty-note">Memuat data…</div></div>
+</div>
+
+<div class="navbar">
+  <button data-t="dashboard" class="active"><svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg><span class="dot"></span></button>
+  <button data-t="belanja"><svg viewBox="0 0 24 24"><circle cx="9" cy="20" r="1.4" fill="currentColor" stroke="none"/><circle cx="18" cy="20" r="1.4" fill="currentColor" stroke="none"/><path d="M2 3h3l2.6 12.4a2 2 0 002 1.6h8a2 2 0 002-1.8L21 8H6"/></svg><span class="dot"></span></button>
+  <button data-t="daftar"><svg viewBox="0 0 24 24"><path d="M4 5h16M4 12h10M4 19h13"/><circle cx="20" cy="12" r="1.6" fill="currentColor" stroke="none"/></svg><span class="dot"></span></button>
+  <button data-t="hargajual"><svg viewBox="0 0 24 24"><path d="M20.6 12.4L12.4 20.6a2 2 0 01-2.8 0l-7.2-7.2a2 2 0 010-2.8L10.6 2.4A2 2 0 0112 2h6a2 2 0 012 2v6a2 2 0 01-.6 1.4z"/><circle cx="15.5" cy="8.5" r="1.3" fill="currentColor" stroke="none"/></svg><span class="dot"></span></button>
+  <button data-t="tutup"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg><span class="dot"></span></button>
+  <button data-t="laporan"><svg viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="1.5"/><path d="M8 8h8M8 12h8M8 16h5"/></svg><span class="dot"></span></button>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ==========================================================
+   KONFIGURASI
+   Ganti API_URL dengan URL Web App Apps Script hasil deploy.
+   ========================================================== */
+const API_URL = 'https://script.google.com/macros/s/AKfycbyj3eXJV0qSa0-3HFuph0AaV1y5dft9Zjsqt-en7j_DU9mM4huxGoctMD52KTbivuN6/exec';
+
+function todayStr(){
+  const d = new Date();
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+document.getElementById('todayLabel').textContent =
+  new Date().toLocaleDateString('id-ID',{weekday:'long', day:'numeric', month:'short'});
+
+function rupiah(n){
+  return 'Rp ' + Number(n||0).toLocaleString('id-ID');
+}
+
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 1800);
+}
+
+/* ---------- Helper panggil API ---------- */
+async function apiGet(action, params={}){
+  const qs = new URLSearchParams({action, ...params}).toString();
+  const res = await fetch(`${API_URL}?${qs}`);
+  const json = await res.json();
+  if(!json.ok) throw new Error(json.error || 'Gagal mengambil data');
+  return json.data;
+}
+
+async function apiPost(action, data){
+  const res = await fetch(API_URL, {
+    method:'POST',
+    body: JSON.stringify({action, data})
+  });
+  const json = await res.json();
+  if(!json.ok) throw new Error(json.error || 'Gagal menyimpan data');
+  return json.data;
+}
+
+/* ---------- Navigasi tab ---------- */
+document.querySelectorAll('.navbar button').forEach(b=>{
+  b.addEventListener('click', ()=>{
+    document.querySelectorAll('.navbar button').forEach(x=>x.classList.remove('active'));
+    document.querySelectorAll('.screen').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active');
+    document.getElementById(b.dataset.t).classList.add('active');
+  });
+});
+
+/* ---------- MODUL: BELANJA ---------- */
+async function loadBelanja(){
+  const listEl = document.getElementById('b_list');
+  listEl.innerHTML = '<div class="empty-note">Memuat data…</div>';
+  try{
+    const items = await apiGet('getBelanja', {tanggal: todayStr()});
+    if(!items.length){
+      listEl.innerHTML = '<div class="empty-note">Belum ada belanja hari ini.</div>';
+      document.getElementById('b_total').textContent = rupiah(0);
+      return;
+    }
+    let total = 0;
+    listEl.innerHTML = items.map(it=>{
+      total += Number(it.Subtotal||0);
+      return `<div class="ledger-item">
+        <div><div class="name">${it.NamaBarang}</div>
+        <div class="sub">${it.Qty} ${it.Satuan} × ${rupiah(it.HargaBeli)}</div></div>
+        <div style="display:flex;align-items:center;">
+          <div class="amt">${rupiah(it.Subtotal)}</div>
+          <button class="del" data-id="${it.ID}">Hapus</button>
+        </div>
+      </div>`;
+    }).join('');
+    document.getElementById('b_total').textContent = rupiah(total);
+
+    listEl.querySelectorAll('.del').forEach(btn=>{
+      btn.addEventListener('click', async ()=>{
+        try{
+          const res = await fetch(API_URL, {method:'POST', body: JSON.stringify({action:'deleteBelanja', id: btn.dataset.id})});
+          const json = await res.json();
+          if(!json.ok) throw new Error(json.error);
+          showToast('Item dihapus');
+          loadBelanja();
+        }catch(e){ showToast('Gagal hapus: ' + e.message); }
+      });
+    });
+  }catch(e){
+    listEl.innerHTML = `<div class="empty-note">Gagal memuat: ${e.message}</div>`;
+  }
+}
+
+document.getElementById('b_submit').addEventListener('click', async ()=>{
+  const nama = document.getElementById('b_nama').value.trim();
+  const qty = document.getElementById('b_qty').value;
+  const satuan = document.getElementById('b_satuan').value.trim();
+  const harga = document.getElementById('b_harga').value;
+  if(!nama || !qty || !harga){
+    showToast('Lengkapi nama, qty, dan harga');
+    return;
+  }
+  try{
+    await apiPost('addBelanja', {namaBarang: nama, qty, satuan, hargaBeli: harga});
+    document.getElementById('b_nama').value = '';
+    document.getElementById('b_qty').value = '';
+    document.getElementById('b_satuan').value = '';
+    document.getElementById('b_harga').value = '';
+    showToast('Belanja tersimpan');
+    loadBelanja();
+  }catch(e){
+    showToast('Gagal simpan: ' + e.message);
+  }
+});
+
+loadBelanja();
+
+/* ---------- MODUL: DAFTAR BELANJA (readonly, sumber sama dgn Belanja) ---------- */
+document.getElementById('d_date').textContent =
+  new Date().toLocaleDateString('id-ID',{weekday:'long', day:'numeric', month:'short'});
+
+async function loadDaftar(){
+  const listEl = document.getElementById('d_list');
+  listEl.innerHTML = '<div class="empty-note">Memuat data…</div>';
+  try{
+    const items = await apiGet('getBelanja', {tanggal: todayStr()});
+    if(!items.length){
+      listEl.innerHTML = '<div class="empty-note">Belum ada barang.</div>';
+      document.getElementById('d_total').textContent = rupiah(0);
+      return;
+    }
+    let total = 0;
+    listEl.innerHTML = items.map(it=>{
+      total += Number(it.Subtotal||0);
+      return `<div class="ledger-item">
+        <div><div class="name">${it.NamaBarang}</div>
+        <div class="sub">${it.Qty} ${it.Satuan} × ${rupiah(it.HargaBeli)}</div></div>
+        <div class="amt">${rupiah(it.Subtotal)}</div>
+      </div>`;
+    }).join('');
+    document.getElementById('d_total').textContent = rupiah(total);
+  }catch(e){
+    listEl.innerHTML = `<div class="empty-note">Gagal memuat: ${e.message}</div>`;
+  }
+}
+
+/* ---------- MODUL: HARGA JUAL ---------- */
+async function loadHargaJual(){
+  const listEl = document.getElementById('hj_list');
+  listEl.innerHTML = '<div class="empty-note">Memuat data…</div>';
+  try{
+    const items = await apiGet('getHargaJual');
+    if(!items.length){
+      listEl.innerHTML = '<div class="empty-note">Belum ada barang. Isi lewat tab Belanja dulu.</div>';
+      return;
+    }
+    listEl.innerHTML = items.map(it=>`
+      <div class="field" style="display:flex; gap:8px; align-items:flex-end;">
+        <div style="flex:1;">
+          <label>${it.NamaBarang}</label>
+          <input type="number" value="${it.HargaJualTerakhir||0}" data-nama="${it.NamaBarang}" class="hj_input">
+        </div>
+        <button class="btn hj_save" style="width:auto; padding:10px 14px;" data-nama="${it.NamaBarang}">Simpan</button>
+      </div>`).join('');
+
+    listEl.querySelectorAll('.hj_save').forEach(btn=>{
+      btn.addEventListener('click', async ()=>{
+        const nama = btn.dataset.nama;
+        const input = listEl.querySelector(`.hj_input[data-nama="${nama}"]`);
+        try{
+          await apiPost('updateHargaJual', {namaBarang: nama, hargaJualBaru: input.value});
+          showToast(`Harga ${nama} disimpan`);
+        }catch(e){ showToast('Gagal simpan: ' + e.message); }
+      });
+    });
+  }catch(e){
+    listEl.innerHTML = `<div class="empty-note">Gagal memuat: ${e.message}</div>`;
+  }
+}
+
+/* ---------- MODUL: TUTUP HARI (Omzet + Biaya Operasional) ---------- */
+async function loadTutup(){
+  try{
+    const ops = await apiGet('getBiayaOperasional', {tanggal: todayStr()});
+    document.getElementById('t_pasar').value = ops.biayaPasar;
+    document.getElementById('t_bensin').value = ops.bensin;
+    document.getElementById('t_konsumsi').value = ops.konsumsi || '';
+    document.getElementById('t_kresek').value = ops.kresekKaret || '';
+
+    const omzet = await apiGet('getOmzet', {tanggal: todayStr()});
+    document.getElementById('t_omzet').value = omzet.totalOmzet || '';
+  }catch(e){
+    showToast('Gagal memuat tutup hari: ' + e.message);
+  }
+}
+
+document.getElementById('t_submit').addEventListener('click', async ()=>{
+  const omzet = document.getElementById('t_omzet').value;
+  const pasar = document.getElementById('t_pasar').value;
+  const bensin = document.getElementById('t_bensin').value;
+  const konsumsi = document.getElementById('t_konsumsi').value || 0;
+  const kresek = document.getElementById('t_kresek').value || 0;
+  if(!omzet){
+    showToast('Isi total omzet dulu');
+    return;
+  }
+  try{
+    await apiPost('setOmzet', {totalOmzet: omzet});
+    await apiPost('setBiayaOperasional', {biayaPasar: pasar, bensin: bensin, konsumsi, kresekKaret: kresek});
+    await apiPost('simpanLaporan', {tanggal: todayStr()});
+    showToast('Tutup hari tersimpan');
+  }catch(e){
+    showToast('Gagal simpan: ' + e.message);
+  }
+});
+
+/* ---------- MODUL: DASHBOARD ---------- */
+async function loadDashboard(){
+  try{
+    const lap = await apiGet('getLaporan', {tanggal: todayStr()});
+    document.getElementById('dash_laba').textContent = rupiah(lap.labaBersih);
+    document.getElementById('dash_omzet').textContent = rupiah(lap.omzet);
+    document.getElementById('dash_modal').textContent = rupiah(lap.modalBelanjaKemarin);
+    document.getElementById('dash_ops').textContent = rupiah(lap.biayaOperasional);
+
+    const ops = await apiGet('getBiayaOperasional', {tanggal: todayStr()});
+    document.getElementById('dash_opslist').innerHTML = `
+      <div class="ledger-item"><div class="name">Biaya pasar</div><div class="amt">${rupiah(ops.biayaPasar)}</div></div>
+      <div class="ledger-item"><div class="name">Bensin</div><div class="amt">${rupiah(ops.bensin)}</div></div>
+      <div class="ledger-item"><div class="name">Konsumsi</div><div class="amt">${rupiah(ops.konsumsi)}</div></div>
+      <div class="ledger-item"><div class="name">Kresek + karet</div><div class="amt">${rupiah(ops.kresekKaret)}</div></div>
+    `;
+  }catch(e){
+    showToast('Gagal memuat dashboard: ' + e.message);
+  }
+}
+loadDashboard();
+
+/* ---------- MODUL: LAPORAN (riwayat) ---------- */
+async function loadLaporan(){
+  const listEl = document.getElementById('l_list');
+  listEl.innerHTML = '<div class="empty-note">Memuat data…</div>';
+  try{
+    const rows = await apiGet('getLaporanList', {limit: 30});
+    if(!rows.length){
+      listEl.innerHTML = '<div class="empty-note">Belum ada laporan tersimpan. Isi lewat tab Tutup Hari.</div>';
+      return;
+    }
+    listEl.innerHTML = rows.map(r=>{
+      const tgl = new Date(r.Tanggal).toLocaleDateString('id-ID',{weekday:'long', day:'numeric', month:'short'});
+      return `<div class="ledger-item">
+        <div><div class="name">${tgl}</div>
+        <div class="sub">Omzet ${rupiah(r.Omzet)} · Modal ${rupiah(r.ModalKemarin)}</div></div>
+        <div class="amt">${rupiah(r.LabaBersih)}</div>
+      </div>`;
+    }).join('');
+  }catch(e){
+    listEl.innerHTML = `<div class="empty-note">Gagal memuat: ${e.message}</div>`;
+  }
+}
+
+/* ---------- Muat data saat pindah tab ---------- */
+document.querySelectorAll('.navbar button').forEach(b=>{
+  b.addEventListener('click', ()=>{
+    if(b.dataset.t === 'dashboard') loadDashboard();
+    if(b.dataset.t === 'daftar') loadDaftar();
+    if(b.dataset.t === 'hargajual') loadHargaJual();
+    if(b.dataset.t === 'tutup') loadTutup();
+    if(b.dataset.t === 'laporan') loadLaporan();
+  });
+});
+</script>
+</body>
+</html>
