@@ -118,9 +118,68 @@ h1,h2,h3{font-family:'Zilla Slab',serif; margin:0;}
 <!-- BELANJA (form input) -->
 <div class="screen" id="belanja">
   <div class="section-head"><h2>Input Belanja</h2></div>
-  <div class="field"><label>Nama Barang</label><input id="b_nama" type="text" placeholder="mis. Wortel"></div>
+  <div class="field"><label>Nama Barang</label>
+    <select id="b_nama">
+      <option value="">— Pilih barang —</option>
+      <option value="Kol">Kol</option>
+      <option value="Kentang">Kentang</option>
+      <option value="Putren">Putren</option>
+      <option value="Bawang Putih">Bawang Putih</option>
+      <option value="Kating">Kating</option>
+      <option value="Bombay">Bombay</option>
+      <option value="Nipis">Nipis</option>
+      <option value="Limo">Limo</option>
+      <option value="Kencur">Kencur</option>
+      <option value="Jamur">Jamur</option>
+      <option value="Tomat">Tomat</option>
+      <option value="Buncis">Buncis</option>
+      <option value="Sawi Putih">Sawi Putih</option>
+      <option value="Pokcoy">Pokcoy</option>
+      <option value="Labu Besar">Labu Besar</option>
+      <option value="Labu Acar">Labu Acar</option>
+      <option value="Jengkol">Jengkol</option>
+      <option value="Wortel Impor">Wortel Impor</option>
+      <option value="Wortel Lokal">Wortel Lokal</option>
+      <option value="Daun Bawang">Daun Bawang</option>
+      <option value="Seledri">Seledri</option>
+      <option value="Bawang M">Bawang M</option>
+      <option value="Cabe Merah Keriting">Cabe Merah Keriting</option>
+      <option value="Rawit Merah">Rawit Merah</option>
+      <option value="Rawit Ijo">Rawit Ijo</option>
+      <option value="Cabe Merah Besar">Cabe Merah Besar</option>
+      <option value="Cabe Ijo Besar">Cabe Ijo Besar</option>
+      <option value="Cabe Ijo Keriting">Cabe Ijo Keriting</option>
+      <option value="Tomat Ijo">Tomat Ijo</option>
+      <option value="Timun">Timun</option>
+      <option value="Kacang Panjang">Kacang Panjang</option>
+      <option value="Jagung">Jagung</option>
+      <option value="Toge">Toge</option>
+      <option value="Cesim">Cesim</option>
+      <option value="Bayam+Kangkung">Bayam+Kangkung</option>
+      <option value="Kemangi">Kemangi</option>
+      <option value="Buah Tangkil">Buah Tangkil</option>
+      <option value="Asem">Asem</option>
+      <option value="Daun Tangkil">Daun Tangkil</option>
+      <option value="Pare">Pare</option>
+      <option value="Terong">Terong</option>
+      <option value="Oyong">Oyong</option>
+      <option value="Kembang Kol">Kembang Kol</option>
+      <option value="Seladra">Seladra</option>
+      <option value="Lengkio">Lengkio</option>
+      <option value="__new__">+ Barang baru…</option>
+    </select>
+    <input id="b_nama_new" type="text" placeholder="Ketik nama barang baru" style="display:none; margin-top:8px;">
+  </div>
   <div class="field"><label>Qty</label><input id="b_qty" type="number" placeholder="mis. 5"></div>
-  <div class="field"><label>Satuan</label><input id="b_satuan" type="text" placeholder="kg / ikat"></div>
+  <div class="field"><label>Satuan</label>
+    <select id="b_satuan">
+      <option value="kg">kg</option>
+      <option value="ikat">ikat</option>
+      <option value="pcs">pcs/buah</option>
+      <option value="__other__">+ Satuan lain…</option>
+    </select>
+    <input id="b_satuan_new" type="text" placeholder="Ketik satuan lain" style="display:none; margin-top:8px;">
+  </div>
   <div class="field"><label>Harga Beli (per satuan)</label><input id="b_harga" type="number" placeholder="mis. 12000"></div>
   <button class="btn" id="b_submit">Simpan</button>
 
@@ -264,10 +323,36 @@ async function loadBelanja(){
   }
 }
 
+/* ---------- Dropdown Nama Barang & Satuan ---------- */
+async function loadNamaBarangOptions(){
+  const sel = document.getElementById('b_nama');
+  try{
+    const names = await apiGet('getNamaBarangMaster');
+    const existing = new Set(Array.from(sel.options).map(o => o.value));
+    names.forEach(n=>{
+      if(existing.has(n)) return;
+      const opt = document.createElement('option');
+      opt.value = n; opt.textContent = n;
+      sel.insertBefore(opt, sel.querySelector('option[value="__new__"]'));
+      existing.add(n);
+    });
+  }catch(e){ /* dropdown tetap bisa dipakai manual walau gagal load */ }
+}
+loadNamaBarangOptions();
+
+document.getElementById('b_nama').addEventListener('change', function(){
+  document.getElementById('b_nama_new').style.display = this.value === '__new__' ? 'block' : 'none';
+});
+document.getElementById('b_satuan').addEventListener('change', function(){
+  document.getElementById('b_satuan_new').style.display = this.value === '__other__' ? 'block' : 'none';
+});
+
 document.getElementById('b_submit').addEventListener('click', async ()=>{
-  const nama = document.getElementById('b_nama').value.trim();
+  const namaSel = document.getElementById('b_nama').value;
+  const nama = namaSel === '__new__' ? document.getElementById('b_nama_new').value.trim() : namaSel;
   const qty = document.getElementById('b_qty').value;
-  const satuan = document.getElementById('b_satuan').value.trim();
+  const satuanSel = document.getElementById('b_satuan').value;
+  const satuan = satuanSel === '__other__' ? document.getElementById('b_satuan_new').value.trim() : satuanSel;
   const harga = document.getElementById('b_harga').value;
   if(!nama || !qty || !harga){
     showToast('Lengkapi nama, qty, dan harga');
@@ -276,11 +361,16 @@ document.getElementById('b_submit').addEventListener('click', async ()=>{
   try{
     await apiPost('addBelanja', {namaBarang: nama, qty, satuan, hargaBeli: harga});
     document.getElementById('b_nama').value = '';
+    document.getElementById('b_nama_new').value = '';
+    document.getElementById('b_nama_new').style.display = 'none';
     document.getElementById('b_qty').value = '';
-    document.getElementById('b_satuan').value = '';
+    document.getElementById('b_satuan').value = 'kg';
+    document.getElementById('b_satuan_new').value = '';
+    document.getElementById('b_satuan_new').style.display = 'none';
     document.getElementById('b_harga').value = '';
     showToast('Belanja tersimpan');
     loadBelanja();
+    loadNamaBarangOptions();
   }catch(e){
     showToast('Gagal simpan: ' + e.message);
   }
