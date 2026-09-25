@@ -5,255 +5,561 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Sayur App</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Zilla+Slab:wght@500;600;700&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Zilla+Slab:wght@600;700&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root{
-  --green:#2F5233; --green-dk:#20391F; --green-lt:#E4EBDD;
-  --rust:#BF4E30; --rust-dk:#973B24;
-  --paper:#F6F5EF; --card:#FFFEFB; --ink:#25261F; --ink-soft:#5B5C50;
-  --line:#DEDACB;
-  color-scheme: light;
+  --green-900:#1B2E1C; --green-700:#2F5233; --green-500:#4A7A4E; --green-100:#E4EBDD;
+  --rust-600:#BF4E30; --rust-700:#973B24;
+  --paper:#F6F5EF; --card:#FFFEFB;
+  --ink-900:#1F2019; --ink-700:#3F4038; --ink-600:#5B5C50; --ink-400:#8A8B7E;
+  --line:#E5E2D6; --line-soft:#EFEDE2;
+  --fs-xs:11px; --fs-sm:13px; --fs-md:15px; --fs-lg:17px; --fs-xl:28px;
+  --r-sm:8px; --r-md:12px; --r-lg:16px; --r-full:999px;
+  --shadow-sm:0 1px 2px rgba(31,32,25,.04);
+  --shadow-md:0 2px 8px rgba(31,32,25,.06);
+  color-scheme:light;
 }
-*{box-sizing:border-box;}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
 html{scroll-padding-top:env(safe-area-inset-top,0px);}
 body{
-  margin:0; background:var(--paper); font-family:'Work Sans',sans-serif; color:var(--ink);
-  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+  margin:0; background:var(--paper); color:var(--ink-900);
+  font-family:'Work Sans',sans-serif; font-size:var(--fs-md); line-height:1.45;
+  padding-top:env(safe-area-inset-top,0px);
   min-height:100vh;
 }
-h1,h2,h3{font-family:'Zilla Slab',serif; margin:0;}
+h1,h2,h3{font-family:'Zilla Slab',serif; margin:0; font-weight:700; letter-spacing:-.2px;}
+
+/* ---------- Topbar ---------- */
 .topbar{
-  padding:16px 20px 14px; background:var(--green); color:#fff;
+  padding:14px 18px 12px; background:var(--green-700); color:#fff;
   display:flex; align-items:baseline; justify-content:space-between;
   position:sticky; top:0; z-index:5;
 }
-.topbar h1{font-size:19px; font-weight:700;}
-.topbar span{font-size:12px; color:#D9E3CE;}
-.screen{display:none; padding:18px 18px 90px; max-width:480px; margin:0 auto;}
+.topbar h1{font-size:var(--fs-lg);}
+.topbar span{font-size:var(--fs-xs); color:#D9E3CE;}
+
+/* ---------- Screens ---------- */
+.screen{display:none; padding:16px 16px 96px; max-width:480px; margin:0 auto;}
 .screen.active{display:block;}
 
-.field{margin-bottom:14px;}
-.field label{font-size:11.5px; color:var(--ink-soft); display:block; margin-bottom:5px;}
-.field input{
-  width:100%; padding:10px 12px; border:1px solid var(--line); border-radius:7px;
-  font-family:'Work Sans',sans-serif; font-size:14.5px; background:var(--card); color:var(--ink);
+.section-head{
+  display:flex; justify-content:space-between; align-items:baseline;
+  margin:0 0 10px;
 }
-.field.readonly input{color:var(--ink-soft); background:var(--green-lt); border-color:transparent;}
-.btn{
-  width:100%; padding:12px; border:none; border-radius:8px; background:var(--rust); color:#fff;
-  font-family:'Work Sans',sans-serif; font-weight:600; font-size:14.5px; margin-top:4px;
-}
-.btn:active{background:var(--rust-dk);}
+.section-head h2{font-size:var(--fs-lg);}
+.section-head .date{font-size:var(--fs-xs); color:var(--ink-600);}
 
+/* ---------- Cards & Hero ---------- */
+.hero{
+  background:linear-gradient(150deg, var(--green-700), var(--green-900));
+  color:#fff; border-radius:var(--r-lg); padding:20px 20px 18px;
+  box-shadow:var(--shadow-md); margin-bottom:14px;
+}
+.hero.neg{background:linear-gradient(150deg, var(--rust-600), var(--rust-700));}
+.hero .k{
+  font-size:var(--fs-xs); letter-spacing:1.6px; text-transform:uppercase;
+  opacity:.72; font-weight:600;
+}
+.hero .v{
+  font-family:'Zilla Slab',serif; font-size:var(--fs-xl); font-weight:700;
+  letter-spacing:-.6px; margin-top:4px;
+}
+
+.stat-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:16px;}
+.stat{
+  background:var(--card); border:1px solid var(--line);
+  border-radius:var(--r-md); padding:11px 12px 10px;
+}
+.stat .k{font-size:var(--fs-xs); color:var(--ink-600); line-height:1.25;}
+.stat .v{font-family:'Zilla Slab',serif; font-size:15px; font-weight:600; margin-top:3px;}
+
+/* ---------- Fields ---------- */
+.field{margin-bottom:12px;}
+.field label{
+  font-size:var(--fs-xs); color:var(--ink-600); display:block;
+  margin-bottom:5px; font-weight:500;
+}
+.field input, .field select, .field textarea{
+  width:100%; padding:11px 13px; border:1px solid var(--line); border-radius:var(--r-sm);
+  font-family:'Work Sans',sans-serif; font-size:var(--fs-md); background:var(--card);
+  color:var(--ink-900); transition:border-color .15s;
+}
+.field select{
+  appearance:none; -webkit-appearance:none;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'><path d='M1 1l5 5 5-5' stroke='%235B5C50' stroke-width='1.6' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+  background-repeat:no-repeat; background-position:right 12px center; background-size:11px 8px;
+  padding-right:34px;
+}
+.field input:focus, .field select:focus{
+  outline:none; border-color:var(--green-700); box-shadow:0 0 0 3px rgba(47,82,51,.12);
+}
+
+/* ---------- Buttons ---------- */
+.btn{
+  width:100%; padding:13px; border:none; border-radius:var(--r-sm);
+  background:var(--rust-600); color:#fff;
+  font:600 var(--fs-md) 'Work Sans',sans-serif;
+  cursor:pointer; transition:background .12s;
+}
+.btn:active{background:var(--rust-700);}
+.btn.secondary{background:var(--green-700);}
+.btn.secondary:active{background:var(--green-900);}
+.btn-ghost{
+  background:none; border:1px solid var(--line); color:var(--green-700);
+  padding:9px 16px; border-radius:var(--r-full);
+  font:600 var(--fs-sm) 'Work Sans',sans-serif; cursor:pointer;
+}
+.btn-ghost:active{background:var(--green-100);}
+
+.btn-share{
+  display:inline-flex; align-items:center; gap:6px;
+  background:var(--green-100); color:var(--green-700);
+  padding:9px 13px; border:none; border-radius:var(--r-full);
+  font:600 12.5px 'Work Sans',sans-serif; cursor:pointer;
+}
+.btn-share:active{background:#d5e0ca;}
+.btn-share svg{width:13px; height:13px; stroke:currentColor; fill:none; stroke-width:2;}
+
+.share-row{display:flex; gap:8px; margin-bottom:14px; flex-wrap:wrap;}
+
+/* ---------- Segmented toggle ---------- */
+.segmented{
+  display:flex; background:var(--green-100); border-radius:var(--r-full);
+  padding:3px; margin-bottom:16px;
+}
+.seg-btn{
+  flex:1; padding:9px 12px; border:none; background:none;
+  font:600 var(--fs-sm) 'Work Sans',sans-serif; color:var(--ink-600);
+  border-radius:var(--r-full); cursor:pointer; transition:all .15s;
+}
+.seg-btn.active{background:var(--card); color:var(--green-700); box-shadow:var(--shadow-sm);}
+
+/* ---------- Ledger items ---------- */
 .ledger-item{
   display:flex; justify-content:space-between; align-items:center;
-  padding:12px 0; border-bottom:1px solid var(--line);
+  padding:12px 0; border-bottom:1px solid var(--line-soft);
 }
 .ledger-item:last-child{border-bottom:none;}
-.ledger-item .name{font-size:14.5px; font-weight:500;}
-.ledger-item .sub{font-size:11.5px; color:var(--ink-soft); margin-top:1px;}
-.ledger-item .amt{font-family:'Zilla Slab',serif; font-weight:600; font-size:15px;}
-.ledger-item .del{background:none; border:none; color:var(--rust); font-size:12px; margin-left:10px;}
-.section-head{
-  display:flex; justify-content:space-between; align-items:baseline; margin:4px 0 4px;
+.ledger-item .name{font-size:var(--fs-md); font-weight:500; color:var(--ink-900);}
+.ledger-item .sub{font-size:var(--fs-xs); color:var(--ink-600); margin-top:2px;}
+.ledger-item .amt{
+  font-family:'Zilla Slab',serif; font-weight:600; font-size:15px;
+  color:var(--ink-900);
 }
-.section-head h2{font-size:15px;}
-.section-head .date{font-size:11.5px; color:var(--ink-soft);}
+.ledger-item .del{
+  background:none; border:none; color:var(--rust-600); font-size:var(--fs-xs);
+  margin-left:12px; padding:6px 8px; cursor:pointer; font-weight:600;
+}
+
+/* ---------- Catatan mode ---------- */
+.catatan-list{background:var(--card); border:1px solid var(--line); border-radius:var(--r-md); overflow:hidden;}
+.catatan-item{
+  padding:14px 16px; border-bottom:1px solid var(--line-soft);
+}
+.catatan-item:last-child{border-bottom:none;}
+.catatan-item .n{
+  font-size:var(--fs-lg); font-weight:600; color:var(--ink-900);
+  line-height:1.25;
+}
+.catatan-item .q{
+  font-size:var(--fs-md); color:var(--ink-600); margin-top:2px;
+}
+
+/* ---------- Harga rows ---------- */
+.price-card{
+  background:var(--card); border:1px solid var(--line); border-radius:var(--r-md);
+  padding:14px 14px 12px; margin-bottom:10px;
+}
+.price-name{font-size:var(--fs-md); font-weight:600; margin-bottom:10px;}
+.price-grid{display:grid; grid-template-columns:1fr 1fr; gap:8px;}
+.price-cell{
+  background:var(--paper); border-radius:var(--r-sm); padding:8px 10px;
+}
+.price-cell.buy{background:var(--line-soft);}
+.price-cell.sell{background:var(--green-100);}
+.price-label{
+  font-size:10.5px; color:var(--ink-600); text-transform:uppercase;
+  letter-spacing:.8px; font-weight:600; margin-bottom:2px;
+}
+.price-value{
+  font-family:'Zilla Slab',serif; font-size:16px; font-weight:600; color:var(--ink-900);
+}
+.price-input{
+  width:100%; border:none; background:none; padding:0;
+  font-family:'Zilla Slab',serif; font-size:16px; font-weight:600;
+  color:var(--green-700); outline:none;
+}
+.price-input:focus{color:var(--green-900);}
+.price-meta{
+  display:flex; justify-content:space-between; margin-top:9px;
+  font-size:var(--fs-xs); color:var(--ink-600);
+}
+.price-meta .margin{font-weight:600; color:var(--green-700);}
+.price-meta .margin.thin{color:var(--rust-600);}
+
+/* ---------- Total bar ---------- */
 .total-bar{
   margin-top:14px; display:flex; justify-content:space-between; align-items:center;
-  background:var(--green-lt); border-radius:8px; padding:12px 16px;
+  background:var(--green-100); border-radius:var(--r-md); padding:13px 16px;
 }
-.total-bar .lbl{font-size:12px; color:var(--ink-soft);}
-.total-bar .val{font-family:'Zilla Slab',serif; font-size:20px; font-weight:700; color:var(--green);}
-.empty-note{font-size:12.5px; color:var(--ink-soft); padding:14px 0; text-align:center;}
+.total-bar .lbl{font-size:var(--fs-sm); color:var(--ink-700); font-weight:500;}
+.total-bar .val{
+  font-family:'Zilla Slab',serif; font-size:19px; font-weight:700; color:var(--green-700);
+}
 
+/* ---------- Empty / error states ---------- */
+.empty{
+  text-align:center; padding:36px 16px; color:var(--ink-400);
+}
+.empty svg{width:36px; height:36px; opacity:.35; margin-bottom:10px; stroke:currentColor; fill:none; stroke-width:1.4;}
+.empty p{font-size:var(--fs-sm); margin:0 0 14px; color:var(--ink-600);}
+.empty-note{font-size:var(--fs-sm); color:var(--ink-600); padding:20px 0; text-align:center;}
+
+/* ---------- Navbar ---------- */
 .navbar{
-  display:flex; border-top:1px solid var(--line); background:var(--card);
-  padding:9px 6px calc(9px + env(safe-area-inset-bottom,0px));
-  position:fixed; bottom:0; left:0; right:0; max-width:480px; margin:0 auto;
+  display:grid; grid-template-columns:repeat(5,1fr);
+  border-top:1px solid var(--line);
+  background:rgba(255,254,251,.94);
+  backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px);
+  padding:6px 4px calc(6px + env(safe-area-inset-bottom,0px));
+  position:fixed; bottom:0; left:0; right:0;
+  max-width:480px; margin:0 auto; z-index:10;
 }
 .navbar button{
-  flex:1; background:none; border:none; display:flex; flex-direction:column; align-items:center;
-  gap:4px; color:var(--ink-soft); padding:4px 0;
+  background:none; border:none; cursor:pointer;
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;
+  color:var(--ink-400); padding:6px 0; min-height:52px;
+  transition:color .15s; font-family:inherit;
 }
-.navbar button svg{width:22px; height:22px; stroke:currentColor; fill:none; stroke-width:1.8;}
-.navbar button.active{color:var(--green);}
-.navbar button .dot{width:4px; height:4px; border-radius:50%; background:transparent;}
-.navbar button.active .dot{background:var(--rust);}
+.navbar button svg{width:21px; height:21px; stroke:currentColor; fill:none; stroke-width:1.7; stroke-linecap:round; stroke-linejoin:round;}
+.navbar button span{font-size:10px; font-weight:500; letter-spacing:.1px;}
+.navbar button.active{color:var(--green-700);}
+.navbar button.active span{font-weight:600;}
+
+/* ---------- Toast ---------- */
 .toast{
-  position:fixed; left:50%; transform:translateX(-50%); bottom:80px; background:var(--ink);
-  color:#fff; padding:10px 18px; border-radius:20px; font-size:13px; opacity:0; transition:opacity .25s;
+  position:fixed; left:50%; transform:translateX(-50%) translateY(10px);
+  bottom:calc(88px + env(safe-area-inset-bottom,0px));
+  background:var(--ink-900); color:#fff;
+  padding:10px 18px; border-radius:var(--r-full);
+  font-size:var(--fs-sm); font-weight:500;
+  opacity:0; transition:opacity .2s, transform .2s;
   pointer-events:none; z-index:20;
+  max-width:calc(100% - 32px); text-align:center;
 }
-.toast.show{opacity:1;}
+.toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
 </style>
 </head>
 <body>
-<div class="topbar"><h1>Sayur App</h1><span id="todayLabel"></span></div>
 
-<!-- DASHBOARD -->
+<div class="topbar">
+  <h1>Sayur App</h1>
+  <span id="todayLabel"></span>
+</div>
+
+<!-- ============ DASHBOARD ============ -->
 <div class="screen active" id="dashboard">
-  <div style="background:var(--rust); color:#fff; border-radius:8px; padding:16px 18px; margin-bottom:16px;">
-    <div style="font-size:11px; text-transform:uppercase; letter-spacing:1.2px; opacity:.85;">Laba bersih hari ini</div>
-    <div style="font-family:'Zilla Slab',serif; font-size:28px; font-weight:700;" id="dash_laba">Rp 0</div>
+  <div class="hero" id="dash_hero">
+    <div class="k">Laba bersih hari ini</div>
+    <div class="v" id="dash_laba">Rp 0</div>
   </div>
-  <div style="display:flex; gap:10px; margin-bottom:16px;">
-    <div style="flex:1; background:var(--card); border:1px solid var(--line); border-radius:8px; padding:10px 12px;">
-      <div style="font-size:10.5px; color:var(--ink-soft);">Omzet</div>
-      <div style="font-family:'Zilla Slab',serif; font-size:16px; font-weight:600;" id="dash_omzet">Rp 0</div>
+  <div class="stat-grid">
+    <div class="stat">
+      <div class="k">Omzet</div>
+      <div class="v" id="dash_omzet">Rp 0</div>
     </div>
-    <div style="flex:1; background:var(--card); border:1px solid var(--line); border-radius:8px; padding:10px 12px;">
-      <div style="font-size:10.5px; color:var(--ink-soft);">Modal (kemarin)</div>
-      <div style="font-family:'Zilla Slab',serif; font-size:16px; font-weight:600;" id="dash_modal">Rp 0</div>
+    <div class="stat">
+      <div class="k">Modal (kemarin)</div>
+      <div class="v" id="dash_modal">Rp 0</div>
     </div>
-    <div style="flex:1; background:var(--card); border:1px solid var(--line); border-radius:8px; padding:10px 12px;">
-      <div style="font-size:10.5px; color:var(--ink-soft);">Operasional</div>
-      <div style="font-family:'Zilla Slab',serif; font-size:16px; font-weight:600;" id="dash_ops">Rp 0</div>
+    <div class="stat">
+      <div class="k">Operasional</div>
+      <div class="v" id="dash_ops">Rp 0</div>
     </div>
   </div>
   <div class="section-head"><h2>Rincian Operasional</h2></div>
   <div id="dash_opslist"><div class="empty-note">Memuat data…</div></div>
 </div>
 
-<!-- BELANJA (form input) -->
+<!-- ============ BELANJA (Input + Catatan toggle) ============ -->
 <div class="screen" id="belanja">
-  <div class="section-head"><h2>Input Belanja</h2></div>
-  <div class="field"><label>Nama Barang</label>
-    <select id="b_nama">
-      <option value="">— Pilih barang —</option>
-      <option value="Kol">Kol</option>
-      <option value="Kentang">Kentang</option>
-      <option value="Putren">Putren</option>
-      <option value="Bawang Putih">Bawang Putih</option>
-      <option value="Kating">Kating</option>
-      <option value="Bombay">Bombay</option>
-      <option value="Nipis">Nipis</option>
-      <option value="Limo">Limo</option>
-      <option value="Kencur">Kencur</option>
-      <option value="Jamur">Jamur</option>
-      <option value="Tomat">Tomat</option>
-      <option value="Buncis">Buncis</option>
-      <option value="Sawi Putih">Sawi Putih</option>
-      <option value="Pokcoy">Pokcoy</option>
-      <option value="Labu Besar">Labu Besar</option>
-      <option value="Labu Acar">Labu Acar</option>
-      <option value="Jengkol">Jengkol</option>
-      <option value="Wortel Impor">Wortel Impor</option>
-      <option value="Wortel Lokal">Wortel Lokal</option>
-      <option value="Daun Bawang">Daun Bawang</option>
-      <option value="Seledri">Seledri</option>
-      <option value="Bawang M">Bawang M</option>
-      <option value="Cabe Merah Keriting">Cabe Merah Keriting</option>
-      <option value="Rawit Merah">Rawit Merah</option>
-      <option value="Rawit Ijo">Rawit Ijo</option>
-      <option value="Cabe Merah Besar">Cabe Merah Besar</option>
-      <option value="Cabe Ijo Besar">Cabe Ijo Besar</option>
-      <option value="Cabe Ijo Keriting">Cabe Ijo Keriting</option>
-      <option value="Tomat Ijo">Tomat Ijo</option>
-      <option value="Timun">Timun</option>
-      <option value="Kacang Panjang">Kacang Panjang</option>
-      <option value="Jagung">Jagung</option>
-      <option value="Toge">Toge</option>
-      <option value="Cesim">Cesim</option>
-      <option value="Bayam+Kangkung">Bayam+Kangkung</option>
-      <option value="Kemangi">Kemangi</option>
-      <option value="Buah Tangkil">Buah Tangkil</option>
-      <option value="Asem">Asem</option>
-      <option value="Daun Tangkil">Daun Tangkil</option>
-      <option value="Pare">Pare</option>
-      <option value="Terong">Terong</option>
-      <option value="Oyong">Oyong</option>
-      <option value="Kembang Kol">Kembang Kol</option>
-      <option value="Seladra">Seladra</option>
-      <option value="Lengkio">Lengkio</option>
-      <option value="__new__">+ Barang baru…</option>
-    </select>
-    <input id="b_nama_new" type="text" placeholder="Ketik nama barang baru" style="display:none; margin-top:8px;">
+  <div class="segmented">
+    <button class="seg-btn active" data-mode="input">Input</button>
+    <button class="seg-btn" data-mode="catatan">Catatan</button>
   </div>
-  <div class="field"><label>Qty</label><input id="b_qty" type="number" placeholder="mis. 5"></div>
-  <div class="field"><label>Satuan</label>
-    <select id="b_satuan">
-      <option value="kg">kg</option>
-      <option value="ikat">ikat</option>
-      <option value="pcs">pcs/buah</option>
-      <option value="__other__">+ Satuan lain…</option>
-    </select>
-    <input id="b_satuan_new" type="text" placeholder="Ketik satuan lain" style="display:none; margin-top:8px;">
+
+  <!-- MODE INPUT -->
+  <div id="mode_input">
+    <div class="section-head"><h2>Input Belanja</h2></div>
+
+    <div class="field">
+      <label for="b_nama">Nama Barang</label>
+      <select id="b_nama">
+        <option value="">— Pilih barang —</option>
+        <option value="Kol">Kol</option>
+        <option value="Kentang">Kentang</option>
+        <option value="Putren">Putren</option>
+        <option value="Bawang Putih">Bawang Putih</option>
+        <option value="Kating">Kating</option>
+        <option value="Bombay">Bombay</option>
+        <option value="Nipis">Nipis</option>
+        <option value="Limo">Limo</option>
+        <option value="Kencur">Kencur</option>
+        <option value="Jamur">Jamur</option>
+        <option value="Tomat">Tomat</option>
+        <option value="Buncis">Buncis</option>
+        <option value="Sawi Putih">Sawi Putih</option>
+        <option value="Pokcoy">Pokcoy</option>
+        <option value="Labu Besar">Labu Besar</option>
+        <option value="Labu Acar">Labu Acar</option>
+        <option value="Jengkol">Jengkol</option>
+        <option value="Wortel Impor">Wortel Impor</option>
+        <option value="Wortel Lokal">Wortel Lokal</option>
+        <option value="Daun Bawang">Daun Bawang</option>
+        <option value="Seledri">Seledri</option>
+        <option value="Bawang M">Bawang M</option>
+        <option value="Cabe Merah Keriting">Cabe Merah Keriting</option>
+        <option value="Rawit Merah">Rawit Merah</option>
+        <option value="Rawit Ijo">Rawit Ijo</option>
+        <option value="Cabe Merah Besar">Cabe Merah Besar</option>
+        <option value="Cabe Ijo Besar">Cabe Ijo Besar</option>
+        <option value="Cabe Ijo Keriting">Cabe Ijo Keriting</option>
+        <option value="Tomat Ijo">Tomat Ijo</option>
+        <option value="Timun">Timun</option>
+        <option value="Kacang Panjang">Kacang Panjang</option>
+        <option value="Jagung">Jagung</option>
+        <option value="Toge">Toge</option>
+        <option value="Cesim">Cesim</option>
+        <option value="Bayam+Kangkung">Bayam+Kangkung</option>
+        <option value="Kemangi">Kemangi</option>
+        <option value="Buah Tangkil">Buah Tangkil</option>
+        <option value="Asem">Asem</option>
+        <option value="Daun Tangkil">Daun Tangkil</option>
+        <option value="Pare">Pare</option>
+        <option value="Terong">Terong</option>
+        <option value="Oyong">Oyong</option>
+        <option value="Kembang Kol">Kembang Kol</option>
+        <option value="Seladra">Seladra</option>
+        <option value="Lengkio">Lengkio</option>
+        <option value="__new__">+ Barang baru…</option>
+      </select>
+      <input id="b_nama_new" type="text" placeholder="Ketik nama barang baru" style="display:none; margin-top:8px;">
+    </div>
+
+    <div class="field">
+      <label for="b_qty">Qty</label>
+      <input id="b_qty" type="text" inputmode="decimal" placeholder="mis. 5">
+    </div>
+
+    <div class="field">
+      <label for="b_satuan">Satuan</label>
+      <select id="b_satuan">
+        <option value="kg">kg</option>
+        <option value="ikat">ikat</option>
+        <option value="pcs">pcs/buah</option>
+        <option value="__other__">+ Satuan lain…</option>
+      </select>
+      <input id="b_satuan_new" type="text" placeholder="Ketik satuan lain" style="display:none; margin-top:8px;">
+    </div>
+
+    <div class="field">
+      <label for="b_harga">Harga Beli (per satuan)</label>
+      <input id="b_harga" type="text" inputmode="numeric" placeholder="mis. 12.000">
+    </div>
+
+    <button class="btn" id="b_submit">Simpan Belanja</button>
+
+    <div class="section-head" style="margin-top:22px;">
+      <h2>Belanja Hari Ini</h2>
+      <button class="btn-share" id="share_belanja_input">
+        <svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg>
+        Bagikan
+      </button>
+    </div>
+    <div id="b_list"><div class="empty-note">Memuat data…</div></div>
+    <div class="total-bar">
+      <span class="lbl">Total modal hari ini</span>
+      <span class="val" id="b_total">Rp 0</span>
+    </div>
   </div>
-  <div class="field"><label>Harga Beli (per satuan)</label><input id="b_harga" type="number" placeholder="mis. 12000"></div>
-  <button class="btn" id="b_submit">Simpan</button>
 
-  <div class="section-head" style="margin-top:22px;"><h2>Belanja Hari Ini</h2></div>
-  <div id="b_list"><div class="empty-note">Memuat data…</div></div>
-  <div class="total-bar"><span class="lbl">Total modal hari ini</span><span class="val" id="b_total">Rp 0</span></div>
+  <!-- MODE CATATAN -->
+  <div id="mode_catatan" style="display:none;">
+    <div class="section-head">
+      <h2>Catatan Belanja</h2>
+      <span class="date" id="catatan_date"></span>
+    </div>
+    <div class="share-row">
+      <button class="btn-share" id="share_catatan">
+        <svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg>
+        Bagikan
+      </button>
+    </div>
+    <div id="c_list"><div class="empty-note">Memuat data…</div></div>
+  </div>
 </div>
 
-<!-- DAFTAR BELANJA (tampilan ringkas, sumber data sama dgn Belanja) -->
-<div class="screen" id="daftar">
-  <div class="section-head"><h2>Daftar Belanja</h2><span class="date" id="d_date"></span></div>
-  <div id="d_list"><div class="empty-note">Memuat data…</div></div>
-  <div class="total-bar"><span class="lbl">Total</span><span class="val" id="d_total">Rp 0</span></div>
+<!-- ============ HARGA (Beli + Jual) ============ -->
+<div class="screen" id="harga">
+  <div class="section-head">
+    <h2>Harga</h2>
+    <span class="date" id="harga_date"></span>
+  </div>
+  <div class="share-row">
+    <button class="btn-share" id="share_beli">
+      <svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg>
+      Bagikan Harga Beli
+    </button>
+    <button class="btn-share" id="share_jual">
+      <svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg>
+      Bagikan Harga Jual
+    </button>
+  </div>
+  <div id="h_list"><div class="empty-note">Memuat data…</div></div>
 </div>
 
-<!-- HARGA JUAL -->
-<div class="screen" id="hargajual">
-  <div class="section-head"><h2>Harga Jual</h2><span class="date">Edit yg berubah</span></div>
-  <div id="hj_list"><div class="empty-note">Memuat data…</div></div>
-</div>
-
-<!-- TUTUP HARI (Omzet + Biaya Operasional) -->
+<!-- ============ TUTUP HARI ============ -->
 <div class="screen" id="tutup">
   <div class="section-head"><h2>Tutup Hari</h2></div>
-  <div class="field"><label>Total Omzet Hari Ini</label><input id="t_omzet" type="number" placeholder="mis. 700000"></div>
-  <div class="field"><label>Biaya Pasar (tetap)</label><input id="t_pasar" type="number"></div>
-  <div class="field"><label>Bensin (tetap)</label><input id="t_bensin" type="number"></div>
-  <div class="field"><label>Konsumsi</label><input id="t_konsumsi" type="number" placeholder="0"></div>
-  <div class="field"><label>Kresek + Karet</label><input id="t_kresek" type="number" placeholder="0"></div>
+  <div class="field">
+    <label for="t_omzet">Total Omzet Hari Ini</label>
+    <input id="t_omzet" type="text" inputmode="numeric" placeholder="mis. 700.000">
+  </div>
+  <div class="field">
+    <label for="t_pasar">Biaya Pasar (tetap)</label>
+    <input id="t_pasar" type="text" inputmode="numeric" placeholder="0">
+  </div>
+  <div class="field">
+    <label for="t_bensin">Bensin (tetap)</label>
+    <input id="t_bensin" type="text" inputmode="numeric" placeholder="0">
+  </div>
+  <div class="field">
+    <label for="t_konsumsi">Konsumsi</label>
+    <input id="t_konsumsi" type="text" inputmode="numeric" placeholder="0">
+  </div>
+  <div class="field">
+    <label for="t_kresek">Kresek + Karet</label>
+    <input id="t_kresek" type="text" inputmode="numeric" placeholder="0">
+  </div>
   <button class="btn" id="t_submit">Simpan Tutup Hari</button>
 </div>
 
-<!-- LAPORAN -->
+<!-- ============ LAPORAN ============ -->
 <div class="screen" id="laporan">
   <div class="section-head"><h2>Laporan</h2><span class="date">Riwayat</span></div>
   <div id="l_list"><div class="empty-note">Memuat data…</div></div>
 </div>
 
+<!-- ============ NAVBAR ============ -->
 <div class="navbar">
-  <button data-t="dashboard" class="active"><svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg><span class="dot"></span></button>
-  <button data-t="belanja"><svg viewBox="0 0 24 24"><circle cx="9" cy="20" r="1.4" fill="currentColor" stroke="none"/><circle cx="18" cy="20" r="1.4" fill="currentColor" stroke="none"/><path d="M2 3h3l2.6 12.4a2 2 0 002 1.6h8a2 2 0 002-1.8L21 8H6"/></svg><span class="dot"></span></button>
-  <button data-t="daftar"><svg viewBox="0 0 24 24"><path d="M4 5h16M4 12h10M4 19h13"/><circle cx="20" cy="12" r="1.6" fill="currentColor" stroke="none"/></svg><span class="dot"></span></button>
-  <button data-t="hargajual"><svg viewBox="0 0 24 24"><path d="M20.6 12.4L12.4 20.6a2 2 0 01-2.8 0l-7.2-7.2a2 2 0 010-2.8L10.6 2.4A2 2 0 0112 2h6a2 2 0 012 2v6a2 2 0 01-.6 1.4z"/><circle cx="15.5" cy="8.5" r="1.3" fill="currentColor" stroke="none"/></svg><span class="dot"></span></button>
-  <button data-t="tutup"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg><span class="dot"></span></button>
-  <button data-t="laporan"><svg viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="1.5"/><path d="M8 8h8M8 12h8M8 16h5"/></svg><span class="dot"></span></button>
+  <button data-t="dashboard" class="active">
+    <svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg>
+    <span>Beranda</span>
+  </button>
+  <button data-t="belanja">
+    <svg viewBox="0 0 24 24"><circle cx="9" cy="20" r="1.4" fill="currentColor" stroke="none"/><circle cx="18" cy="20" r="1.4" fill="currentColor" stroke="none"/><path d="M2 3h3l2.6 12.4a2 2 0 002 1.6h8a2 2 0 002-1.8L21 8H6"/></svg>
+    <span>Belanja</span>
+  </button>
+  <button data-t="harga">
+    <svg viewBox="0 0 24 24"><path d="M20.6 12.4L12.4 20.6a2 2 0 01-2.8 0l-7.2-7.2a2 2 0 010-2.8L10.6 2.4A2 2 0 0112 2h6a2 2 0 012 2v6a2 2 0 01-.6 1.4z"/><circle cx="15.5" cy="8.5" r="1.3" fill="currentColor" stroke="none"/></svg>
+    <span>Harga</span>
+  </button>
+  <button data-t="tutup">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6"/></svg>
+    <span>Tutup</span>
+  </button>
+  <button data-t="laporan">
+    <svg viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="1.5"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>
+    <span>Laporan</span>
+  </button>
 </div>
+
 <div class="toast" id="toast"></div>
 
 <script>
 /* ==========================================================
    KONFIGURASI
-   Ganti API_URL dengan URL Web App Apps Script hasil deploy.
    ========================================================== */
 const API_URL = 'https://script.google.com/macros/s/AKfycbyj3eXJV0qSa0-3HFuph0AaV1y5dft9Zjsqt-en7j_DU9mM4huxGoctMD52KTbivuN6/exec';
+const NAMA_LAPAK = ''; /* isi misal 'Sayur Bu Ani' — muncul di footer share */
 
+/* ==========================================================
+   HELPERS
+   ========================================================== */
 function todayStr(){
   const d = new Date();
   return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
 }
-document.getElementById('todayLabel').textContent =
-  new Date().toLocaleDateString('id-ID',{weekday:'long', day:'numeric', month:'short'});
-
+function dateShort(){
+  return new Date().toLocaleDateString('id-ID',{weekday:'long', day:'numeric', month:'short'});
+}
+function dateLong(){
+  return new Date().toLocaleDateString('id-ID',{weekday:'long', day:'numeric', month:'long', year:'numeric'});
+}
 function rupiah(n){
   return 'Rp ' + Number(n||0).toLocaleString('id-ID');
 }
-
+function bacaUang(el){
+  return Number(String(el.value||'').replace(/\D/g,'')) || 0;
+}
+/* Parser angka yang toleran terhadap "12.000", "60,000", "12000", 12000 */
+function parseNum(v){
+  if(typeof v === 'number') return isFinite(v) ? v : 0;
+  if(v == null || v === '') return 0;
+  let s = String(v).trim().replace(/[^\d.,-]/g, '');
+  if(!s) return 0;
+  if(/,\d{1,2}$/.test(s)){
+    s = s.replace(/\./g,'').replace(',', '.');
+  }else{
+    s = s.replace(/[.,]/g, '');
+  }
+  const n = Number(s);
+  return isFinite(n) ? n : 0;
+}
+function attachMoneyInput(el){
+  if(!el) return;
+  el.addEventListener('input', ()=>{
+    const raw = el.value.replace(/\D/g,'');
+    el.value = raw ? Number(raw).toLocaleString('id-ID') : '';
+  });
+}
+function escHtml(s){
+  return String(s==null?'':s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
 function showToast(msg){
   const t = document.getElementById('toast');
   t.textContent = msg;
   t.classList.add('show');
-  setTimeout(()=>t.classList.remove('show'), 1800);
+  clearTimeout(t._t);
+  t._t = setTimeout(()=>t.classList.remove('show'), 1900);
 }
+async function shareText(text){
+  if(navigator.share){
+    try{ await navigator.share({text}); return; }catch(e){ if(e.name==='AbortError') return; }
+  }
+  try{
+    await navigator.clipboard.writeText(text);
+    showToast('Disalin ke clipboard');
+  }catch(e){
+    showToast('Gagal membagikan');
+  }
+}
+function shareFooter(){
+  return NAMA_LAPAK ? `\n\n— ${NAMA_LAPAK} —` : '';
+}
+function emptyHTML(iconPath, text, ctaLabel, ctaId){
+  return `<div class="empty">
+    <svg viewBox="0 0 24 24">${iconPath}</svg>
+    <p>${escHtml(text)}</p>
+    ${ctaLabel ? `<button class="btn-ghost" id="${ctaId}">${escHtml(ctaLabel)}</button>` : ''}
+  </div>`;
+}
+const ICON_CART = '<circle cx="9" cy="20" r="1.4" fill="currentColor" stroke="none"/><circle cx="18" cy="20" r="1.4" fill="currentColor" stroke="none"/><path d="M2 3h3l2.6 12.4a2 2 0 002 1.6h8a2 2 0 002-1.8L21 8H6"/>';
+const ICON_TAG = '<path d="M20.6 12.4L12.4 20.6a2 2 0 01-2.8 0l-7.2-7.2a2 2 0 010-2.8L10.6 2.4A2 2 0 0112 2h6a2 2 0 012 2v6a2 2 0 01-.6 1.4z"/><circle cx="15.5" cy="8.5" r="1.3" fill="currentColor" stroke="none"/>';
 
-/* ---------- Helper panggil API ---------- */
+/* ==========================================================
+   API
+   ========================================================== */
 async function apiGet(action, params={}){
   const qs = new URLSearchParams({action, ...params}).toString();
   const res = await fetch(`${API_URL}?${qs}`);
@@ -261,7 +567,6 @@ async function apiGet(action, params={}){
   if(!json.ok) throw new Error(json.error || 'Gagal mengambil data');
   return json.data;
 }
-
 async function apiPost(action, data){
   const res = await fetch(API_URL, {
     method:'POST',
@@ -272,36 +577,86 @@ async function apiPost(action, data){
   return json.data;
 }
 
-/* ---------- Navigasi tab ---------- */
+/* ==========================================================
+   INISIALISASI
+   ========================================================== */
+document.getElementById('todayLabel').textContent = dateShort();
+document.getElementById('catatan_date').textContent = dateShort();
+document.getElementById('harga_date').textContent = dateShort();
+
+['b_harga','t_omzet','t_pasar','t_bensin','t_konsumsi','t_kresek'].forEach(id=>{
+  attachMoneyInput(document.getElementById(id));
+});
+
+/* ==========================================================
+   NAVIGASI
+   ========================================================== */
+function goTab(name){
+  document.querySelectorAll('.navbar button').forEach(x=>x.classList.toggle('active', x.dataset.t===name));
+  document.querySelectorAll('.screen').forEach(x=>x.classList.toggle('active', x.id===name));
+  if(name==='dashboard') loadDashboard();
+  if(name==='belanja'){ loadBelanja(); loadCatatan(); }
+  if(name==='harga') loadHarga();
+  if(name==='tutup') loadTutup();
+  if(name==='laporan') loadLaporan();
+}
 document.querySelectorAll('.navbar button').forEach(b=>{
-  b.addEventListener('click', ()=>{
-    document.querySelectorAll('.navbar button').forEach(x=>x.classList.remove('active'));
-    document.querySelectorAll('.screen').forEach(x=>x.classList.remove('active'));
-    b.classList.add('active');
-    document.getElementById(b.dataset.t).classList.add('active');
+  b.addEventListener('click', ()=>goTab(b.dataset.t));
+});
+
+/* ==========================================================
+   SEGMENTED TOGGLE: Input / Catatan
+   ========================================================== */
+document.querySelectorAll('.seg-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.seg-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    const mode = btn.dataset.mode;
+    document.getElementById('mode_input').style.display = mode==='input' ? 'block' : 'none';
+    document.getElementById('mode_catatan').style.display = mode==='catatan' ? 'block' : 'none';
+    if(mode==='catatan') loadCatatan();
   });
 });
 
-/* ---------- MODUL: BELANJA ---------- */
+/* ==========================================================
+   MODUL: BELANJA (Input)
+   ========================================================== */
+let _belanjaCache = [];
+
+function hitungSubtotal(it){
+  const fromServer = parseNum(it.Subtotal);
+  if(fromServer > 0) return fromServer;
+  const beli = parseNum(it.HargaBeli);
+  const qty  = parseNum(String(it.Qty).replace(',', '.'));
+  return beli * qty;
+}
+
 async function loadBelanja(){
   const listEl = document.getElementById('b_list');
   listEl.innerHTML = '<div class="empty-note">Memuat data…</div>';
   try{
     const items = await apiGet('getBelanja', {tanggal: todayStr()});
+    _belanjaCache = items || [];
+
     if(!items.length){
-      listEl.innerHTML = '<div class="empty-note">Belum ada belanja hari ini.</div>';
+      listEl.innerHTML = emptyHTML(ICON_CART, 'Belum ada belanja hari ini', null);
       document.getElementById('b_total').textContent = rupiah(0);
       return;
     }
+
     let total = 0;
     listEl.innerHTML = items.map(it=>{
-      total += Number(it.Subtotal||0);
+      const beli = parseNum(it.HargaBeli);
+      const subtotal = hitungSubtotal(it);
+      total += subtotal;
       return `<div class="ledger-item">
-        <div><div class="name">${it.NamaBarang}</div>
-        <div class="sub">${it.Qty} ${it.Satuan} × ${rupiah(it.HargaBeli)}</div></div>
+        <div>
+          <div class="name">${escHtml(it.NamaBarang)}</div>
+          <div class="sub">${escHtml(it.Qty)} ${escHtml(it.Satuan)} × ${rupiah(beli)}</div>
+        </div>
         <div style="display:flex;align-items:center;">
-          <div class="amt">${rupiah(it.Subtotal)}</div>
-          <button class="del" data-id="${it.ID}">Hapus</button>
+          <div class="amt">${rupiah(subtotal)}</div>
+          <button class="del" data-id="${escHtml(it.ID)}" data-nama="${escHtml(it.NamaBarang)}">Hapus</button>
         </div>
       </div>`;
     }).join('');
@@ -309,55 +664,59 @@ async function loadBelanja(){
 
     listEl.querySelectorAll('.del').forEach(btn=>{
       btn.addEventListener('click', async ()=>{
+        if(!confirm(`Hapus "${btn.dataset.nama}" dari daftar belanja?`)) return;
         try{
-          const res = await fetch(API_URL, {method:'POST', body: JSON.stringify({action:'deleteBelanja', id: btn.dataset.id})});
-          const json = await res.json();
-          if(!json.ok) throw new Error(json.error);
+          await apiPost('deleteBelanja', {id: btn.dataset.id});
           showToast('Item dihapus');
           loadBelanja();
+          loadCatatan();
         }catch(e){ showToast('Gagal hapus: ' + e.message); }
       });
     });
   }catch(e){
-    listEl.innerHTML = `<div class="empty-note">Gagal memuat: ${e.message}</div>`;
+    listEl.innerHTML = `<div class="empty-note">Gagal memuat: ${escHtml(e.message)}</div>`;
   }
 }
 
-/* ---------- Dropdown Nama Barang & Satuan ---------- */
+/* ---- Dropdown Nama Barang (dari master) ---- */
 async function loadNamaBarangOptions(){
   const sel = document.getElementById('b_nama');
   try{
     const names = await apiGet('getNamaBarangMaster');
-    const existing = new Set(Array.from(sel.options).map(o => o.value));
+    const existing = new Set(Array.from(sel.options).map(o=>o.value));
+    const optNew = sel.querySelector('option[value="__new__"]');
     names.forEach(n=>{
       if(existing.has(n)) return;
       const opt = document.createElement('option');
       opt.value = n; opt.textContent = n;
-      sel.insertBefore(opt, sel.querySelector('option[value="__new__"]'));
+      sel.insertBefore(opt, optNew);
       existing.add(n);
     });
-  }catch(e){ /* dropdown tetap bisa dipakai manual walau gagal load */ }
+  }catch(e){ /* diamkan */ }
 }
-loadNamaBarangOptions();
 
 document.getElementById('b_nama').addEventListener('change', function(){
-  document.getElementById('b_nama_new').style.display = this.value === '__new__' ? 'block' : 'none';
+  document.getElementById('b_nama_new').style.display = this.value==='__new__' ? 'block' : 'none';
+  if(this.value==='__new__') document.getElementById('b_nama_new').focus();
 });
 document.getElementById('b_satuan').addEventListener('change', function(){
-  document.getElementById('b_satuan_new').style.display = this.value === '__other__' ? 'block' : 'none';
+  document.getElementById('b_satuan_new').style.display = this.value==='__other__' ? 'block' : 'none';
+  if(this.value==='__other__') document.getElementById('b_satuan_new').focus();
 });
 
 document.getElementById('b_submit').addEventListener('click', async ()=>{
   const namaSel = document.getElementById('b_nama').value;
   const nama = namaSel === '__new__' ? document.getElementById('b_nama_new').value.trim() : namaSel;
-  const qty = document.getElementById('b_qty').value;
+  const qty = document.getElementById('b_qty').value.trim();
   const satuanSel = document.getElementById('b_satuan').value;
   const satuan = satuanSel === '__other__' ? document.getElementById('b_satuan_new').value.trim() : satuanSel;
-  const harga = document.getElementById('b_harga').value;
-  if(!nama || !qty || !harga){
-    showToast('Lengkapi nama, qty, dan harga');
-    return;
-  }
+  const harga = bacaUang(document.getElementById('b_harga'));
+
+  if(!nama){ showToast('Isi nama barang dulu'); return; }
+  if(!qty){ showToast('Isi qty dulu'); return; }
+  if(!satuan){ showToast('Isi satuan dulu'); return; }
+  if(!harga){ showToast('Isi harga beli dulu'); return; }
+
   try{
     await apiPost('addBelanja', {namaBarang: nama, qty, satuan, hargaBeli: harga});
     document.getElementById('b_nama').value = '';
@@ -370,106 +729,254 @@ document.getElementById('b_submit').addEventListener('click', async ()=>{
     document.getElementById('b_harga').value = '';
     showToast('Belanja tersimpan');
     loadBelanja();
+    loadCatatan();
     loadNamaBarangOptions();
   }catch(e){
     showToast('Gagal simpan: ' + e.message);
   }
 });
 
-loadBelanja();
+/* ---- Share modal belanja dari tab Input ---- */
+document.getElementById('share_belanja_input').addEventListener('click', ()=>{
+  if(!_belanjaCache.length){ showToast('Belum ada belanja hari ini'); return; }
+  const lines = _belanjaCache.map(it=>{
+    const beli = parseNum(it.HargaBeli);
+    const sub  = hitungSubtotal(it);
+    return `${it.NamaBarang} — ${it.Qty} ${it.Satuan} × ${rupiah(beli)} = ${rupiah(sub)}`;
+  });
+  const total = _belanjaCache.reduce((s,it)=>s + hitungSubtotal(it), 0);
+  const text =
+`*Modal Belanja* — ${dateLong()}
 
-/* ---------- MODUL: DAFTAR BELANJA (readonly, sumber sama dgn Belanja) ---------- */
-document.getElementById('d_date').textContent =
-  new Date().toLocaleDateString('id-ID',{weekday:'long', day:'numeric', month:'short'});
+${lines.join('\n')}
 
-async function loadDaftar(){
-  const listEl = document.getElementById('d_list');
+Total modal: ${rupiah(total)}${shareFooter()}`;
+  shareText(text);
+});
+
+/* ==========================================================
+   MODUL: CATATAN (mode pasar — tanpa harga)
+   ========================================================== */
+let _catatanCache = [];
+async function loadCatatan(){
+  const listEl = document.getElementById('c_list');
   listEl.innerHTML = '<div class="empty-note">Memuat data…</div>';
   try{
     const items = await apiGet('getBelanja', {tanggal: todayStr()});
+    _catatanCache = items;
     if(!items.length){
-      listEl.innerHTML = '<div class="empty-note">Belum ada barang.</div>';
-      document.getElementById('d_total').textContent = rupiah(0);
+      listEl.innerHTML = emptyHTML(
+        ICON_CART,
+        'Belum ada belanja untuk dibawa ke pasar',
+        '+ Tambah Belanja',
+        'catatan_add'
+      );
+      const addBtn = document.getElementById('catatan_add');
+      if(addBtn) addBtn.addEventListener('click', ()=>{
+        document.querySelector('.seg-btn[data-mode="input"]').click();
+        setTimeout(()=>document.getElementById('b_nama').focus(), 100);
+      });
       return;
     }
-    let total = 0;
-    listEl.innerHTML = items.map(it=>{
-      total += Number(it.Subtotal||0);
-      return `<div class="ledger-item">
-        <div><div class="name">${it.NamaBarang}</div>
-        <div class="sub">${it.Qty} ${it.Satuan} × ${rupiah(it.HargaBeli)}</div></div>
-        <div class="amt">${rupiah(it.Subtotal)}</div>
-      </div>`;
-    }).join('');
-    document.getElementById('d_total').textContent = rupiah(total);
+    listEl.innerHTML = `<div class="catatan-list">${
+      items.map(it=>`
+        <div class="catatan-item">
+          <div class="n">${escHtml(it.NamaBarang)}</div>
+          <div class="q">${escHtml(it.Qty)} ${escHtml(it.Satuan)}</div>
+        </div>
+      `).join('')
+    }</div>
+    <div class="total-bar" style="background:var(--line-soft);">
+      <span class="lbl">Total item</span>
+      <span class="val" style="color:var(--ink-900);">${items.length} barang</span>
+    </div>`;
   }catch(e){
-    listEl.innerHTML = `<div class="empty-note">Gagal memuat: ${e.message}</div>`;
+    listEl.innerHTML = `<div class="empty-note">Gagal memuat: ${escHtml(e.message)}</div>`;
   }
 }
 
-/* ---------- MODUL: HARGA JUAL ---------- */
-async function loadHargaJual(){
-  const listEl = document.getElementById('hj_list');
+document.getElementById('share_catatan').addEventListener('click', ()=>{
+  if(!_catatanCache.length){ showToast('Belum ada item untuk dibagikan'); return; }
+  const lines = _catatanCache.map((it,i)=>`${i+1}. ${it.NamaBarang} — ${it.Qty} ${it.Satuan}`);
+  const text =
+`*Catatan Belanja* — ${dateLong()}
+
+${lines.join('\n')}
+
+Total: ${_catatanCache.length} item${shareFooter()}`;
+  shareText(text);
+});
+
+/* ==========================================================
+   MODUL: HARGA (Beli + Jual bersamaan)
+   ========================================================== */
+let _hargaCache = [];
+
+async function fetchHargaMaster(){
+  try{
+    return await apiGet('getHargaMaster');
+  }catch(e){
+    const [hj, belanja] = await Promise.all([
+      apiGet('getHargaJual'),
+      apiGet('getBelanja', {tanggal: todayStr()}).catch(()=>[])
+    ]);
+    const beliMap = {};
+    belanja.forEach(b => { beliMap[b.NamaBarang] = parseNum(b.HargaBeli); });
+    return (hj||[]).map(h => ({
+      NamaBarang: h.NamaBarang,
+      HargaJual: parseNum(h.HargaJualTerakhir),
+      HargaBeli: beliMap[h.NamaBarang] || 0
+    }));
+  }
+}
+
+async function loadHarga(){
+  const listEl = document.getElementById('h_list');
   listEl.innerHTML = '<div class="empty-note">Memuat data…</div>';
   try{
-    const items = await apiGet('getHargaJual');
+    const items = await fetchHargaMaster();
+    _hargaCache = items || [];
     if(!items.length){
-      listEl.innerHTML = '<div class="empty-note">Belum ada barang. Isi lewat tab Belanja dulu.</div>';
+      listEl.innerHTML = emptyHTML(
+        ICON_TAG,
+        'Belum ada barang. Isi lewat tab Belanja dulu.',
+        'Ke Belanja',
+        'harga_go_belanja'
+      );
+      const goBtn = document.getElementById('harga_go_belanja');
+      if(goBtn) goBtn.addEventListener('click', ()=>goTab('belanja'));
       return;
     }
-    listEl.innerHTML = items.map(it=>`
-      <div class="field" style="display:flex; gap:8px; align-items:flex-end;">
-        <div style="flex:1;">
-          <label>${it.NamaBarang}</label>
-          <input type="number" value="${it.HargaJualTerakhir||0}" data-nama="${it.NamaBarang}" class="hj_input">
+    listEl.innerHTML = items.map(it=>{
+      const beli = parseNum(it.HargaBeli);
+      const jual = parseNum(it.HargaJual);
+      const margin = jual - beli;
+      const marginPct = beli > 0 ? Math.round(margin / beli * 100) : 0;
+      const thin = beli > 0 && marginPct < 10;
+      return `<div class="price-card">
+        <div class="price-name">${escHtml(it.NamaBarang)}</div>
+        <div class="price-grid">
+          <div class="price-cell buy">
+            <div class="price-label">Beli</div>
+            <div class="price-value">${beli ? rupiah(beli) : '—'}</div>
+          </div>
+          <div class="price-cell sell">
+            <div class="price-label">Jual</div>
+            <input class="price-input" type="text" inputmode="numeric"
+                   value="${jual ? jual.toLocaleString('id-ID') : ''}"
+                   placeholder="0"
+                   data-nama="${escHtml(it.NamaBarang)}"
+                   data-original="${jual}">
+          </div>
         </div>
-        <button class="btn hj_save" style="width:auto; padding:10px 14px;" data-nama="${it.NamaBarang}">Simpan</button>
-      </div>`).join('');
+        <div class="price-meta">
+          <span class="margin ${thin?'thin':''}">Margin: ${margin?rupiah(margin):'—'} ${beli>0?`(${marginPct}%)`:''}</span>
+          ${beli>0?`<span>Batas bawah: ${rupiah(beli)}</span>`:''}
+        </div>
+      </div>`;
+    }).join('');
 
-    listEl.querySelectorAll('.hj_save').forEach(btn=>{
-      btn.addEventListener('click', async ()=>{
-        const nama = btn.dataset.nama;
-        const input = listEl.querySelector(`.hj_input[data-nama="${nama}"]`);
+    listEl.querySelectorAll('.price-input').forEach(inp=>{
+      attachMoneyInput(inp);
+      inp.addEventListener('blur', async ()=>{
+        const baru = bacaUang(inp);
+        const lama = parseNum(inp.dataset.original);
+        if(baru === lama) return;
         try{
-          await apiPost('updateHargaJual', {namaBarang: nama, hargaJualBaru: input.value});
-          showToast(`Harga ${nama} disimpan`);
-        }catch(e){ showToast('Gagal simpan: ' + e.message); }
+          await apiPost('updateHargaJual', {namaBarang: inp.dataset.nama, hargaJualBaru: baru});
+          inp.dataset.original = String(baru);
+          showToast(`Harga ${inp.dataset.nama} disimpan`);
+          const cached = _hargaCache.find(x=>x.NamaBarang===inp.dataset.nama);
+          if(cached) cached.HargaJual = baru;
+        }catch(e){
+          showToast('Gagal simpan: ' + e.message);
+          inp.value = lama ? lama.toLocaleString('id-ID') : '';
+        }
       });
     });
   }catch(e){
-    listEl.innerHTML = `<div class="empty-note">Gagal memuat: ${e.message}</div>`;
+    listEl.innerHTML = `<div class="empty-note">Gagal memuat: ${escHtml(e.message)}</div>`;
   }
 }
 
-/* ---------- MODUL: TUTUP HARI (Omzet + Biaya Operasional) ---------- */
+/* ---- Share Harga Beli ---- */
+document.getElementById('share_beli').addEventListener('click', async ()=>{
+  if(!_hargaCache.length){ showToast('Belum ada data harga'); return; }
+  try{
+    const belanja = await apiGet('getBelanja', {tanggal: todayStr()});
+    if(!belanja.length){ showToast('Belum ada belanja hari ini'); return; }
+    const lines = belanja.map(b=>{
+      const beli = parseNum(b.HargaBeli);
+      const sub  = hitungSubtotal(b);
+      return `${b.NamaBarang} — ${b.Qty} ${b.Satuan} × ${rupiah(beli)} = ${rupiah(sub)}`;
+    });
+    const total = belanja.reduce((s,b)=>s + hitungSubtotal(b), 0);
+    const text =
+`*Harga Beli* — ${dateLong()}
+
+${lines.join('\n')}
+
+Total modal: ${rupiah(total)}${shareFooter()}`;
+    shareText(text);
+  }catch(e){ showToast('Gagal: ' + e.message); }
+});
+
+/* ---- Share Harga Jual ---- */
+document.getElementById('share_jual').addEventListener('click', async ()=>{
+  if(!_hargaCache.length){ showToast('Belum ada data harga'); return; }
+  let source = _hargaCache.filter(x=>parseNum(x.HargaJual)>0);
+  try{
+    const belanja = await apiGet('getBelanja', {tanggal: todayStr()});
+    if(belanja.length){
+      const setHariIni = new Set(belanja.map(b=>b.NamaBarang));
+      const filtered = source.filter(x=>setHariIni.has(x.NamaBarang));
+      if(filtered.length) source = filtered;
+    }
+  }catch(e){ /* pakai semua */ }
+  if(!source.length){ showToast('Belum ada harga jual'); return; }
+  const lines = source.map(x=>`${x.NamaBarang} — ${rupiah(parseNum(x.HargaJual))}`);
+  const text =
+`*Daftar Harga* — ${dateLong()}
+
+${lines.join('\n')}${shareFooter()}`;
+  shareText(text);
+});
+
+/* ==========================================================
+   MODUL: TUTUP HARI
+   ========================================================== */
 async function loadTutup(){
   try{
     const ops = await apiGet('getBiayaOperasional', {tanggal: todayStr()});
-    document.getElementById('t_pasar').value = ops.biayaPasar;
-    document.getElementById('t_bensin').value = ops.bensin;
-    document.getElementById('t_konsumsi').value = ops.konsumsi || '';
-    document.getElementById('t_kresek').value = ops.kresekKaret || '';
+    const setMoney = (id, val) => {
+      const el = document.getElementById(id);
+      const n = parseNum(val);
+      el.value = n ? n.toLocaleString('id-ID') : '';
+    };
+    setMoney('t_pasar', ops.biayaPasar);
+    setMoney('t_bensin', ops.bensin);
+    setMoney('t_konsumsi', ops.konsumsi);
+    setMoney('t_kresek', ops.kresekKaret);
 
     const omzet = await apiGet('getOmzet', {tanggal: todayStr()});
-    document.getElementById('t_omzet').value = omzet.totalOmzet || '';
+    setMoney('t_omzet', omzet.totalOmzet);
   }catch(e){
     showToast('Gagal memuat tutup hari: ' + e.message);
   }
 }
 
 document.getElementById('t_submit').addEventListener('click', async ()=>{
-  const omzet = document.getElementById('t_omzet').value;
-  const pasar = document.getElementById('t_pasar').value;
-  const bensin = document.getElementById('t_bensin').value;
-  const konsumsi = document.getElementById('t_konsumsi').value || 0;
-  const kresek = document.getElementById('t_kresek').value || 0;
-  if(!omzet){
-    showToast('Isi total omzet dulu');
-    return;
-  }
+  const omzet = bacaUang(document.getElementById('t_omzet'));
+  if(!omzet){ showToast('Isi total omzet dulu'); return; }
+  const pasar = bacaUang(document.getElementById('t_pasar'));
+  const bensin = bacaUang(document.getElementById('t_bensin'));
+  const konsumsi = bacaUang(document.getElementById('t_konsumsi'));
+  const kresek = bacaUang(document.getElementById('t_kresek'));
   try{
     await apiPost('setOmzet', {totalOmzet: omzet});
-    await apiPost('setBiayaOperasional', {biayaPasar: pasar, bensin: bensin, konsumsi, kresekKaret: kresek});
+    await apiPost('setBiayaOperasional', {
+      biayaPasar: pasar, bensin: bensin, konsumsi: konsumsi, kresekKaret: kresek
+    });
     await apiPost('simpanLaporan', {tanggal: todayStr()});
     showToast('Tutup hari tersimpan');
   }catch(e){
@@ -477,61 +984,70 @@ document.getElementById('t_submit').addEventListener('click', async ()=>{
   }
 });
 
-/* ---------- MODUL: DASHBOARD ---------- */
+/* ==========================================================
+   MODUL: DASHBOARD
+   ========================================================== */
 async function loadDashboard(){
   try{
     const lap = await apiGet('getLaporan', {tanggal: todayStr()});
-    document.getElementById('dash_laba').textContent = rupiah(lap.labaBersih);
-    document.getElementById('dash_omzet').textContent = rupiah(lap.omzet);
-    document.getElementById('dash_modal').textContent = rupiah(lap.modalBelanjaKemarin);
-    document.getElementById('dash_ops').textContent = rupiah(lap.biayaOperasional);
+    document.getElementById('dash_laba').textContent = rupiah(parseNum(lap.labaBersih));
+    document.getElementById('dash_omzet').textContent = rupiah(parseNum(lap.omzet));
+    document.getElementById('dash_modal').textContent = rupiah(parseNum(lap.modalBelanjaKemarin));
+    document.getElementById('dash_ops').textContent = rupiah(parseNum(lap.biayaOperasional));
+
+    const hero = document.getElementById('dash_hero');
+    hero.classList.toggle('neg', parseNum(lap.labaBersih) < 0);
 
     const ops = await apiGet('getBiayaOperasional', {tanggal: todayStr()});
     document.getElementById('dash_opslist').innerHTML = `
-      <div class="ledger-item"><div class="name">Biaya pasar</div><div class="amt">${rupiah(ops.biayaPasar)}</div></div>
-      <div class="ledger-item"><div class="name">Bensin</div><div class="amt">${rupiah(ops.bensin)}</div></div>
-      <div class="ledger-item"><div class="name">Konsumsi</div><div class="amt">${rupiah(ops.konsumsi)}</div></div>
-      <div class="ledger-item"><div class="name">Kresek + karet</div><div class="amt">${rupiah(ops.kresekKaret)}</div></div>
+      <div class="ledger-item"><div class="name">Biaya pasar</div><div class="amt">${rupiah(parseNum(ops.biayaPasar))}</div></div>
+      <div class="ledger-item"><div class="name">Bensin</div><div class="amt">${rupiah(parseNum(ops.bensin))}</div></div>
+      <div class="ledger-item"><div class="name">Konsumsi</div><div class="amt">${rupiah(parseNum(ops.konsumsi))}</div></div>
+      <div class="ledger-item"><div class="name">Kresek + karet</div><div class="amt">${rupiah(parseNum(ops.kresekKaret))}</div></div>
     `;
   }catch(e){
     showToast('Gagal memuat dashboard: ' + e.message);
   }
 }
-loadDashboard();
 
-/* ---------- MODUL: LAPORAN (riwayat) ---------- */
+/* ==========================================================
+   MODUL: LAPORAN (riwayat)
+   ========================================================== */
 async function loadLaporan(){
   const listEl = document.getElementById('l_list');
   listEl.innerHTML = '<div class="empty-note">Memuat data…</div>';
   try{
     const rows = await apiGet('getLaporanList', {limit: 30});
     if(!rows.length){
-      listEl.innerHTML = '<div class="empty-note">Belum ada laporan tersimpan. Isi lewat tab Tutup Hari.</div>';
+      listEl.innerHTML = emptyHTML(
+        '<rect x="4" y="3" width="16" height="18" rx="1.5"/><path d="M8 8h8M8 12h8M8 16h5"/>',
+        'Belum ada laporan. Isi lewat Tutup Hari.',
+        null
+      );
       return;
     }
     listEl.innerHTML = rows.map(r=>{
       const tgl = new Date(r.Tanggal).toLocaleDateString('id-ID',{weekday:'long', day:'numeric', month:'short'});
       return `<div class="ledger-item">
-        <div><div class="name">${tgl}</div>
-        <div class="sub">Omzet ${rupiah(r.Omzet)} · Modal ${rupiah(r.ModalKemarin)}</div></div>
-        <div class="amt">${rupiah(r.LabaBersih)}</div>
+        <div>
+          <div class="name">${tgl}</div>
+          <div class="sub">Omzet ${rupiah(parseNum(r.Omzet))} · Modal ${rupiah(parseNum(r.ModalKemarin))}</div>
+        </div>
+        <div class="amt">${rupiah(parseNum(r.LabaBersih))}</div>
       </div>`;
     }).join('');
   }catch(e){
-    listEl.innerHTML = `<div class="empty-note">Gagal memuat: ${e.message}</div>`;
+    listEl.innerHTML = `<div class="empty-note">Gagal memuat: ${escHtml(e.message)}</div>`;
   }
 }
 
-/* ---------- Muat data saat pindah tab ---------- */
-document.querySelectorAll('.navbar button').forEach(b=>{
-  b.addEventListener('click', ()=>{
-    if(b.dataset.t === 'dashboard') loadDashboard();
-    if(b.dataset.t === 'daftar') loadDaftar();
-    if(b.dataset.t === 'hargajual') loadHargaJual();
-    if(b.dataset.t === 'tutup') loadTutup();
-    if(b.dataset.t === 'laporan') loadLaporan();
-  });
-});
+/* ==========================================================
+   INIT
+   ========================================================== */
+loadDashboard();
+loadBelanja();
+loadCatatan();
+loadNamaBarangOptions();
 </script>
 </body>
 </html>
