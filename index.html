@@ -151,7 +151,7 @@ h1,h2,h3{font-family:'Zilla Slab',serif; margin:0; font-weight:700; letter-spaci
   margin-left:12px; padding:6px 8px; cursor:pointer; font-weight:600;
 }
 
-/* ---------- Catatan mode ---------- */
+/* ---------- Catatan mode (font besar, tanpa harga) ---------- */
 .catatan-list{background:var(--card); border:1px solid var(--line); border-radius:var(--r-md); overflow:hidden;}
 .catatan-item{
   padding:14px 16px; border-bottom:1px solid var(--line-soft);
@@ -165,7 +165,7 @@ h1,h2,h3{font-family:'Zilla Slab',serif; margin:0; font-weight:700; letter-spaci
   font-size:var(--fs-md); color:var(--ink-600); margin-top:2px;
 }
 
-/* ---------- Harga cards ---------- */
+/* ---------- Harga rows ---------- */
 .price-card{
   background:var(--card); border:1px solid var(--line); border-radius:var(--r-md);
   padding:14px 14px 12px; margin-bottom:10px;
@@ -190,33 +190,12 @@ h1,h2,h3{font-family:'Zilla Slab',serif; margin:0; font-weight:700; letter-spaci
   color:var(--green-700); outline:none;
 }
 .price-input:focus{color:var(--green-900);}
-
 .price-meta{
-  margin-top:10px; padding-top:10px;
-  border-top:1px solid var(--line-soft);
-  display:flex; flex-direction:column; gap:5px;
-}
-.price-meta-row{
-  display:flex; justify-content:space-between; align-items:center;
+  display:flex; justify-content:space-between; margin-top:9px;
   font-size:var(--fs-xs); color:var(--ink-600);
 }
-.price-meta-row strong{
-  font-family:'Zilla Slab',serif;
-  font-size:14px; font-weight:600;
-  color:var(--ink-900);
-}
-.price-meta-row .margin{font-weight:600; color:var(--green-700);}
-.price-meta-row .margin.thin{color:var(--rust-600);}
-.price-meta-divider{
-  border-top:1px dashed var(--line);
-  margin:4px 0 2px;
-}
-.price-meta-row.bersih strong{
-  font-size:15px; color:var(--green-700);
-}
-.price-meta-row.susut span:last-child{
-  color:var(--rust-600);
-}
+.price-meta .margin{font-weight:600; color:var(--green-700);}
+.price-meta .margin.thin{color:var(--rust-600);}
 
 /* ---------- Total bar ---------- */
 .total-bar{
@@ -228,8 +207,10 @@ h1,h2,h3{font-family:'Zilla Slab',serif; margin:0; font-weight:700; letter-spaci
   font-family:'Zilla Slab',serif; font-size:19px; font-weight:700; color:var(--green-700);
 }
 
-/* ---------- Empty / error ---------- */
-.empty{text-align:center; padding:36px 16px; color:var(--ink-400);}
+/* ---------- Empty / error states ---------- */
+.empty{
+  text-align:center; padding:36px 16px; color:var(--ink-400);
+}
 .empty svg{width:36px; height:36px; opacity:.35; margin-bottom:10px; stroke:currentColor; fill:none; stroke-width:1.4;}
 .empty p{font-size:var(--fs-sm); margin:0 0 14px; color:var(--ink-600);}
 .empty-note{font-size:var(--fs-sm); color:var(--ink-600); padding:20px 0; text-align:center;}
@@ -283,15 +264,24 @@ h1,h2,h3{font-family:'Zilla Slab',serif; margin:0; font-weight:700; letter-spaci
     <div class="v" id="dash_laba">Rp 0</div>
   </div>
   <div class="stat-grid">
-    <div class="stat"><div class="k">Omzet</div><div class="v" id="dash_omzet">Rp 0</div></div>
-    <div class="stat"><div class="k">Modal (kemarin)</div><div class="v" id="dash_modal">Rp 0</div></div>
-    <div class="stat"><div class="k">Operasional</div><div class="v" id="dash_ops">Rp 0</div></div>
+    <div class="stat">
+      <div class="k">Omzet</div>
+      <div class="v" id="dash_omzet">Rp 0</div>
+    </div>
+    <div class="stat">
+      <div class="k">Modal (kemarin)</div>
+      <div class="v" id="dash_modal">Rp 0</div>
+    </div>
+    <div class="stat">
+      <div class="k">Operasional</div>
+      <div class="v" id="dash_ops">Rp 0</div>
+    </div>
   </div>
   <div class="section-head"><h2>Rincian Operasional</h2></div>
   <div id="dash_opslist"><div class="empty-note">Memuat data…</div></div>
 </div>
 
-<!-- ============ BELANJA ============ -->
+<!-- ============ BELANJA (Input + Catatan toggle) ============ -->
 <div class="screen" id="belanja">
   <div class="segmented">
     <button class="seg-btn active" data-mode="input">Input</button>
@@ -379,13 +369,7 @@ h1,h2,h3{font-family:'Zilla Slab',serif; margin:0; font-weight:700; letter-spaci
 
     <button class="btn" id="b_submit">Simpan Belanja</button>
 
-    <div class="section-head" style="margin-top:22px;">
-      <h2>Belanja Hari Ini</h2>
-      <button class="btn-share" id="share_belanja_input">
-        <svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg>
-        Bagikan
-      </button>
-    </div>
+    <div class="section-head" style="margin-top:22px;"><h2>Belanja Hari Ini</h2></div>
     <div id="b_list"><div class="empty-note">Memuat data…</div></div>
     <div class="total-bar">
       <span class="lbl">Total modal hari ini</span>
@@ -393,7 +377,7 @@ h1,h2,h3{font-family:'Zilla Slab',serif; margin:0; font-weight:700; letter-spaci
     </div>
   </div>
 
-  <!-- MODE CATATAN -->
+  <!-- MODE CATATAN (font besar, tanpa harga, tombol share) -->
   <div id="mode_catatan" style="display:none;">
     <div class="section-head">
       <h2>Catatan Belanja</h2>
@@ -409,7 +393,7 @@ h1,h2,h3{font-family:'Zilla Slab',serif; margin:0; font-weight:700; letter-spaci
   </div>
 </div>
 
-<!-- ============ HARGA ============ -->
+<!-- ============ HARGA (Beli + Jual) ============ -->
 <div class="screen" id="harga">
   <div class="section-head">
     <h2>Harga</h2>
@@ -492,7 +476,6 @@ h1,h2,h3{font-family:'Zilla Slab',serif; margin:0; font-weight:700; letter-spaci
    ========================================================== */
 const API_URL = 'https://script.google.com/macros/s/AKfycbyj3eXJV0qSa0-3HFuph0AaV1y5dft9Zjsqt-en7j_DU9mM4huxGoctMD52KTbivuN6/exec';
 const NAMA_LAPAK = ''; /* isi misal 'Sayur Bu Ani' — muncul di footer share */
-const SUSUT_RATE = 0.30; /* 30% — dari pengalaman lapangan (timbangan ecer, cuaca, sortir) */
 
 /* ==========================================================
    HELPERS
@@ -512,20 +495,6 @@ function rupiah(n){
 }
 function bacaUang(el){
   return Number(String(el.value||'').replace(/\D/g,'')) || 0;
-}
-/* Parser angka toleran: "12.000", "60,000", "12000", 12000 */
-function parseNum(v){
-  if(typeof v === 'number') return isFinite(v) ? v : 0;
-  if(v == null || v === '') return 0;
-  let s = String(v).trim().replace(/[^\d.,-]/g, '');
-  if(!s) return 0;
-  if(/,\d{1,2}$/.test(s)){
-    s = s.replace(/\./g,'').replace(',', '.');
-  }else{
-    s = s.replace(/[.,]/g, '');
-  }
-  const n = Number(s);
-  return isFinite(n) ? n : 0;
 }
 function attachMoneyInput(el){
   if(!el) return;
@@ -568,32 +537,6 @@ function emptyHTML(iconPath, text, ctaLabel, ctaId){
 const ICON_CART = '<circle cx="9" cy="20" r="1.4" fill="currentColor" stroke="none"/><circle cx="18" cy="20" r="1.4" fill="currentColor" stroke="none"/><path d="M2 3h3l2.6 12.4a2 2 0 002 1.6h8a2 2 0 002-1.8L21 8H6"/>';
 const ICON_TAG = '<path d="M20.6 12.4L12.4 20.6a2 2 0 01-2.8 0l-7.2-7.2a2 2 0 010-2.8L10.6 2.4A2 2 0 0112 2h6a2 2 0 012 2v6a2 2 0 01-.6 1.4z"/><circle cx="15.5" cy="8.5" r="1.3" fill="currentColor" stroke="none"/>';
 
-/* ---------- Formula bisnis: Markup & Batas Tawar ---------- */
-function getMarkupRate(modal){
-  if(modal <= 5000)  return 1.00;
-  if(modal <= 10000) return 0.50;
-  if(modal <= 30000) return 0.30;
-  return 0.20;
-}
-function mround(value, multiple){
-  return Math.round(value / multiple) * multiple;
-}
-function hitungHargaJual(modal){
-  if(!modal || modal <= 0) return 0;
-  const markup = getMarkupRate(modal);
-  return mround(modal * (1 + markup), 1000);
-}
-function hitungBatasTawar(modal){
-  if(!modal || modal <= 0) return 0;
-  const markup = getMarkupRate(modal);
-  /* Setengah markup, dibulatkan KE BAWAH ke 500 terdekat */
-  return Math.floor(modal * (1 + markup / 2) / 500) * 500;
-}
-function hitungNettoPerUnit(modal, hj){
-  if(!modal || modal <= 0 || !hj || hj <= 0) return 0;
-  return Math.round((hj - modal) * (1 - SUSUT_RATE));
-}
-
 /* ==========================================================
    API
    ========================================================== */
@@ -621,6 +564,7 @@ document.getElementById('todayLabel').textContent = dateShort();
 document.getElementById('catatan_date').textContent = dateShort();
 document.getElementById('harga_date').textContent = dateShort();
 
+/* Attach money formatting ke semua input uang */
 ['b_harga','t_omzet','t_pasar','t_bensin','t_konsumsi','t_kresek'].forEach(id=>{
   attachMoneyInput(document.getElementById(id));
 });
@@ -642,7 +586,7 @@ document.querySelectorAll('.navbar button').forEach(b=>{
 });
 
 /* ==========================================================
-   SEGMENTED TOGGLE
+   SEGMENTED TOGGLE: Input / Catatan
    ========================================================== */
 document.querySelectorAll('.seg-btn').forEach(btn=>{
   btn.addEventListener('click', ()=>{
@@ -658,43 +602,26 @@ document.querySelectorAll('.seg-btn').forEach(btn=>{
 /* ==========================================================
    MODUL: BELANJA (Input)
    ========================================================== */
-let _belanjaCache = [];
-
-function hitungSubtotal(it){
-  const fromTotal  = parseNum(it.Total);
-  const fromSub    = parseNum(it.Subtotal);
-  const fromServer = fromTotal > 0 ? fromTotal : fromSub;
-  if(fromServer > 0) return fromServer;
-  const beli = parseNum(it.HargaBeli);
-  const qty  = parseNum(String(it.Qty).replace(',', '.'));
-  return beli * qty;
-}
-
 async function loadBelanja(){
   const listEl = document.getElementById('b_list');
   listEl.innerHTML = '<div class="empty-note">Memuat data…</div>';
   try{
     const items = await apiGet('getBelanja', {tanggal: todayStr()});
-    _belanjaCache = items || [];
-
     if(!items.length){
       listEl.innerHTML = emptyHTML(ICON_CART, 'Belum ada belanja hari ini', null);
       document.getElementById('b_total').textContent = rupiah(0);
       return;
     }
-
     let total = 0;
     listEl.innerHTML = items.map(it=>{
-      const beli = parseNum(it.HargaBeli);
-      const subtotal = hitungSubtotal(it);
-      total += subtotal;
+      total += Number(it.Subtotal||0);
       return `<div class="ledger-item">
         <div>
           <div class="name">${escHtml(it.NamaBarang)}</div>
-          <div class="sub">${escHtml(it.Qty)} ${escHtml(it.Satuan)} × ${rupiah(beli)}</div>
+          <div class="sub">${escHtml(it.Qty)} ${escHtml(it.Satuan)} × ${rupiah(it.HargaBeli)}</div>
         </div>
         <div style="display:flex;align-items:center;">
-          <div class="amt">${rupiah(subtotal)}</div>
+          <div class="amt">${rupiah(it.Subtotal)}</div>
           <button class="del" data-id="${escHtml(it.ID)}" data-nama="${escHtml(it.NamaBarang)}">Hapus</button>
         </div>
       </div>`;
@@ -717,6 +644,7 @@ async function loadBelanja(){
   }
 }
 
+/* ---- Dropdown Nama Barang (dari master) ---- */
 async function loadNamaBarangOptions(){
   const sel = document.getElementById('b_nama');
   try{
@@ -730,7 +658,7 @@ async function loadNamaBarangOptions(){
       sel.insertBefore(opt, optNew);
       existing.add(n);
     });
-  }catch(e){}
+  }catch(e){ /* diamkan, dropdown tetap bisa dipakai */ }
 }
 
 document.getElementById('b_nama').addEventListener('change', function(){
@@ -774,25 +702,8 @@ document.getElementById('b_submit').addEventListener('click', async ()=>{
   }
 });
 
-document.getElementById('share_belanja_input').addEventListener('click', ()=>{
-  if(!_belanjaCache.length){ showToast('Belum ada belanja hari ini'); return; }
-  const lines = _belanjaCache.map(it=>{
-    const beli = parseNum(it.HargaBeli);
-    const sub  = hitungSubtotal(it);
-    return `${it.NamaBarang} — ${it.Qty} ${it.Satuan} × ${rupiah(beli)} = ${rupiah(sub)}`;
-  });
-  const total = _belanjaCache.reduce((s,it)=>s + hitungSubtotal(it), 0);
-  const text =
-`*Modal Belanja* — ${dateLong()}
-
-${lines.join('\n')}
-
-Total modal: ${rupiah(total)}${shareFooter()}`;
-  shareText(text);
-});
-
 /* ==========================================================
-   MODUL: CATATAN
+   MODUL: CATATAN (mode pasar — tanpa harga)
    ========================================================== */
 let _catatanCache = [];
 async function loadCatatan(){
@@ -845,60 +756,27 @@ Total: ${_catatanCache.length} item${shareFooter()}`;
 });
 
 /* ==========================================================
-   MODUL: HARGA (Beli + Jual + Susut)
+   MODUL: HARGA (Beli + Jual bersamaan)
    ========================================================== */
 let _hargaCache = [];
 
 async function fetchHargaMaster(){
-  /* Union dari semua sumber. Kalau satu gagal, yang lain tetap dipakai. */
-  const [belanjaToday, hargaJualList, namaMaster, hargaMasterOpt] = await Promise.all([
-    apiGet('getBelanja', {tanggal: todayStr()}).catch(()=>[]),
-    apiGet('getHargaJual').catch(()=>[]),
-    apiGet('getNamaBarangMaster').catch(()=>[]),
-    apiGet('getHargaMaster').catch(()=>null)
-  ]);
-
-  const map = {};
-  const ensure = (nama) => {
-    if(!nama) return null;
-    if(!map[nama]) map[nama] = { NamaBarang: nama, HargaBeli: 0, HargaJual: 0 };
-    return map[nama];
-  };
-
-  /* 1. Dari getHargaMaster kalau ada */
-  if(Array.isArray(hargaMasterOpt)){
-    hargaMasterOpt.forEach(h=>{
-      const item = ensure(h.NamaBarang);
-      if(!item) return;
-      const b = parseNum(h.HargaBeli);
-      const j = parseNum(h.HargaJual);
-      if(b > 0) item.HargaBeli = b;
-      if(j > 0) item.HargaJual = j;
-    });
+  try{
+    return await apiGet('getHargaMaster');
+  }catch(e){
+    /* Fallback: gabungkan getHargaJual + getBelanja hari ini */
+    const [hj, belanja] = await Promise.all([
+      apiGet('getHargaJual'),
+      apiGet('getBelanja', {tanggal: todayStr()}).catch(()=>[])
+    ]);
+    const beliMap = {};
+    belanja.forEach(b => { beliMap[b.NamaBarang] = Number(b.HargaBeli)||0; });
+    return (hj||[]).map(h => ({
+      NamaBarang: h.NamaBarang,
+      HargaJual: Number(h.HargaJualTerakhir)||0,
+      HargaBeli: beliMap[h.NamaBarang] || 0
+    }));
   }
-
-  /* 2. Dari master nama barang */
-  (namaMaster || []).forEach(n => ensure(n));
-
-  /* 3. Dari master harga jual */
-  (hargaJualList || []).forEach(h=>{
-    const item = ensure(h.NamaBarang);
-    if(!item) return;
-    const j = parseNum(h.HargaJualTerakhir);
-    if(j > 0) item.HargaJual = j;
-  });
-
-  /* 4. Dari belanja hari ini — harga beli prioritas tertinggi */
-  (belanjaToday || []).forEach(b=>{
-    const item = ensure(b.NamaBarang);
-    if(!item) return;
-    const bl = parseNum(b.HargaBeli);
-    if(bl > 0) item.HargaBeli = bl;
-  });
-
-  return Object.values(map).sort((a,b)=>
-    String(a.NamaBarang).localeCompare(String(b.NamaBarang), 'id')
-  );
 }
 
 async function loadHarga(){
@@ -907,7 +785,6 @@ async function loadHarga(){
   try{
     const items = await fetchHargaMaster();
     _hargaCache = items || [];
-
     if(!items.length){
       listEl.innerHTML = emptyHTML(
         ICON_TAG,
@@ -919,32 +796,12 @@ async function loadHarga(){
       if(goBtn) goBtn.addEventListener('click', ()=>goTab('belanja'));
       return;
     }
-
-    /* Auto-fill HJ kalau kosong */
-    const autoSaveQueue = [];
-    items.forEach(it=>{
-      const beli = parseNum(it.HargaBeli);
-      let jual = parseNum(it.HargaJual);
-      if(jual <= 0 && beli > 0){
-        const auto = hitungHargaJual(beli);
-        if(auto > 0){
-          it.HargaJual = auto;
-          autoSaveQueue.push({namaBarang: it.NamaBarang, hargaJualBaru: auto});
-        }
-      }
-    });
-
     listEl.innerHTML = items.map(it=>{
-      const beli = parseNum(it.HargaBeli);
-      const jual = parseNum(it.HargaJual);
-      const autoJual = hitungHargaJual(beli);
-      const batas = hitungBatasTawar(beli);
+      const beli = Number(it.HargaBeli)||0;
+      const jual = Number(it.HargaJual)||0;
       const margin = jual - beli;
       const marginPct = beli > 0 ? Math.round(margin / beli * 100) : 0;
-      const thin = beli > 0 && marginPct < 15;
-      const netto = hitungNettoPerUnit(beli, jual);
-      const susutVal = margin - netto;
-
+      const thin = beli > 0 && marginPct < 10;
       return `<div class="price-card">
         <div class="price-name">${escHtml(it.NamaBarang)}</div>
         <div class="price-grid">
@@ -962,78 +819,45 @@ async function loadHarga(){
           </div>
         </div>
         <div class="price-meta">
-          ${beli > 0 ? `<div class="price-meta-row">
-            <span>Batas tawar</span>
-            <strong>${rupiah(batas)}</strong>
-          </div>` : ''}
-          <div class="price-meta-row">
-            <span>Margin kotor</span>
-            <span class="margin ${thin?'thin':''}">${margin?rupiah(margin):'—'} ${beli>0?`· ${marginPct}%`:''}</span>
-          </div>
-          ${netto>0 ? `
-            <div class="price-meta-row susut">
-              <span>Estimasi susut (${Math.round(SUSUT_RATE*100)}%)</span>
-              <span>− ${rupiah(susutVal)}</span>
-            </div>
-            <div class="price-meta-divider"></div>
-            <div class="price-meta-row bersih">
-              <span>Margin bersih</span>
-              <strong>${rupiah(netto)}</strong>
-            </div>
-          ` : ''}
-          ${autoJual>0 && jual>0 && jual !== autoJual ? `<div class="price-meta-row" style="margin-top:4px;">
-            <span style="color:var(--ink-400); font-size:10.5px;">Rekomendasi formula</span>
-            <span style="color:var(--ink-400); font-size:10.5px;">${rupiah(autoJual)}</span>
-          </div>` : ''}
+          <span class="margin ${thin?'thin':''}">Margin: ${margin?rupiah(margin):'—'} ${beli>0?`(${marginPct}%)`:''}</span>
+          ${beli>0?`<span>Batas bawah: ${rupiah(beli)}</span>`:''}
         </div>
       </div>`;
     }).join('');
 
+    /* Attach money formatter + save on blur */
     listEl.querySelectorAll('.price-input').forEach(inp=>{
       attachMoneyInput(inp);
       inp.addEventListener('blur', async ()=>{
         const baru = bacaUang(inp);
-        const lama = parseNum(inp.dataset.original);
+        const lama = Number(inp.dataset.original)||0;
         if(baru === lama) return;
         try{
           await apiPost('updateHargaJual', {namaBarang: inp.dataset.nama, hargaJualBaru: baru});
           inp.dataset.original = String(baru);
           showToast(`Harga ${inp.dataset.nama} disimpan`);
+          /* update cache */
           const cached = _hargaCache.find(x=>x.NamaBarang===inp.dataset.nama);
           if(cached) cached.HargaJual = baru;
-          /* Re-render kartu supaya batas & margin update */
-          loadHarga();
         }catch(e){
           showToast('Gagal simpan: ' + e.message);
           inp.value = lama ? lama.toLocaleString('id-ID') : '';
         }
       });
     });
-
-    /* Auto-save HJ yang baru diisi formula */
-    if(autoSaveQueue.length){
-      Promise.all(autoSaveQueue.map(x =>
-        apiPost('updateHargaJual', x).catch(()=>null)
-      )).then(()=>{
-        showToast(`${autoSaveQueue.length} harga jual diisi otomatis`);
-      });
-    }
   }catch(e){
     listEl.innerHTML = `<div class="empty-note">Gagal memuat: ${escHtml(e.message)}</div>`;
   }
 }
 
+/* ---- Share Harga Beli ---- */
 document.getElementById('share_beli').addEventListener('click', async ()=>{
   if(!_hargaCache.length){ showToast('Belum ada data harga'); return; }
   try{
     const belanja = await apiGet('getBelanja', {tanggal: todayStr()});
     if(!belanja.length){ showToast('Belum ada belanja hari ini'); return; }
-    const lines = belanja.map(b=>{
-      const beli = parseNum(b.HargaBeli);
-      const sub  = hitungSubtotal(b);
-      return `${b.NamaBarang} — ${b.Qty} ${b.Satuan} × ${rupiah(beli)} = ${rupiah(sub)}`;
-    });
-    const total = belanja.reduce((s,b)=>s + hitungSubtotal(b), 0);
+    const lines = belanja.map(b=>`${b.NamaBarang} — ${b.Qty} ${b.Satuan} × ${rupiah(b.HargaBeli)} = ${rupiah(b.Subtotal)}`);
+    const total = belanja.reduce((s,b)=>s+Number(b.Subtotal||0), 0);
     const text =
 `*Harga Beli* — ${dateLong()}
 
@@ -1044,9 +868,10 @@ Total modal: ${rupiah(total)}${shareFooter()}`;
   }catch(e){ showToast('Gagal: ' + e.message); }
 });
 
+/* ---- Share Harga Jual (hanya barang yang ada di belanja hari ini, atau semua kalau tidak ada) ---- */
 document.getElementById('share_jual').addEventListener('click', async ()=>{
   if(!_hargaCache.length){ showToast('Belum ada data harga'); return; }
-  let source = _hargaCache.filter(x=>parseNum(x.HargaJual)>0);
+  let source = _hargaCache.filter(x=>Number(x.HargaJual)>0);
   try{
     const belanja = await apiGet('getBelanja', {tanggal: todayStr()});
     if(belanja.length){
@@ -1054,9 +879,9 @@ document.getElementById('share_jual').addEventListener('click', async ()=>{
       const filtered = source.filter(x=>setHariIni.has(x.NamaBarang));
       if(filtered.length) source = filtered;
     }
-  }catch(e){}
+  }catch(e){ /* pakai semua */ }
   if(!source.length){ showToast('Belum ada harga jual'); return; }
-  const lines = source.map(x=>`${x.NamaBarang} — ${rupiah(parseNum(x.HargaJual))}`);
+  const lines = source.map(x=>`${x.NamaBarang} — ${rupiah(x.HargaJual)}`);
   const text =
 `*Daftar Harga* — ${dateLong()}
 
@@ -1072,8 +897,7 @@ async function loadTutup(){
     const ops = await apiGet('getBiayaOperasional', {tanggal: todayStr()});
     const setMoney = (id, val) => {
       const el = document.getElementById(id);
-      const n = parseNum(val);
-      el.value = n ? n.toLocaleString('id-ID') : '';
+      el.value = (val && Number(val)) ? Number(val).toLocaleString('id-ID') : '';
     };
     setMoney('t_pasar', ops.biayaPasar);
     setMoney('t_bensin', ops.bensin);
@@ -1112,20 +936,20 @@ document.getElementById('t_submit').addEventListener('click', async ()=>{
 async function loadDashboard(){
   try{
     const lap = await apiGet('getLaporan', {tanggal: todayStr()});
-    document.getElementById('dash_laba').textContent = rupiah(parseNum(lap.labaBersih));
-    document.getElementById('dash_omzet').textContent = rupiah(parseNum(lap.omzet));
-    document.getElementById('dash_modal').textContent = rupiah(parseNum(lap.modalBelanjaKemarin));
-    document.getElementById('dash_ops').textContent = rupiah(parseNum(lap.biayaOperasional));
+    document.getElementById('dash_laba').textContent = rupiah(lap.labaBersih);
+    document.getElementById('dash_omzet').textContent = rupiah(lap.omzet);
+    document.getElementById('dash_modal').textContent = rupiah(lap.modalBelanjaKemarin);
+    document.getElementById('dash_ops').textContent = rupiah(lap.biayaOperasional);
 
     const hero = document.getElementById('dash_hero');
-    hero.classList.toggle('neg', parseNum(lap.labaBersih) < 0);
+    hero.classList.toggle('neg', Number(lap.labaBersih) < 0);
 
     const ops = await apiGet('getBiayaOperasional', {tanggal: todayStr()});
     document.getElementById('dash_opslist').innerHTML = `
-      <div class="ledger-item"><div class="name">Biaya pasar</div><div class="amt">${rupiah(parseNum(ops.biayaPasar))}</div></div>
-      <div class="ledger-item"><div class="name">Bensin</div><div class="amt">${rupiah(parseNum(ops.bensin))}</div></div>
-      <div class="ledger-item"><div class="name">Konsumsi</div><div class="amt">${rupiah(parseNum(ops.konsumsi))}</div></div>
-      <div class="ledger-item"><div class="name">Kresek + karet</div><div class="amt">${rupiah(parseNum(ops.kresekKaret))}</div></div>
+      <div class="ledger-item"><div class="name">Biaya pasar</div><div class="amt">${rupiah(ops.biayaPasar)}</div></div>
+      <div class="ledger-item"><div class="name">Bensin</div><div class="amt">${rupiah(ops.bensin)}</div></div>
+      <div class="ledger-item"><div class="name">Konsumsi</div><div class="amt">${rupiah(ops.konsumsi)}</div></div>
+      <div class="ledger-item"><div class="name">Kresek + karet</div><div class="amt">${rupiah(ops.kresekKaret)}</div></div>
     `;
   }catch(e){
     showToast('Gagal memuat dashboard: ' + e.message);
@@ -1133,7 +957,7 @@ async function loadDashboard(){
 }
 
 /* ==========================================================
-   MODUL: LAPORAN
+   MODUL: LAPORAN (riwayat)
    ========================================================== */
 async function loadLaporan(){
   const listEl = document.getElementById('l_list');
@@ -1153,9 +977,9 @@ async function loadLaporan(){
       return `<div class="ledger-item">
         <div>
           <div class="name">${tgl}</div>
-          <div class="sub">Omzet ${rupiah(parseNum(r.Omzet))} · Modal ${rupiah(parseNum(r.ModalKemarin))}</div>
+          <div class="sub">Omzet ${rupiah(r.Omzet)} · Modal ${rupiah(r.ModalKemarin)}</div>
         </div>
-        <div class="amt">${rupiah(parseNum(r.LabaBersih))}</div>
+        <div class="amt">${rupiah(r.LabaBersih)}</div>
       </div>`;
     }).join('');
   }catch(e){
