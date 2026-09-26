@@ -595,4 +595,500 @@ function hitungHargaJual(modal){
 function hitungHargaMinimum(modal){
   if(!modal || modal <= 0) return 0;
   const markup = getMarkupRate(modal);
-  /*
+  /* Setengah markup, dibulatkan KE BAWAH ke 500 terdekat */
+  return Math.floor(modal * (1 + markup / 2) / 500) * 500;
+}
+
+/* ==========================================================
+   API
+   ========================================================== */
+async function apiGet(action, params={}){
+  const qs = new URLSearchParams({action, ...params}).toString();
+  const res = await fetch(`${API_URL}?${qs}`);
+  const json = await res.json();
+  if(!json.ok) throw new Error(json.error || 'Gagal mengambil data');
+  return json.data;
+}
+async function apiPost(action, data){
+  const res = await fetch(API_URL, {
+    method:'POST',
+    body: JSON.stringify({action, data})
+  });
+  const json = await res.json();
+  if(!json.ok) throw new Error(json.error || 'Gagal menyimpan data');
+  return json.data;
+}
+
+/* ==========================================================
+   INISIALISASI
+   ========================================================== */
+document.getElementById('todayLabel').textContent = dateShort();
+document.getElementById('catatan_date').textContent = dateShort();
+document.getElementById('harga_date').textContent = dateShort();
+
+['b_harga','t_omzet','t_pasar','t_bensin','t_konsumsi','t_kresek'].forEach(id=>{
+  attachMoneyInput(document.getElementById(id));
+});
+
+/* ==========================================================
+   NAVIGASI
+   ========================================================== */
+function goTab(name){
+  document.querySelectorAll('.navbar button').forEach(x=>x.classList.toggle('active', x.dataset.t===name));
+  document.querySelectorAll('.screen').forEach(x=>x.classList.toggle('active', x.id===name));
+  if(name==='dashboard') loadDashboard();
+  if(name==='belanja'){ loadBelanja(); loadCatatan(); }
+  if(name==='harga') loadHarga();
+  if(name==='tutup') loadTutup();
+  if(name==='laporan') loadLaporan();
+}
+document.querySelectorAll('.navbar button').forEach(b=>{
+  b.addEventListener('click', ()=>goTab(b.dataset.t));
+});
+
+/* ==========================================================
+   SEGMENTED TOGGLE
+   ========================================================== */
+document.querySelectorAll('.seg-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.seg-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    const mode = btn.dataset.mode;
+    document.getElementById('mode_input').style.display = mode==='input' ? 'block' : 'none';
+    document.getElementById('mode_catatan').style.display = mode==='catatan' ? 'block' : 'none';
+    if(mode==='catatan') loadCatatan();
+  });
+});
+
+/* ==========================================================
+   MODUL: BELANJA (Input)
+   ========================================================== */
+let _belanjaCache = [];
+
+function hitungSubtotal(it){
+  const fromTotal  = parseNum(it.Total);
+  const fromSub    = parseNum(it.Subtotal);
+  const fromServer = fromTotal > 0 ? fromTotal : fromSub;
+  if(fromServer > 0) return fromServer;
+  const beli = parseNum(it.HargaBeli);
+  const qty  = parseNum(String(it.Qty).replace(',', '.'));
+  return beli * qty;
+}
+
+async function loadBelanja(){
+  const listEl = document.getElementById('b_list');
+  listEl.innerHTML = '<div class="empty-note">Memuat data…</div>';
+  try{
+    const items = await apiGet('getBelanja', {tanggal: todayStr()});
+    _belanjaCache = items || [];
+
+    if(!items.length){
+      listEl.innerHTML = emptyHTML(ICON_CART, 'Belum ada belanja hari ini', null);
+      document.getElementById('b_total').textContent = rupiah(0);
+      return;
+    }
+
+    let total = 0;
+    listEl.innerHTML = items.map(it=>{
+      const beli = parseNum(it.HargaBeli);
+      const subtotal = hitungSubtotal(it);
+      total += subtotal;
+      return `<div class="ledger-item">
+        <div>
+          <div class="name">${escHtml(it.NamaBarang)}</div>
+          <div class="sub">${escHtml(it.Qty)} ${escHtml(it.Satuan)} × ${rupiah(beli)}</div>
+        </div>
+        <div style="display:flex;align-items:center;">
+          <div class="amt">${rupiah(subtotal)}</div>
+          <button class="del" data-id="${escHtml(it.ID)}" data-nama="${escHtml(it.NamaBarang)}">Hapus</button>
+        </div>
+      </div>`;
+    }).join('');
+    document.getElementById('b_total').textContent = rupiah(total);
+
+    listEl.querySelectorAll('.del').forEach(btn=>{
+      btn.addEventListener('click', async ()=>{
+        if(!confirm(`Hapus "${btn.dataset.nama}" dari daftar belanja?`)) return;
+        try{
+          await apiPost('deleteBelanja', {id: btn.dataset.id});
+          showToast('Item dihapus');
+          loadBelanja();
+          loadCatatan();
+        }catch(e){ showToast('Gagal hapus: ' + e.message); }
+      });
+    });
+  }catch(e){
+    listEl.innerHTML = `<div class="empty-note">Gagal memuat: ${escHtml(e.message)}</div>`;
+  }
+}
+
+async function loadNamaBarangOptions(){
+  const sel = document.getElementById('b_nama');
+  try{
+    const names = await apiGet('getNamaBarangMaster');
+    const existing = new Set(Array.from(sel.options).map(o=>o.value));
+    const optNew = sel.querySelector('option[value="__new__"]');
+    names.forEach(n=>{
+      if(existing.has(n)) return;
+      const opt = document.createElement('option');
+      opt.value = n; opt.textContent = n;
+      sel.insertBefore(opt, optNew);
+      existing.add(n);
+    });
+  }catch(e){}
+}
+
+document.getElementById('b_nama').addEventListener('change', function(){
+  document.getElementById('b_nama_new').style.display = this.value==='__new__' ? 'block' : 'none';
+  if(this.value==='__new__') document.getElementById('b_nama_new').focus();
+});
+document.getElementById('b_satuan').addEventListener('change', function(){
+  document.getElementById('b_satuan_new').style.display = this.value==='__other__' ? 'block' : 'none';
+  if(this.value==='__other__') document.getElementById('b_satuan_new').focus();
+});
+
+document.getElementById('b_submit').addEventListener('click', async ()=>{
+  const namaSel = document.getElementById('b_nama').value;
+  const nama = namaSel === '__new__' ? document.getElementById('b_nama_new').value.trim() : namaSel;
+  const qty = document.getElementById('b_qty').value.trim();
+  const satuanSel = document.getElementById('b_satuan').value;
+  const satuan = satuanSel === '__other__' ? document.getElementById('b_satuan_new').value.trim() : satuanSel;
+  const harga = bacaUang(document.getElementById('b_harga'));
+
+  if(!nama){ showToast('Isi nama barang dulu'); return; }
+  if(!qty){ showToast('Isi qty dulu'); return; }
+  if(!satuan){ showToast('Isi satuan dulu'); return; }
+  if(!harga){ showToast('Isi harga beli dulu'); return; }
+
+  try{
+    await apiPost('addBelanja', {namaBarang: nama, qty, satuan, hargaBeli: harga});
+    document.getElementById('b_nama').value = '';
+    document.getElementById('b_nama_new').value = '';
+    document.getElementById('b_nama_new').style.display = 'none';
+    document.getElementById('b_qty').value = '';
+    document.getElementById('b_satuan').value = 'kg';
+    document.getElementById('b_satuan_new').value = '';
+    document.getElementById('b_satuan_new').style.display = 'none';
+    document.getElementById('b_harga').value = '';
+    showToast('Belanja tersimpan');
+    loadBelanja();
+    loadCatatan();
+    loadNamaBarangOptions();
+  }catch(e){
+    showToast('Gagal simpan: ' + e.message);
+  }
+});
+
+document.getElementById('share_belanja_input').addEventListener('click', ()=>{
+  if(!_belanjaCache.length){ showToast('Belum ada belanja hari ini'); return; }
+  const lines = _belanjaCache.map(it=>{
+    const beli = parseNum(it.HargaBeli);
+    const sub  = hitungSubtotal(it);
+    return `${it.NamaBarang} — ${it.Qty} ${it.Satuan} × ${rupiah(beli)} = ${rupiah(sub)}`;
+  });
+  const total = _belanjaCache.reduce((s,it)=>s + hitungSubtotal(it), 0);
+  const text =
+`*Modal Belanja* — ${dateLong()}
+
+${lines.join('\n')}
+
+Total modal: ${rupiah(total)}${shareFooter()}`;
+  shareText(text);
+});
+
+/* ==========================================================
+   MODUL: CATATAN
+   ========================================================== */
+let _catatanCache = [];
+async function loadCatatan(){
+  const listEl = document.getElementById('c_list');
+  listEl.innerHTML = '<div class="empty-note">Memuat data…</div>';
+  try{
+    const items = await apiGet('getBelanja', {tanggal: todayStr()});
+    _catatanCache = items;
+    if(!items.length){
+      listEl.innerHTML = emptyHTML(
+        ICON_CART,
+        'Belum ada belanja untuk dibawa ke pasar',
+        '+ Tambah Belanja',
+        'catatan_add'
+      );
+      const addBtn = document.getElementById('catatan_add');
+      if(addBtn) addBtn.addEventListener('click', ()=>{
+        document.querySelector('.seg-btn[data-mode="input"]').click();
+        setTimeout(()=>document.getElementById('b_nama').focus(), 100);
+      });
+      return;
+    }
+    listEl.innerHTML = `<div class="catatan-list">${
+      items.map(it=>`
+        <div class="catatan-item">
+          <div class="n">${escHtml(it.NamaBarang)}</div>
+          <div class="q">${escHtml(it.Qty)} ${escHtml(it.Satuan)}</div>
+        </div>
+      `).join('')
+    }</div>
+    <div class="total-bar" style="background:var(--line-soft);">
+      <span class="lbl">Total item</span>
+      <span class="val" style="color:var(--ink-900);">${items.length} barang</span>
+    </div>`;
+  }catch(e){
+    listEl.innerHTML = `<div class="empty-note">Gagal memuat: ${escHtml(e.message)}</div>`;
+  }
+}
+
+document.getElementById('share_catatan').addEventListener('click', ()=>{
+  if(!_catatanCache.length){ showToast('Belum ada item untuk dibagikan'); return; }
+  const lines = _catatanCache.map((it,i)=>`${i+1}. ${it.NamaBarang} — ${it.Qty} ${it.Satuan}`);
+  const text =
+`*Catatan Belanja* — ${dateLong()}
+
+${lines.join('\n')}
+
+Total: ${_catatanCache.length} item${shareFooter()}`;
+  shareText(text);
+});
+
+/* ==========================================================
+   MODUL: HARGA
+   ==========================================================
+   Harga Jual & Harga Minimum SELALU dihitung dari formula.
+   Tidak ada input manual, tidak ada simpan ke sheet.
+   ========================================================== */
+let _hargaCache = [];
+
+async function fetchHargaMaster(){
+  const [belanjaToday, namaMaster, hargaMasterOpt] = await Promise.all([
+    apiGet('getBelanja', {tanggal: todayStr()}).catch(()=>[]),
+    apiGet('getNamaBarangMaster').catch(()=>[]),
+    apiGet('getHargaMaster').catch(()=>null)
+  ]);
+
+  const map = {};
+  const ensure = (nama) => {
+    if(!nama) return null;
+    if(!map[nama]) map[nama] = { NamaBarang: nama, HargaBeli: 0 };
+    return map[nama];
+  };
+
+  /* 1. Dari getHargaMaster kalau ada (mengandung harga beli terakhir per barang) */
+  if(Array.isArray(hargaMasterOpt)){
+    hargaMasterOpt.forEach(h=>{
+      const item = ensure(h.NamaBarang);
+      if(!item) return;
+      const b = parseNum(h.HargaBeli);
+      if(b > 0) item.HargaBeli = b;
+    });
+  }
+
+  /* 2. Dari master nama barang — minimal nama muncul */
+  (namaMaster || []).forEach(n => ensure(n));
+
+  /* 3. Dari belanja hari ini — harga beli prioritas tertinggi */
+  (belanjaToday || []).forEach(b=>{
+    const item = ensure(b.NamaBarang);
+    if(!item) return;
+    const bl = parseNum(b.HargaBeli);
+    if(bl > 0) item.HargaBeli = bl;
+  });
+
+  return Object.values(map).sort((a,b)=>
+    String(a.NamaBarang).localeCompare(String(b.NamaBarang), 'id')
+  );
+}
+
+async function loadHarga(){
+  const listEl = document.getElementById('h_list');
+  listEl.innerHTML = '<div class="empty-note">Memuat data…</div>';
+  try{
+    const items = await fetchHargaMaster();
+    _hargaCache = items || [];
+
+    if(!items.length){
+      listEl.innerHTML = emptyHTML(
+        ICON_TAG,
+        'Belum ada barang. Isi lewat tab Belanja dulu.',
+        'Ke Belanja',
+        'harga_go_belanja'
+      );
+      const goBtn = document.getElementById('harga_go_belanja');
+      if(goBtn) goBtn.addEventListener('click', ()=>goTab('belanja'));
+      return;
+    }
+
+    listEl.innerHTML = items.map(it=>{
+      const beli = parseNum(it.HargaBeli);
+      const jual = hitungHargaJual(beli);
+      const minimum = hitungHargaMinimum(beli);
+
+      return `<div class="price-card">
+        <div class="price-name">${escHtml(it.NamaBarang)}</div>
+        <div class="price-grid">
+          <div class="price-cell buy">
+            <div class="price-label">Beli</div>
+            <div class="price-value">${beli ? rupiah(beli) : '—'}</div>
+          </div>
+          <div class="price-cell sell">
+            <div class="price-label">Jual</div>
+            <div class="price-value">${jual ? rupiah(jual) : '—'}</div>
+          </div>
+        </div>
+        ${minimum > 0 ? `<div class="min-row">
+          <span class="lbl">Harga Minimum</span>
+          <span class="val">${rupiah(minimum)}</span>
+        </div>` : ''}
+      </div>`;
+    }).join('');
+  }catch(e){
+    listEl.innerHTML = `<div class="empty-note">Gagal memuat: ${escHtml(e.message)}</div>`;
+  }
+}
+
+/* ---- Share Harga Beli ---- */
+document.getElementById('share_beli').addEventListener('click', async ()=>{
+  if(!_hargaCache.length){ showToast('Belum ada data harga'); return; }
+  try{
+    const belanja = await apiGet('getBelanja', {tanggal: todayStr()});
+    if(!belanja.length){ showToast('Belum ada belanja hari ini'); return; }
+    const lines = belanja.map(b=>{
+      const beli = parseNum(b.HargaBeli);
+      const sub  = hitungSubtotal(b);
+      return `${b.NamaBarang} — ${b.Qty} ${b.Satuan} × ${rupiah(beli)} = ${rupiah(sub)}`;
+    });
+    const total = belanja.reduce((s,b)=>s + hitungSubtotal(b), 0);
+    const text =
+`*Harga Beli* — ${dateLong()}
+
+${lines.join('\n')}
+
+Total modal: ${rupiah(total)}${shareFooter()}`;
+    shareText(text);
+  }catch(e){ showToast('Gagal: ' + e.message); }
+});
+
+/* ---- Share Harga Jual (tanpa batas tawar) ---- */
+document.getElementById('share_jual').addEventListener('click', async ()=>{
+  if(!_hargaCache.length){ showToast('Belum ada data harga'); return; }
+  const source = _hargaCache.filter(x=>parseNum(x.HargaBeli)>0);
+  if(!source.length){ showToast('Belum ada harga jual'); return; }
+  const lines = source.map(x=>{
+    const beli = parseNum(x.HargaBeli);
+    const jual = hitungHargaJual(beli);
+    return `${x.NamaBarang} — ${rupiah(jual)}`;
+  });
+  const text =
+`*Daftar Harga* — ${dateLong()}
+
+${lines.join('\n')}${shareFooter()}`;
+  shareText(text);
+});
+
+/* ==========================================================
+   MODUL: TUTUP HARI
+   ========================================================== */
+async function loadTutup(){
+  try{
+    const ops = await apiGet('getBiayaOperasional', {tanggal: todayStr()});
+    const setMoney = (id, val) => {
+      const el = document.getElementById(id);
+      const n = parseNum(val);
+      el.value = n ? n.toLocaleString('id-ID') : '';
+    };
+    setMoney('t_pasar', ops.biayaPasar);
+    setMoney('t_bensin', ops.bensin);
+    setMoney('t_konsumsi', ops.konsumsi);
+    setMoney('t_kresek', ops.kresekKaret);
+
+    const omzet = await apiGet('getOmzet', {tanggal: todayStr()});
+    setMoney('t_omzet', omzet.totalOmzet);
+  }catch(e){
+    showToast('Gagal memuat tutup hari: ' + e.message);
+  }
+}
+
+document.getElementById('t_submit').addEventListener('click', async ()=>{
+  const omzet = bacaUang(document.getElementById('t_omzet'));
+  if(!omzet){ showToast('Isi total omzet dulu'); return; }
+  const pasar = bacaUang(document.getElementById('t_pasar'));
+  const bensin = bacaUang(document.getElementById('t_bensin'));
+  const konsumsi = bacaUang(document.getElementById('t_konsumsi'));
+  const kresek = bacaUang(document.getElementById('t_kresek'));
+  try{
+    await apiPost('setOmzet', {totalOmzet: omzet});
+    await apiPost('setBiayaOperasional', {
+      biayaPasar: pasar, bensin: bensin, konsumsi: konsumsi, kresekKaret: kresek
+    });
+    await apiPost('simpanLaporan', {tanggal: todayStr()});
+    showToast('Tutup hari tersimpan');
+  }catch(e){
+    showToast('Gagal simpan: ' + e.message);
+  }
+});
+
+/* ==========================================================
+   MODUL: DASHBOARD
+   ========================================================== */
+async function loadDashboard(){
+  try{
+    const lap = await apiGet('getLaporan', {tanggal: todayStr()});
+    document.getElementById('dash_laba').textContent = rupiah(parseNum(lap.labaBersih));
+    document.getElementById('dash_omzet').textContent = rupiah(parseNum(lap.omzet));
+    document.getElementById('dash_modal').textContent = rupiah(parseNum(lap.modalBelanjaKemarin));
+    document.getElementById('dash_ops').textContent = rupiah(parseNum(lap.biayaOperasional));
+
+    const hero = document.getElementById('dash_hero');
+    hero.classList.toggle('neg', parseNum(lap.labaBersih) < 0);
+
+    const ops = await apiGet('getBiayaOperasional', {tanggal: todayStr()});
+    document.getElementById('dash_opslist').innerHTML = `
+      <div class="ledger-item"><div class="name">Biaya pasar</div><div class="amt">${rupiah(parseNum(ops.biayaPasar))}</div></div>
+      <div class="ledger-item"><div class="name">Bensin</div><div class="amt">${rupiah(parseNum(ops.bensin))}</div></div>
+      <div class="ledger-item"><div class="name">Konsumsi</div><div class="amt">${rupiah(parseNum(ops.konsumsi))}</div></div>
+      <div class="ledger-item"><div class="name">Kresek + karet</div><div class="amt">${rupiah(parseNum(ops.kresekKaret))}</div></div>
+    `;
+  }catch(e){
+    showToast('Gagal memuat dashboard: ' + e.message);
+  }
+}
+
+/* ==========================================================
+   MODUL: LAPORAN
+   ========================================================== */
+async function loadLaporan(){
+  const listEl = document.getElementById('l_list');
+  listEl.innerHTML = '<div class="empty-note">Memuat data…</div>';
+  try{
+    const rows = await apiGet('getLaporanList', {limit: 30});
+    if(!rows.length){
+      listEl.innerHTML = emptyHTML(
+        '<rect x="4" y="3" width="16" height="18" rx="1.5"/><path d="M8 8h8M8 12h8M8 16h5"/>',
+        'Belum ada laporan. Isi lewat Tutup Hari.',
+        null
+      );
+      return;
+    }
+    listEl.innerHTML = rows.map(r=>{
+      const tgl = new Date(r.Tanggal).toLocaleDateString('id-ID',{weekday:'long', day:'numeric', month:'short'});
+      return `<div class="ledger-item">
+        <div>
+          <div class="name">${tgl}</div>
+          <div class="sub">Omzet ${rupiah(parseNum(r.Omzet))} · Modal ${rupiah(parseNum(r.ModalKemarin))}</div>
+        </div>
+        <div class="amt">${rupiah(parseNum(r.LabaBersih))}</div>
+      </div>`;
+    }).join('');
+  }catch(e){
+    listEl.innerHTML = `<div class="empty-note">Gagal memuat: ${escHtml(e.message)}</div>`;
+  }
+}
+
+/* ==========================================================
+   INIT
+   ========================================================== */
+loadDashboard();
+loadBelanja();
+loadCatatan();
+loadNamaBarangOptions();
+</script>
+</body>
+</html>
