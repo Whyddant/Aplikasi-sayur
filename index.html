@@ -94,6 +94,38 @@ h1,h2,h3{font-family:'Zilla Slab',serif; margin:0; font-weight:700; letter-spaci
   outline:none; border-color:var(--green-700); box-shadow:0 0 0 3px rgba(47,82,51,.12);
 }
 
+/* ---------- Baris biaya tetap ---------- */
+.fixed-row{
+  display:flex; justify-content:space-between; align-items:center;
+  padding:12px 13px; background:var(--green-100);
+  border-radius:var(--r-sm); margin-bottom:8px;
+  border:1px solid transparent;
+  transition:border-color .15s;
+}
+.fixed-row.editing{border-color:var(--rust-600); background:var(--card);}
+.fixed-row .lbl{
+  font-size:var(--fs-sm); color:var(--ink-700);
+  display:flex; align-items:center; gap:6px;
+}
+.fixed-row .val{
+  font-family:'Zilla Slab',serif; font-weight:600; font-size:16px;
+  color:var(--green-700);
+}
+.fixed-row .edit-btn{
+  background:none; border:none; padding:4px 6px; cursor:pointer;
+  color:var(--ink-600); font-size:14px; margin-left:6px;
+}
+.fixed-row .edit-btn:active{color:var(--rust-600);}
+.fixed-row input.fixed-input{
+  width:120px; padding:6px 10px; font-size:15px;
+  border:1px solid var(--line); border-radius:var(--r-sm);
+  background:var(--card); font-family:'Zilla Slab',serif; font-weight:600;
+  text-align:right; color:var(--green-700);
+}
+.fixed-row input.fixed-input:focus{
+  outline:none; border-color:var(--green-700);
+}
+
 /* ---------- Buttons ---------- */
 .btn{
   width:100%; padding:13px; border:none; border-radius:var(--r-sm);
@@ -200,6 +232,43 @@ h1,h2,h3{font-family:'Zilla Slab',serif; margin:0; font-weight:700; letter-spaci
 .min-row .val{
   font-family:'Zilla Slab',serif;
   font-size:18px; font-weight:700;
+}
+
+/* ---------- Tombol Rincian & breakdown ---------- */
+.detail-toggle{
+  display:block; margin:8px auto 0; padding:5px 12px;
+  background:none; border:1px dashed var(--line);
+  border-radius:var(--r-full); color:var(--ink-600);
+  font:500 11.5px 'Work Sans',sans-serif; cursor:pointer;
+  transition:all .15s;
+}
+.detail-toggle:active{background:var(--green-100);}
+.detail-toggle.open{border-style:solid; color:var(--green-700);}
+
+.price-detail{
+  margin-top:10px; padding-top:10px;
+  border-top:1px dashed var(--line);
+  display:flex; flex-direction:column; gap:5px;
+}
+.price-detail-row{
+  display:flex; justify-content:space-between; align-items:center;
+  font-size:var(--fs-xs); color:var(--ink-600);
+}
+.price-detail-row strong{
+  font-family:'Zilla Slab',serif; font-size:14px; font-weight:600;
+  color:var(--ink-900);
+}
+.price-detail-row.margin span:last-child{
+  font-weight:600; color:var(--green-700);
+}
+.price-detail-row.susut span:last-child{
+  color:var(--rust-600);
+}
+.price-detail-divider{
+  border-top:1px dashed var(--line); margin:3px 0;
+}
+.price-detail-row.bersih strong{
+  font-size:15px; color:var(--green-700);
 }
 
 /* ---------- Total bar ---------- */
@@ -413,26 +482,44 @@ h1,h2,h3{font-family:'Zilla Slab',serif; margin:0; font-weight:700; letter-spaci
 <!-- ============ TUTUP HARI ============ -->
 <div class="screen" id="tutup">
   <div class="section-head"><h2>Tutup Hari</h2></div>
+
   <div class="field">
     <label for="t_omzet">Total Omzet Hari Ini</label>
     <input id="t_omzet" type="text" inputmode="numeric" placeholder="mis. 700.000">
   </div>
-  <div class="field">
-    <label for="t_pasar">Biaya Pasar (tetap)</label>
-    <input id="t_pasar" type="text" inputmode="numeric" placeholder="0">
+
+  <div class="field" style="margin-bottom:8px;">
+    <label>Operasional Belanja (tetap)</label>
+    <div class="fixed-row" id="t_ops_row">
+      <span class="lbl">
+        Harian
+        <button class="edit-btn" data-target="ops" title="Ubah">✎</button>
+      </span>
+      <span class="val" id="t_ops_val">Rp 100.000</span>
+    </div>
   </div>
-  <div class="field">
-    <label for="t_bensin">Bensin (tetap)</label>
-    <input id="t_bensin" type="text" inputmode="numeric" placeholder="0">
+
+  <div class="field" style="margin-bottom:16px;">
+    <label>Bensin (tetap)</label>
+    <div class="fixed-row" id="t_bensin_row">
+      <span class="lbl">
+        Harian
+        <button class="edit-btn" data-target="bensin" title="Ubah">✎</button>
+      </span>
+      <span class="val" id="t_bensin_val">Rp 50.000</span>
+    </div>
   </div>
+
   <div class="field">
     <label for="t_konsumsi">Konsumsi</label>
     <input id="t_konsumsi" type="text" inputmode="numeric" placeholder="0">
   </div>
+
   <div class="field">
     <label for="t_kresek">Kresek + Karet</label>
     <input id="t_kresek" type="text" inputmode="numeric" placeholder="0">
   </div>
+
   <button class="btn" id="t_submit">Simpan Tutup Hari</button>
 </div>
 
@@ -473,8 +560,14 @@ h1,h2,h3{font-family:'Zilla Slab',serif; margin:0; font-weight:700; letter-spaci
    KONFIGURASI
    ========================================================== */
 const API_URL = 'https://script.google.com/macros/s/AKfycbyj3eXJV0qSa0-3HFuph0AaV1y5dft9Zjsqt-en7j_DU9mM4huxGoctMD52KTbivuN6/exec';
-const NAMA_LAPAK = ''; /* isi misal 'Sayur Bu Ani' — muncul di footer share */
-const SUSUT_RATE = 0.30; /* 30% — dari pengalaman lapangan */
+const NAMA_LAPAK = '';
+const SUSUT_RATE = 0.30;
+
+/* Default kalau sheet Pengaturan kosong */
+const DEFAULT_PENGATURAN = {
+  OperasionalBelanja: 100000,
+  Bensin: 50000
+};
 
 /* ==========================================================
    HELPERS
@@ -550,38 +643,23 @@ const ICON_CART = '<circle cx="9" cy="20" r="1.4" fill="currentColor" stroke="no
 const ICON_TAG = '<path d="M20.6 12.4L12.4 20.6a2 2 0 01-2.8 0l-7.2-7.2a2 2 0 010-2.8L10.6 2.4A2 2 0 0112 2h6a2 2 0 012 2v6a2 2 0 01-.6 1.4z"/><circle cx="15.5" cy="8.5" r="1.3" fill="currentColor" stroke="none"/>';
 
 /* ==========================================================
-   FORMULA BISNIS — Markup interpolasi + Harga Minimum
-   ==========================================================
-   Anchor markup:
-     ≤ 5.000        → flat 100%
-     5.000–10.000   → 100% turun ke 50%
-     10.000–30.000  → 50%  turun ke 30%
-     30.000–100.000 → 30%  turun ke 15%
-     > 100.000      → flat 15%
-
-   Harga Jual    = modal × (1 + markup)   → dibulatkan ke 1000
-   Harga Minimum = modal × (1 + markup/2) → dibulatkan ke bawah ke 500
+   FORMULA BISNIS
    ========================================================== */
 function getMarkupRate(modal){
   if(!modal || modal <= 0) return 0;
-
   if(modal <= 5000) return 1.00;
-
   if(modal <= 10000){
-    const t = (modal - 5000) / (10000 - 5000);
+    const t = (modal - 5000) / 5000;
     return 1.00 + (0.50 - 1.00) * t;
   }
-
   if(modal <= 30000){
-    const t = (modal - 10000) / (30000 - 10000);
+    const t = (modal - 10000) / 20000;
     return 0.50 + (0.30 - 0.50) * t;
   }
-
   if(modal <= 100000){
-    const t = (modal - 30000) / (100000 - 30000);
+    const t = (modal - 30000) / 70000;
     return 0.30 + (0.15 - 0.30) * t;
   }
-
   return 0.15;
 }
 function mround(value, multiple){
@@ -589,14 +667,11 @@ function mround(value, multiple){
 }
 function hitungHargaJual(modal){
   if(!modal || modal <= 0) return 0;
-  const markup = getMarkupRate(modal);
-  return mround(modal * (1 + markup), 1000);
+  return mround(modal * (1 + getMarkupRate(modal)), 1000);
 }
 function hitungHargaMinimum(modal){
   if(!modal || modal <= 0) return 0;
-  const markup = getMarkupRate(modal);
-  /* Setengah markup, dibulatkan KE BAWAH ke 500 terdekat */
-  return Math.floor(modal * (1 + markup / 2) / 500) * 500;
+  return Math.floor(modal * (1 + getMarkupRate(modal) / 2) / 500) * 500;
 }
 
 /* ==========================================================
@@ -626,9 +701,16 @@ document.getElementById('todayLabel').textContent = dateShort();
 document.getElementById('catatan_date').textContent = dateShort();
 document.getElementById('harga_date').textContent = dateShort();
 
-['b_harga','t_omzet','t_pasar','t_bensin','t_konsumsi','t_kresek'].forEach(id=>{
+['b_harga','t_omzet','t_konsumsi','t_kresek'].forEach(id=>{
   attachMoneyInput(document.getElementById(id));
 });
+
+/* State biaya tetap hari ini (tidak mengubah default) */
+const _biayaHariIni = {
+  OperasionalBelanja: DEFAULT_PENGATURAN.OperasionalBelanja,
+  Bensin: DEFAULT_PENGATURAN.Bensin,
+  sudahDiubah: false /* kalau true, jangan timpa dari sheet hari ini */
+};
 
 /* ==========================================================
    NAVIGASI
@@ -681,13 +763,11 @@ async function loadBelanja(){
   try{
     const items = await apiGet('getBelanja', {tanggal: todayStr()});
     _belanjaCache = items || [];
-
     if(!items.length){
       listEl.innerHTML = emptyHTML(ICON_CART, 'Belum ada belanja hari ini', null);
       document.getElementById('b_total').textContent = rupiah(0);
       return;
     }
-
     let total = 0;
     listEl.innerHTML = items.map(it=>{
       const beli = parseNum(it.HargaBeli);
@@ -705,7 +785,6 @@ async function loadBelanja(){
       </div>`;
     }).join('');
     document.getElementById('b_total').textContent = rupiah(total);
-
     listEl.querySelectorAll('.del').forEach(btn=>{
       btn.addEventListener('click', async ()=>{
         if(!confirm(`Hapus "${btn.dataset.nama}" dari daftar belanja?`)) return;
@@ -754,12 +833,10 @@ document.getElementById('b_submit').addEventListener('click', async ()=>{
   const satuanSel = document.getElementById('b_satuan').value;
   const satuan = satuanSel === '__other__' ? document.getElementById('b_satuan_new').value.trim() : satuanSel;
   const harga = bacaUang(document.getElementById('b_harga'));
-
   if(!nama){ showToast('Isi nama barang dulu'); return; }
   if(!qty){ showToast('Isi qty dulu'); return; }
   if(!satuan){ showToast('Isi satuan dulu'); return; }
   if(!harga){ showToast('Isi harga beli dulu'); return; }
-
   try{
     await apiPost('addBelanja', {namaBarang: nama, qty, satuan, hargaBeli: harga});
     document.getElementById('b_nama').value = '';
@@ -851,9 +928,6 @@ Total: ${_catatanCache.length} item${shareFooter()}`;
 
 /* ==========================================================
    MODUL: HARGA
-   ==========================================================
-   Harga Jual & Harga Minimum SELALU dihitung dari formula.
-   Tidak ada input manual, tidak ada simpan ke sheet.
    ========================================================== */
 let _hargaCache = [];
 
@@ -871,7 +945,6 @@ async function fetchHargaMaster(){
     return map[nama];
   };
 
-  /* 1. Dari getHargaMaster kalau ada (mengandung harga beli terakhir per barang) */
   if(Array.isArray(hargaMasterOpt)){
     hargaMasterOpt.forEach(h=>{
       const item = ensure(h.NamaBarang);
@@ -881,10 +954,8 @@ async function fetchHargaMaster(){
     });
   }
 
-  /* 2. Dari master nama barang — minimal nama muncul */
   (namaMaster || []).forEach(n => ensure(n));
 
-  /* 3. Dari belanja hari ini — harga beli prioritas tertinggi */
   (belanjaToday || []).forEach(b=>{
     const item = ensure(b.NamaBarang);
     if(!item) return;
@@ -920,6 +991,10 @@ async function loadHarga(){
       const beli = parseNum(it.HargaBeli);
       const jual = hitungHargaJual(beli);
       const minimum = hitungHargaMinimum(beli);
+      const margin = jual - beli;
+      const marginPct = beli > 0 ? Math.round(margin / beli * 100) : 0;
+      const netto = Math.round(margin * (1 - SUSUT_RATE));
+      const susutVal = margin - netto;
 
       return `<div class="price-card">
         <div class="price-name">${escHtml(it.NamaBarang)}</div>
@@ -937,14 +1012,42 @@ async function loadHarga(){
           <span class="lbl">Harga Minimum</span>
           <span class="val">${rupiah(minimum)}</span>
         </div>` : ''}
+        ${beli > 0 ? `<button class="detail-toggle" data-target="${escHtml(it.NamaBarang)}">▾ Rincian</button>
+        <div class="price-detail" id="detail-${escHtml(it.NamaBarang).replace(/\s/g,'_')}" style="display:none;">
+          <div class="price-detail-row margin">
+            <span>Margin kotor</span>
+            <span>${rupiah(margin)} · ${marginPct}%</span>
+          </div>
+          <div class="price-detail-row susut">
+            <span>Estimasi susut (${Math.round(SUSUT_RATE*100)}%)</span>
+            <span>− ${rupiah(susutVal)}</span>
+          </div>
+          <div class="price-detail-divider"></div>
+          <div class="price-detail-row bersih">
+            <span>Margin bersih</span>
+            <strong>${rupiah(netto)}</strong>
+          </div>
+        </div>` : ''}
       </div>`;
     }).join('');
+
+    /* Tombol Rincian */
+    listEl.querySelectorAll('.detail-toggle').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        const key = btn.dataset.target.replace(/\s/g,'_');
+        const detail = document.getElementById('detail-' + key);
+        if(!detail) return;
+        const isOpen = detail.style.display !== 'none';
+        detail.style.display = isOpen ? 'none' : 'flex';
+        btn.textContent = isOpen ? '▾ Rincian' : '▴ Tutup';
+        btn.classList.toggle('open', !isOpen);
+      });
+    });
   }catch(e){
     listEl.innerHTML = `<div class="empty-note">Gagal memuat: ${escHtml(e.message)}</div>`;
   }
 }
 
-/* ---- Share Harga Beli ---- */
 document.getElementById('share_beli').addEventListener('click', async ()=>{
   if(!_hargaCache.length){ showToast('Belum ada data harga'); return; }
   try{
@@ -966,7 +1069,6 @@ Total modal: ${rupiah(total)}${shareFooter()}`;
   }catch(e){ showToast('Gagal: ' + e.message); }
 });
 
-/* ---- Share Harga Jual (tanpa batas tawar) ---- */
 document.getElementById('share_jual').addEventListener('click', async ()=>{
   if(!_hargaCache.length){ showToast('Belum ada data harga'); return; }
   const source = _hargaCache.filter(x=>parseNum(x.HargaBeli)>0);
@@ -986,16 +1088,100 @@ ${lines.join('\n')}${shareFooter()}`;
 /* ==========================================================
    MODUL: TUTUP HARI
    ========================================================== */
+
+/* Render baris biaya tetap */
+function renderFixedRow(target, value){
+  const rowId = target === 'ops' ? 't_ops_row' : 't_bensin_row';
+  const valId = target === 'ops' ? 't_ops_val' : 't_bensin_val';
+  const row = document.getElementById(rowId);
+  const valEl = document.getElementById(valId);
+  if(!row || !valEl) return;
+
+  /* Kalau sedang mode edit, biarkan */
+  if(row.classList.contains('editing')) return;
+
+  row.innerHTML = `
+    <span class="lbl">
+      Harian
+      <button class="edit-btn" data-target="${target}" title="Ubah">✎</button>
+    </span>
+    <span class="val" id="${valId}">${rupiah(value)}</span>
+  `;
+  /* Re-attach listener */
+  row.querySelector('.edit-btn').addEventListener('click', ()=>startEditFixed(target));
+}
+
+/* Mulai edit inline */
+function startEditFixed(target){
+  const rowId = target === 'ops' ? 't_ops_row' : 't_bensin_row';
+  const row = document.getElementById(rowId);
+  if(!row) return;
+
+  const currentVal = target === 'ops'
+    ? _biayaHariIni.OperasionalBelanja
+    : _biayaHariIni.Bensin;
+
+  row.classList.add('editing');
+  row.innerHTML = `
+    <span class="lbl">Harian</span>
+    <input class="fixed-input" type="text" inputmode="numeric"
+           value="${Number(currentVal).toLocaleString('id-ID')}"
+           data-target="${target}">
+  `;
+  const inp = row.querySelector('.fixed-input');
+  attachMoneyInput(inp);
+  inp.focus();
+  inp.select();
+
+  const commit = () => {
+    const n = bacaUang(inp);
+    if(target === 'ops') _biayaHariIni.OperasionalBelanja = n;
+    else _biayaHariIni.Bensin = n;
+    _biayaHariIni.sudahDiubah = true;
+    row.classList.remove('editing');
+    renderFixedRow(target, n);
+    showToast('Biaya diubah untuk hari ini');
+  };
+
+  inp.addEventListener('blur', commit, {once:true});
+  inp.addEventListener('keydown', (e)=>{
+    if(e.key === 'Enter'){ inp.blur(); }
+  });
+}
+
 async function loadTutup(){
   try{
+    /* Ambil default dari Pengaturan */
+    let pengaturan = {...DEFAULT_PENGATURAN};
+    try{
+      const p = await apiGet('getPengaturan');
+      if(p && typeof p === 'object'){
+        pengaturan.OperasionalBelanja = parseNum(p.OperasionalBelanja) || DEFAULT_PENGATURAN.OperasionalBelanja;
+        pengaturan.Bensin = parseNum(p.Bensin) || DEFAULT_PENGATURAN.Bensin;
+      }
+    }catch(e){ /* pakai default */ }
+
+    /* Ambil data hari ini */
     const ops = await apiGet('getBiayaOperasional', {tanggal: todayStr()});
+
+    /* Set nilai biaya tetap: kalau user belum ubah manual hari ini,
+       pakai nilai hari ini dari sheet (kalau ada), atau default */
+    if(!_biayaHariIni.sudahDiubah){
+      const opsToday = parseNum(ops.operasionalBelanja);
+      const bensinToday = parseNum(ops.bensin);
+      _biayaHariIni.OperasionalBelanja = opsToday > 0 ? opsToday : pengaturan.OperasionalBelanja;
+      _biayaHariIni.Bensin = bensinToday > 0 ? bensinToday : pengaturan.Bensin;
+    }
+
+    renderFixedRow('ops', _biayaHariIni.OperasionalBelanja);
+    renderFixedRow('bensin', _biayaHariIni.Bensin);
+
+    /* Konsumsi & Kresek: isi dari sheet kalau ada */
     const setMoney = (id, val) => {
       const el = document.getElementById(id);
       const n = parseNum(val);
       el.value = n ? n.toLocaleString('id-ID') : '';
     };
-    setMoney('t_pasar', ops.biayaPasar);
-    setMoney('t_bensin', ops.bensin);
     setMoney('t_konsumsi', ops.konsumsi);
     setMoney('t_kresek', ops.kresekKaret);
 
@@ -1009,17 +1195,19 @@ async function loadTutup(){
 document.getElementById('t_submit').addEventListener('click', async ()=>{
   const omzet = bacaUang(document.getElementById('t_omzet'));
   if(!omzet){ showToast('Isi total omzet dulu'); return; }
-  const pasar = bacaUang(document.getElementById('t_pasar'));
-  const bensin = bacaUang(document.getElementById('t_bensin'));
   const konsumsi = bacaUang(document.getElementById('t_konsumsi'));
   const kresek = bacaUang(document.getElementById('t_kresek'));
   try{
     await apiPost('setOmzet', {totalOmzet: omzet});
     await apiPost('setBiayaOperasional', {
-      biayaPasar: pasar, bensin: bensin, konsumsi: konsumsi, kresekKaret: kresek
+      operasionalBelanja: _biayaHariIni.OperasionalBelanja,
+      bensin: _biayaHariIni.Bensin,
+      konsumsi: konsumsi,
+      kresekKaret: kresek
     });
     await apiPost('simpanLaporan', {tanggal: todayStr()});
     showToast('Tutup hari tersimpan');
+    _biayaHariIni.sudahDiubah = false; /* reset — besok pakai default lagi */
   }catch(e){
     showToast('Gagal simpan: ' + e.message);
   }
@@ -1041,7 +1229,7 @@ async function loadDashboard(){
 
     const ops = await apiGet('getBiayaOperasional', {tanggal: todayStr()});
     document.getElementById('dash_opslist').innerHTML = `
-      <div class="ledger-item"><div class="name">Biaya pasar</div><div class="amt">${rupiah(parseNum(ops.biayaPasar))}</div></div>
+      <div class="ledger-item"><div class="name">Operasional Belanja</div><div class="amt">${rupiah(parseNum(ops.operasionalBelanja))}</div></div>
       <div class="ledger-item"><div class="name">Bensin</div><div class="amt">${rupiah(parseNum(ops.bensin))}</div></div>
       <div class="ledger-item"><div class="name">Konsumsi</div><div class="amt">${rupiah(parseNum(ops.konsumsi))}</div></div>
       <div class="ledger-item"><div class="name">Kresek + karet</div><div class="amt">${rupiah(parseNum(ops.kresekKaret))}</div></div>
