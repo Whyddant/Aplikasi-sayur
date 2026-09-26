@@ -4,6 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Sayur App</title>
+<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#2F5233">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Sayur App">
+<link rel="apple-touch-icon" href="./icons/icon-192.png">
+<link rel="icon" href="./icons/icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Zilla+Slab:wght@600;700&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -258,6 +266,53 @@ h1,h2,h3{font-family:'Zilla Slab',serif; margin:0; font-weight:700; letter-spaci
   font-size:10.5px; color:var(--ink-600); text-transform:uppercase;
   letter-spacing:.8px; font-weight:600; margin-bottom:2px;
 }
+.cell-head{display:flex; justify-content:space-between; align-items:center; margin-bottom:2px;}
+.cell-head .price-label{margin-bottom:0;}
+.jual-edit-btn{
+  background:none; border:none; color:var(--green-700);
+  font-size:13px; padding:2px 4px; cursor:pointer; line-height:1;
+}
+.manual-badge{
+  display:inline-block; font-size:9.5px; font-weight:700;
+  color:var(--green-700); background:#fff;
+  padding:1px 6px; border-radius:4px;
+  text-transform:uppercase; letter-spacing:.4px;
+  margin-left:6px; vertical-align:middle;
+}
+.jual-edit-form{display:flex; flex-direction:column; gap:6px;}
+.jual-edit-form input{
+  width:100%; padding:7px 8px; border:1px solid var(--line); border-radius:var(--r-sm);
+  font-family:'Zilla Slab',serif; font-size:15px; font-weight:600;
+  background:var(--card); color:var(--ink-900);
+}
+.jual-edit-form input:focus{
+  outline:none; border-color:var(--green-700);
+  box-shadow:0 0 0 2px rgba(47,82,51,.12);
+}
+.jual-edit-hint{font-size:10px; color:var(--ink-600);}
+.jual-edit-actions{display:flex; gap:6px;}
+.jual-edit-actions .btn-mini{flex:1; padding:6px 8px; font-size:11.5px;}
+
+/* ---------- Navigasi tanggal (Belanja / Tutup Hari) ---------- */
+.date-field{display:flex; align-items:center; gap:8px; margin-bottom:12px;}
+.date-field label{font-size:var(--fs-xs); color:var(--ink-600); font-weight:500;}
+.date-field input[type="date"]{
+  flex:1; padding:8px 10px; border:1px solid var(--line); border-radius:var(--r-sm);
+  font-family:'Work Sans',sans-serif; font-size:13.5px; color:var(--ink-900);
+  background:var(--card);
+}
+.date-warn{
+  display:none; margin:0 0 14px; padding:9px 12px;
+  background:#FFF3E0; border-left:3px solid var(--rust-600);
+  border-radius:4px; font-size:12px; color:#7A3410;
+  align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap;
+  line-height:1.4;
+}
+.date-warn strong{display:block; font-weight:700;}
+.date-warn button{
+  background:var(--rust-600); color:#fff; border:none; border-radius:var(--r-full);
+  padding:6px 12px; font-size:11px; font-weight:600; cursor:pointer; white-space:nowrap;
+}
 .price-value{
   font-family:'Zilla Slab',serif; font-size:16px; font-weight:600; color:var(--ink-900);
 }
@@ -311,7 +366,18 @@ h1,h2,h3{font-family:'Zilla Slab',serif; margin:0; font-weight:700; letter-spaci
   border:1px solid transparent;
   transition:border-color .15s;
 }
-.fixed-row.editing{border-color:var(--rust-600); background:var(--card);}
+.fixed-row.editing{
+  border-color:var(--rust-600); background:var(--card);
+  flex-direction:column; align-items:stretch; gap:8px;
+}
+.fixed-edit-group{display:flex; gap:8px; align-items:center;}
+.fixed-row.editing input.fixed-input{width:auto; flex:1; text-align:left;}
+.fixed-default-btn{
+  background:none; border:1px dashed var(--green-700); color:var(--green-700);
+  border-radius:var(--r-sm); padding:0 10px; height:34px;
+  font-size:11.5px; font-weight:600; cursor:pointer; white-space:nowrap; flex-shrink:0;
+}
+.fixed-default-btn:active{background:var(--green-100);}
 .fixed-row .lbl{
   font-size:var(--fs-sm); color:var(--ink-700);
   display:flex; align-items:center; gap:6px;
@@ -470,6 +536,15 @@ h1,h2,h3{font-family:'Zilla Slab',serif; margin:0; font-weight:700; letter-spaci
   </div>
 
   <div id="mode_input">
+    <div class="date-field">
+      <label for="b_date">Tanggal</label>
+      <input id="b_date" type="date">
+    </div>
+    <div class="date-warn" id="b_date_warn">
+      <span>Sedang mengedit <strong id="b_date_warn_txt"></strong>, bukan hari ini.</span>
+      <button type="button" class="date-reset" data-src="b">Kembali ke Hari Ini</button>
+    </div>
+
     <div class="section-head"><h2>Input Belanja</h2></div>
 
     <div class="field">
@@ -504,7 +579,7 @@ h1,h2,h3{font-family:'Zilla Slab',serif; margin:0; font-weight:700; letter-spaci
     <button class="btn" id="b_submit">Tambah ke Daftar</button>
 
     <div class="section-head" style="margin-top:22px;">
-      <h2>Belanja Hari Ini</h2>
+      <h2 id="b_list_title">Belanja Hari Ini</h2>
       <button class="btn-share" id="share_belanja_input">
         <svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg>
         Bagikan
@@ -569,6 +644,15 @@ h1,h2,h3{font-family:'Zilla Slab',serif; margin:0; font-weight:700; letter-spaci
 <!-- ============ TUTUP HARI ============ -->
 <div class="screen" id="tutup">
   <div class="section-head"><h2>Tutup Hari</h2></div>
+
+  <div class="date-field">
+    <label for="t_date">Tanggal</label>
+    <input id="t_date" type="date">
+  </div>
+  <div class="date-warn" id="t_date_warn">
+    <span>Sedang menutup <strong id="t_date_warn_txt"></strong>, bukan hari ini.</span>
+    <button type="button" class="date-reset" data-src="t">Kembali ke Hari Ini</button>
+  </div>
 
   <div class="field">
     <label for="t_omzet">Total Omzet Hari Ini</label>
@@ -651,6 +735,8 @@ h1,h2,h3{font-family:'Zilla Slab',serif; margin:0; font-weight:700; letter-spaci
    KONFIGURASI
    ========================================================== */
 const API_URL = 'https://script.google.com/macros/s/AKfycbyj3eXJV0qSa0-3HFuph0AaV1y5dft9Zjsqt-en7j_DU9mM4huxGoctMD52KTbivuN6/exec';
+/* Harus SAMA PERSIS dengan API_TOKEN di Code.gs */
+const API_TOKEN = 'T_ps2ImXNPwz51wWz-bb7qjHjT4dNgFh';
 const NAMA_LAPAK = '';
 const SUSUT_RATE = 0.30;
 
@@ -671,6 +757,10 @@ function dateShort(){
 }
 function dateLong(){
   return new Date().toLocaleDateString('id-ID',{weekday:'long', day:'numeric', month:'long', year:'numeric'});
+}
+function formatTanggalPendek(ymd){
+  const [y,m,d] = ymd.split('-').map(Number);
+  return new Date(y, m-1, d).toLocaleDateString('id-ID',{weekday:'long', day:'numeric', month:'short'});
 }
 function rupiah(n){
   return 'Rp ' + Number(n||0).toLocaleString('id-ID');
@@ -788,7 +878,7 @@ function hitungHargaMinimum(modal){
    API
    ========================================================== */
 async function apiGet(action, params={}){
-  const qs = new URLSearchParams({action, ...params}).toString();
+  const qs = new URLSearchParams({action, token: API_TOKEN, ...params}).toString();
   const res = await fetch(`${API_URL}?${qs}`);
   const json = await res.json();
   if(!json.ok) throw new Error(json.error || 'Gagal mengambil data');
@@ -797,7 +887,7 @@ async function apiGet(action, params={}){
 async function apiPost(action, data){
   const res = await fetch(API_URL, {
     method:'POST',
-    body: JSON.stringify({action, data})
+    body: JSON.stringify({action, token: API_TOKEN, data})
   });
   const json = await res.json();
   if(!json.ok) throw new Error(json.error || 'Gagal menyimpan data');
@@ -838,6 +928,45 @@ document.querySelectorAll('.navbar button').forEach(b=>{
 });
 
 /* ==========================================================
+   NAVIGASI TANGGAL (Belanja & Tutup Hari berbagi _activeDate)
+   ========================================================== */
+function updateDateWarnings(){
+  const notToday = _activeDate !== todayStr();
+  const label = notToday ? formatTanggalPendek(_activeDate) : '';
+  ['b_date_warn', 't_date_warn'].forEach(id=>{
+    const el = document.getElementById(id);
+    if(el) el.style.display = notToday ? 'flex' : 'none';
+  });
+  ['b_date_warn_txt', 't_date_warn_txt'].forEach(id=>{
+    const el = document.getElementById(id);
+    if(el) el.textContent = label;
+  });
+}
+
+function setActiveDate(newDate){
+  if(!newDate || newDate > todayStr()) newDate = todayStr();
+  _activeDate = newDate;
+  const bDate = document.getElementById('b_date');
+  const tDate = document.getElementById('t_date');
+  if(bDate) bDate.value = _activeDate;
+  if(tDate) tDate.value = _activeDate;
+  _biayaHariIni.sudahDiubah = false;
+  updateDateWarnings();
+  loadBelanja();
+  loadTutup();
+}
+
+document.getElementById('b_date').addEventListener('change', function(){
+  if(this.value) setActiveDate(this.value);
+});
+document.getElementById('t_date').addEventListener('change', function(){
+  if(this.value) setActiveDate(this.value);
+});
+document.querySelectorAll('.date-reset').forEach(btn=>{
+  btn.addEventListener('click', ()=> setActiveDate(todayStr()));
+});
+
+/* ==========================================================
    SEGMENTED TOGGLE
    ========================================================== */
 document.querySelectorAll('.seg-btn').forEach(btn=>{
@@ -859,8 +988,9 @@ let _draft = [];
 let _editingKey = null;
 let _masterBarang = [];
 let _infoMap = {};
+let _activeDate = todayStr(); // tanggal yang sedang dibuka di tab Belanja & Tutup Hari
 
-function draftStorageKey(){ return 'sayur_draft_' + todayStr(); }
+function draftStorageKey(){ return 'sayur_draft_' + _activeDate; }
 function loadDraftFromStorage(){
   try{
     const raw = localStorage.getItem(draftStorageKey());
@@ -1112,10 +1242,16 @@ function attachBelanjaHandlers(){
 
 async function loadBelanja(){
   const listEl = document.getElementById('b_list');
+  const titleEl = document.getElementById('b_list_title');
+  if(titleEl){
+    titleEl.textContent = _activeDate === todayStr()
+      ? 'Belanja Hari Ini'
+      : 'Belanja — ' + formatTanggalPendek(_activeDate);
+  }
   listEl.innerHTML = '<div class="empty-note">Memuat data…</div>';
   _draft = loadDraftFromStorage();
   try{
-    const items = await apiGet('getBelanja', {tanggal: todayStr()});
+    const items = await apiGet('getBelanja', {tanggal: _activeDate});
     _belanjaCache = items || [];
     renderBelanja();
   }catch(e){
@@ -1265,7 +1401,8 @@ async function saveAllDrafts(){
       namaBarang: item.NamaBarang,
       qty: item.qty,
       satuan: item.satuan,
-      hargaBeli: item.hargaBeli
+      hargaBeli: item.hargaBeli,
+      tanggal: _activeDate
     }).then(() => ({ok:true, item}))
       .catch(e => ({ok:false, item, error: e.message}));
   }));
@@ -1376,6 +1513,8 @@ Total: ${_catatanCache.length} item${shareFooter()}`;
    ========================================================== */
 let _hargaCache = [];
 let _hargaFilter = '';
+let _hargaJualManual = {}; // { NamaBarang: {harga, tanggal} }
+let _editingJual = null;   // NamaBarang yang sedang diedit
 
 async function fetchHargaMaster(){
   const [belanjaToday, namaMaster, hargaMasterOpt] = await Promise.all([
@@ -1418,8 +1557,15 @@ async function loadHarga(){
   const listEl = document.getElementById('h_list');
   listEl.innerHTML = '<div class="empty-note">Memuat data…</div>';
   try{
-    const items = await fetchHargaMaster();
+    const [items, manualList] = await Promise.all([
+      fetchHargaMaster(),
+      apiGet('getHargaJual').catch(()=>[])
+    ]);
     _hargaCache = items || [];
+    _hargaJualManual = {};
+    (manualList || []).forEach(m=>{
+      _hargaJualManual[m.NamaBarang] = { harga: parseNum(m.HargaJualTerakhir), tanggal: m.TanggalUpdate };
+    });
     if(!items.length){
       listEl.innerHTML = emptyHTML(ICON_TAG, 'Belum ada barang. Isi lewat tab Belanja dulu.', 'Ke Belanja', 'harga_go_belanja');
       const goBtn = document.getElementById('harga_go_belanja');
@@ -1446,23 +1592,39 @@ function renderHargaList(){
 
   listEl.innerHTML = filtered.map(it=>{
     const beli = parseNum(it.HargaBeli);
-    const jual = hitungHargaJual(beli);
+    const otomatis = hitungHargaJual(beli);
+    const manual = _hargaJualManual[it.NamaBarang];
+    const isManualToday = !!(manual && manual.tanggal === todayStr() && manual.harga > 0);
+    const jual = isManualToday ? manual.harga : otomatis;
     const minimum = hitungHargaMinimum(beli);
     const margin = jual - beli;
     const marginPct = beli > 0 ? Math.round(margin / beli * 100) : 0;
     const netto = Math.round(margin * (1 - SUSUT_RATE));
     const susutVal = margin - netto;
+    const isEditing = _editingJual === it.NamaBarang;
 
     return `<div class="price-card">
-      <div class="price-name">${escHtml(it.NamaBarang)}</div>
+      <div class="price-name">${escHtml(it.NamaBarang)}${isManualToday ? '<span class="manual-badge">Manual</span>' : ''}</div>
       <div class="price-grid">
         <div class="price-cell buy">
           <div class="price-label">Beli</div>
           <div class="price-value">${beli ? rupiah(beli) : '—'}</div>
         </div>
         <div class="price-cell sell">
-          <div class="price-label">Jual</div>
-          <div class="price-value">${jual ? rupiah(jual) : '—'}</div>
+          <div class="cell-head">
+            <div class="price-label">Jual</div>
+            ${beli > 0 && !isEditing ? `<button class="jual-edit-btn" data-nama="${escHtml(it.NamaBarang)}" type="button">✎</button>` : ''}
+          </div>
+          ${isEditing ? `
+            <div class="jual-edit-form">
+              <input type="text" inputmode="numeric" class="jual-edit-input" value="${jual ? jual.toLocaleString('id-ID') : ''}">
+              <div class="jual-edit-hint">Otomatis: ${otomatis ? rupiah(otomatis) : '—'}</div>
+              <div class="jual-edit-actions">
+                <button class="btn-mini ghost jual-cancel" type="button">Batal</button>
+                <button class="btn-mini primary jual-save" data-nama="${escHtml(it.NamaBarang)}" type="button">Simpan</button>
+              </div>
+            </div>
+          ` : `<div class="price-value">${jual ? rupiah(jual) : '—'}</div>`}
         </div>
       </div>
       ${minimum > 0 ? `<div class="min-row">
@@ -1497,6 +1659,47 @@ function renderHargaList(){
       detail.style.display = isOpen ? 'none' : 'flex';
       btn.textContent = isOpen ? '▾ Rincian' : '▴ Tutup';
       btn.classList.toggle('open', !isOpen);
+    });
+  });
+
+  listEl.querySelectorAll('.jual-edit-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      _editingJual = btn.dataset.nama;
+      renderHargaList();
+      setTimeout(()=>{
+        const inp = listEl.querySelector('.jual-edit-input');
+        if(inp){ inp.focus(); inp.select(); }
+      }, 30);
+    });
+  });
+
+  listEl.querySelectorAll('.jual-cancel').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      _editingJual = null;
+      renderHargaList();
+    });
+  });
+
+  listEl.querySelectorAll('.jual-save').forEach(btn=>{
+    btn.addEventListener('click', async ()=>{
+      const nama = btn.dataset.nama;
+      const card = btn.closest('.price-card');
+      const input = card ? card.querySelector('.jual-edit-input') : null;
+      const val = bacaUang(input);
+      if(!val || val <= 0){ showToast('Harga jual tidak valid'); return; }
+      btn.disabled = true;
+      btn.textContent = '…';
+      try{
+        await apiPost('updateHargaJual', { namaBarang: nama, hargaJualBaru: val });
+        _hargaJualManual[nama] = { harga: val, tanggal: todayStr() };
+        _editingJual = null;
+        showToast('Harga jual disimpan');
+        renderHargaList();
+      }catch(e){
+        showToast('Gagal simpan: ' + e.message);
+        btn.disabled = false;
+        btn.textContent = 'Simpan';
+      }
     });
   });
 }
@@ -1577,11 +1780,15 @@ function startEditFixed(target){
   row.classList.add('editing');
   row.innerHTML = `
     <span class="lbl">Harian</span>
-    <input class="fixed-input" type="text" inputmode="numeric"
-           value="${Number(currentVal).toLocaleString('id-ID')}"
-           data-target="${target}">
+    <div class="fixed-edit-group">
+      <input class="fixed-input" type="text" inputmode="numeric"
+             value="${Number(currentVal).toLocaleString('id-ID')}"
+             data-target="${target}">
+      <button type="button" class="fixed-default-btn" data-target="${target}">Jadikan default</button>
+    </div>
   `;
   const inp = row.querySelector('.fixed-input');
+  const defaultBtn = row.querySelector('.fixed-default-btn');
   attachMoneyInput(inp);
   inp.focus();
   inp.select();
@@ -1596,9 +1803,35 @@ function startEditFixed(target){
     showToast('Biaya diubah untuk hari ini');
   };
 
-  inp.addEventListener('blur', commit, {once:true});
+  inp.addEventListener('blur', (e)=>{
+    // Kalau fokus pindah ke tombol "Jadikan default", biarkan tombol itu
+    // yang menangani commit — supaya klik tombolnya tidak keburu batal.
+    if(e.relatedTarget === defaultBtn) return;
+    commit();
+  });
   inp.addEventListener('keydown', (e)=>{
     if(e.key === 'Enter'){ inp.blur(); }
+  });
+
+  defaultBtn.addEventListener('click', async ()=>{
+    const n = bacaUang(inp);
+    if(!n || n <= 0){ showToast('Isi angkanya dulu'); return; }
+    defaultBtn.disabled = true;
+    defaultBtn.textContent = '…';
+    try{
+      const key = target === 'ops' ? 'OperasionalBelanja' : 'Bensin';
+      await apiPost('setPengaturan', {[key]: n});
+      if(target === 'ops') _biayaHariIni.OperasionalBelanja = n;
+      else _biayaHariIni.Bensin = n;
+      _biayaHariIni.sudahDiubah = true;
+      row.classList.remove('editing');
+      renderFixedRow(target, n);
+      showToast('Default baru disimpan: ' + rupiah(n));
+    }catch(e){
+      showToast('Gagal simpan default: ' + e.message);
+      defaultBtn.disabled = false;
+      defaultBtn.textContent = 'Jadikan default';
+    }
   });
 }
 
@@ -1613,7 +1846,7 @@ async function loadTutup(){
       }
     }catch(e){}
 
-    const ops = await apiGet('getBiayaOperasional', {tanggal: todayStr()});
+    const ops = await apiGet('getBiayaOperasional', {tanggal: _activeDate});
 
     if(!_biayaHariIni.sudahDiubah){
       const opsToday = parseNum(ops.operasionalBelanja);
@@ -1633,8 +1866,15 @@ async function loadTutup(){
     setMoney('t_konsumsi', ops.konsumsi);
     setMoney('t_kresek', ops.kresekKaret);
 
-    const omzet = await apiGet('getOmzet', {tanggal: todayStr()});
+    const omzet = await apiGet('getOmzet', {tanggal: _activeDate});
     setMoney('t_omzet', omzet.totalOmzet);
+
+    const submitBtn = document.getElementById('t_submit');
+    if(submitBtn){
+      submitBtn.textContent = _activeDate === todayStr()
+        ? 'Simpan Tutup Hari'
+        : 'Simpan untuk ' + formatTanggalPendek(_activeDate);
+    }
   }catch(e){
     showToast('Gagal memuat tutup hari: ' + e.message);
   }
@@ -1646,15 +1886,16 @@ document.getElementById('t_submit').addEventListener('click', async ()=>{
   const konsumsi = bacaUang(document.getElementById('t_konsumsi'));
   const kresek = bacaUang(document.getElementById('t_kresek'));
   try{
-    await apiPost('setOmzet', {totalOmzet: omzet});
+    await apiPost('setOmzet', {totalOmzet: omzet, tanggal: _activeDate});
     await apiPost('setBiayaOperasional', {
       operasionalBelanja: _biayaHariIni.OperasionalBelanja,
       bensin: _biayaHariIni.Bensin,
       konsumsi: konsumsi,
-      kresekKaret: kresek
+      kresekKaret: kresek,
+      tanggal: _activeDate
     });
-    await apiPost('simpanLaporan', {tanggal: todayStr()});
-    showToast('Tutup hari tersimpan');
+    await apiPost('simpanLaporan', {tanggal: _activeDate});
+    showToast(_activeDate === todayStr() ? 'Tutup hari tersimpan' : 'Laporan ' + formatTanggalPendek(_activeDate) + ' tersimpan');
     _biayaHariIni.sudahDiubah = false;
   }catch(e){
     showToast('Gagal simpan: ' + e.message);
@@ -1721,10 +1962,26 @@ async function loadLaporan(){
 /* ==========================================================
    INIT
    ========================================================== */
+document.getElementById('b_date').max = todayStr();
+document.getElementById('t_date').max = todayStr();
+document.getElementById('b_date').value = _activeDate;
+document.getElementById('t_date').value = _activeDate;
+updateDateWarnings();
+
 loadDashboard();
 loadBelanja();
 loadCatatan();
 loadNamaBarangOptions();
+
+/* ==========================================================
+   PWA: registrasi service worker
+   ========================================================== */
+if('serviceWorker' in navigator){
+  window.addEventListener('load', ()=>{
+    navigator.serviceWorker.register('./service-worker.js')
+      .catch(err => console.warn('SW gagal didaftarkan:', err));
+  });
+}
 </script>
 </body>
 </html>
