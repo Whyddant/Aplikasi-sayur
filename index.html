@@ -665,15 +665,30 @@ function getMarkupRate(modal){
 function mround(value, multiple){
   return Math.round(value / multiple) * multiple;
 }
-function hitungHargaJual(modal){
-  if(!modal || modal <= 0) return 0;
-  return mround(modal * (1 + getMarkupRate(modal)), 1000);
-}
-function hitungHargaMinimum(modal){
-  if(!modal || modal <= 0) return 0;
-  return Math.floor(modal * (1 + getMarkupRate(modal) / 2) / 500) * 500;
+function ceilTo(value, multiple){
+  return Math.ceil(value / multiple) * multiple;
 }
 
+/* Harga Jual:
+   - Modal ≤ 30.000 → dibulatkan ke 1.000 terdekat
+   - Modal > 30.000 → dibulatkan KE ATAS ke 5.000 terdekat */
+function hitungHargaJual(modal){
+  if(!modal || modal <= 0) return 0;
+  const raw = modal * (1 + getMarkupRate(modal));
+  if(modal <= 30000) return mround(raw, 1000);
+  return ceilTo(raw, 5000);
+}
+
+/* Harga Minimum — HANYA untuk modal ≤ 10.000 (markup ≥ 50%)
+   Formula: HJ − 2.000
+   Return 0 kalau tidak berlaku → HTML tidak menampilkan kotak HM */
+function hitungHargaMinimum(modal){
+  if(!modal || modal <= 0) return 0;
+  if(modal > 10000) return 0;
+  const hj = hitungHargaJual(modal);
+  const hm = hj - 2000;
+  return hm > 0 ? hm : 0;
+}
 /* ==========================================================
    API
    ========================================================== */
