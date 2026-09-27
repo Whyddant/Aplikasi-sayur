@@ -125,9 +125,17 @@ h1,h2,h3{font-family:'Zilla Slab',serif; margin:0; font-weight:700; letter-spaci
   padding:12px 13px; font-size:var(--fs-sm); color:var(--ink-400); text-align:center;
 }
 .ac-free{
-  padding:10px 13px; font-size:var(--fs-sm); color:var(--green-700);
-  cursor:pointer; font-weight:500; border-top:1px dashed var(--line);
+  display:flex; align-items:center; justify-content:center; gap:6px;
+  padding:11px 13px; font-size:var(--fs-sm); font-weight:600;
+  color:var(--green-700); cursor:pointer;
+  border-top:1px dashed var(--line);
   background:var(--paper);
+  transition:background .12s;
+}
+.ac-free::before{
+  content:'＋';
+  font-size:14px; font-weight:700;
+  line-height:1;
 }
 .ac-free:active{background:var(--green-100);}
 
@@ -1012,6 +1020,7 @@ function setActiveDate(newDate){
   loadBelanja();
   loadCatatan();
   loadTutup();
+  loadNamaBarangOptions(); // refresh master agar mencakup riwayat tanggal ini
 }
 
 document.getElementById('b_date').addEventListener('change', function(){
@@ -1044,7 +1053,7 @@ document.querySelectorAll('.seg-btn').forEach(btn=>{
    - User bebas mengetik apa saja lewat keyboard.
    - Saran muncul sebagai dropdown, bukan menggantikan input.
    - Bisa dipilih pakai tap, atau ↑ ↓ + Enter.
-   - Tidak memaksa; teks yang diketik tetap bisa disimpan apa adanya.
+   - Kalau tidak ada yang cocok → tampilkan tombol "+ Pakai ...".
    ========================================================== */
 let _acItems = [];
 let _acIndex = -1;
@@ -1079,10 +1088,35 @@ function renderAc(rawQuery){
     .slice(0, 8);
 
   if(!matches.length){
-    box.innerHTML = `<div class="ac-empty">Tidak ada saran — ketik bebas lalu tekan "+ Tambah"</div>`;
+    const safe = escHtml(q);
+    box.innerHTML = `
+      <div class="ac-empty">Barang baru: "${safe}"</div>
+      <div class="ac-free" id="ac_free_add">Pakai "${safe}"</div>
+    `;
     box.style.display = 'block';
     _acItems = [];
     _acIndex = -1;
+
+    const freeBtn = box.querySelector('#ac_free_add');
+    if(freeBtn){
+      freeBtn.addEventListener('pointerdown', (e)=>{
+        e.preventDefault();          // cegah blur sebelum handler selesai
+        const inp   = document.getElementById('b_nama');
+        const qty   = document.getElementById('b_qty');
+        const harga = document.getElementById('b_harga');
+
+        inp.value = q;
+        hideAc();
+
+        if(qty.value.trim() && bacaUang(harga)){
+          document.getElementById('b_submit').click();
+        } else if(!qty.value.trim()){
+          setTimeout(()=>qty.focus(), 60);
+        } else {
+          setTimeout(()=>harga.focus(), 60);
+        }
+      });
+    }
     return;
   }
 
@@ -1104,7 +1138,7 @@ function renderAc(rawQuery){
   box.style.display = 'block';
 
   box.querySelectorAll('.ac-item').forEach(el=>{
-    // Pakai pointerdown agar tidak keburu blur (dan konsisten di HP & desktop)
+    // pointerdown supaya tidak keburu blur (konsisten di HP & desktop)
     el.addEventListener('pointerdown', (e)=>{
       e.preventDefault();
       selectAc(el.dataset.nama);
@@ -1149,7 +1183,6 @@ function selectAc(nama){
   input.value = nama;
   hideAc();
   applyAutofill(nama);
-  // Fokus ke qty supaya user tinggal ketik angka
   const qty = document.getElementById('b_qty');
   if(qty) setTimeout(()=>qty.focus(), 30);
 }
@@ -1167,8 +1200,10 @@ document.getElementById('b_nama').addEventListener('focus', function(){
 });
 
 document.getElementById('b_nama').addEventListener('blur', function(){
-  // Delay kecil supaya pointerdown di item sempat jalan
-  setTimeout(()=>{ if(document.activeElement !== acListEl()) hideAc(); }, 160);
+  setTimeout(()=>{
+    const box = acListEl();
+    if(box && !box.contains(document.activeElement)) hideAc();
+  }, 180);
 });
 
 document.getElementById('b_nama').addEventListener('keydown', function(e){
@@ -1197,7 +1232,6 @@ document.getElementById('b_nama').addEventListener('keydown', function(e){
       e.preventDefault();
       selectAc(_acItems[0]);
     } else {
-      // Enter tanpa pilihan → biarkan; user bisa tab/ketik lanjut
       hideAc();
     }
   }
@@ -1228,7 +1262,7 @@ function clearDraftStorage(){
   try{ localStorage.removeItem(draftStorageKey()); }catch(e){}
 }
 
-/* BUG #4 fix: buang .replace(',', '.') yang redundan & berbahaya */
+/* Hitung subtotal — tanpa .replace(',', '.') yang berbahaya */
 function hitungSubtotal(it){
   const fromTotal  = parseNum(it.Total);
   const fromSub    = parseNum(it.Subtotal);
@@ -1390,7 +1424,7 @@ function attachBelanjaHandlers(){
           showToast('Item dihapus');
           await loadBelanja();
           loadCatatan();
-          loadNamaBarangOptions(); // refresh master, karena item dihapus
+          loadNamaBarangOptions();
         }catch(e){ showToast('Gagal hapus: ' + e.message); }
       }
     });
@@ -1479,27 +1513,55 @@ async function loadBelanja(){
   }
 }
 
+/* Autocomplete lengkap — union semua sumber nama barang */
 async function loadNamaBarangOptions(){
   try{
-    const [names, hargaMaster] = await Promise.all([
+    const [names, hargaMaster, belanjaHariIni] = await Promise.all([
       apiGet('getNamaBarangMaster').catch(()=>[]),
-      apiGet('getHargaMaster').catch(()=>[])
+      apiGet('getHargaMaster').catch(()=>[]),
+      apiGet('getBelanja', {tanggal: _activeDate}).catch(()=>[])
     ]);
-    _masterBarang = names || [];
 
+    // 1) _infoMap dari harga master
     _infoMap = {};
     (hargaMaster || []).forEach(h => {
+      if(!h || !h.NamaBarang) return;
       _infoMap[h.NamaBarang] = {
-        harga: parseNum(h.HargaBeli),
+        harga:  parseNum(h.HargaBeli),
         satuan: String(h.Satuan || '').trim()
       };
     });
 
-    // Refresh AC jika sedang terbuka
+    // 2) Union semua nama barang dari berbagai sumber
+    const set = new Set();
+    const push = (n) => {
+      if(!n) return;
+      // Dukung baik array of string maupun array of object {NamaBarang}
+      const nama = typeof n === 'string' ? n : (n && (n.NamaBarang || n.nama));
+      if(!nama) return;
+      const trimmed = String(nama).trim();
+      if(trimmed) set.add(trimmed);
+    };
+
+    (names          || []).forEach(push);
+    (hargaMaster    || []).forEach(h => push(h && h.NamaBarang));
+    (belanjaHariIni || []).forEach(b => push(b && b.NamaBarang));
+    (_belanjaCache  || []).forEach(b => push(b && b.NamaBarang));
+    (_draft         || []).forEach(d => push(d && d.NamaBarang));
+
+    _masterBarang = Array.from(set).sort((a,b) =>
+      String(a).localeCompare(String(b), 'id')
+    );
+
+    // 3) Kalau dropdown AC sedang terbuka, refresh
     const box = acListEl();
     if(box && box.style.display !== 'none') renderAc(currentAcQuery());
+
+    // 4) Refresh reminder (pakai daftar lengkap)
     renderBelanja();
-  }catch(e){}
+  }catch(e){
+    console.warn('loadNamaBarangOptions gagal:', e);
+  }
 }
 
 document.getElementById('b_satuan').addEventListener('change', function(){
@@ -1507,12 +1569,12 @@ document.getElementById('b_satuan').addEventListener('change', function(){
   if(this.value==='__other__') document.getElementById('b_satuan_new').focus();
 });
 
-/* Enter di qty → langsung ke harga */
+/* Enter di qty → ke harga */
 document.getElementById('b_qty').addEventListener('keydown', function(e){
   if(e.key === 'Enter'){ e.preventDefault(); document.getElementById('b_harga').focus(); }
 });
 
-/* Enter di harga → tambah ke draft */
+/* Enter di harga → submit */
 document.getElementById('b_harga').addEventListener('keydown', function(e){
   if(e.key === 'Enter'){ e.preventDefault(); document.getElementById('b_submit').click(); }
 });
@@ -1548,6 +1610,13 @@ document.getElementById('b_submit').addEventListener('click', ()=>{
   document.getElementById('b_harga').value = '';
   hideAc();
 
+  // Refresh master agar nama baru langsung muncul di saran berikutnya
+  const set = new Set(_masterBarang);
+  set.add(nama);
+  _masterBarang = Array.from(set).sort((a,b) =>
+    String(a).localeCompare(String(b), 'id')
+  );
+
   renderBelanja();
   document.getElementById('b_nama').focus();
   showToast('Ditambahkan ke daftar');
@@ -1569,7 +1638,6 @@ document.getElementById('b_save_all').addEventListener('click', ()=>{
     el.addEventListener('click', ()=>{
       const nama = el.dataset.nama;
       closeModal();
-      // Langsung isi + autofill, tanpa harus menunggu ketikan user
       selectAc(nama);
     });
   });
@@ -1596,7 +1664,7 @@ function closeModal(){
   document.getElementById('modal_confirm').style.display = 'none';
 }
 
-/* BUG #6 fix: POST sekuensial, bukan Promise.all */
+/* Simpan semua draft — SEKUENSIAL (bukan Promise.all) */
 async function saveAllDrafts(){
   if(!_draft.length) return;
   const btn = document.getElementById('b_save_all');
@@ -1641,7 +1709,7 @@ async function saveAllDrafts(){
   btn.textContent = 'Simpan Semua';
 }
 
-/* Share gabungan — BUG #3 fix: pakai _activeDate */
+/* Share belanja — pakai _activeDate */
 document.getElementById('share_belanja_input').addEventListener('click', ()=>{
   const all = [
     ..._draft.map(d=>({
@@ -1674,8 +1742,7 @@ window.addEventListener('beforeunload', (e)=>{
 });
 
 /* ==========================================================
-   MODUL: CATATAN
-   BUG #7 fix: ikuti _activeDate, bukan todayStr()
+   MODUL: CATATAN — ikuti _activeDate
    ========================================================== */
 let _catatanCache = [];
 async function loadCatatan(){
@@ -1759,7 +1826,10 @@ async function fetchHargaMaster(){
     });
   }
 
-  (namaMaster || []).forEach(n => ensure(n));
+  (namaMaster || []).forEach(n => {
+    // dukung string atau object
+    ensure(typeof n === 'string' ? n : (n && (n.NamaBarang || n.nama)));
+  });
 
   (belanjaToday || []).forEach(b=>{
     const item = ensure(b.NamaBarang);
@@ -1783,7 +1853,6 @@ async function loadHarga(){
     ]);
     _hargaCache = items || [];
     _hargaJualManual = {};
-    // BUG #1 fix: normalisasi tanggal ke YYYY-MM-DD
     (manualList || []).forEach(m=>{
       _hargaJualManual[m.NamaBarang] = {
         harga: parseNum(m.HargaJualTerakhir),
@@ -1814,7 +1883,6 @@ function renderHargaList(){
     return;
   }
 
-  // BUG #5 fix: pakai index sebagai id unik
   listEl.innerHTML = filtered.map((it, idx)=>{
     const beli = parseNum(it.HargaBeli);
     const otomatis = hitungHargaJual(beli);
@@ -1934,7 +2002,7 @@ document.getElementById('h_search').addEventListener('input', function(){
   renderHargaList();
 });
 
-/* Share Harga Beli (tetap berbasis hari ini, konsisten dgn fetch-nya) */
+/* Share Harga Beli */
 document.getElementById('share_beli').addEventListener('click', async ()=>{
   if(!_hargaCache.length){ showToast('Belum ada data harga'); return; }
   try{
@@ -2019,14 +2087,13 @@ function startEditFixed(target){
   inp.focus();
   inp.select();
 
-  // BUG #2 fix: pakai flag pointerdown, bukan e.relatedTarget
+  // Flag: user menekan "Jadikan default" → jangan commit lewat blur
   let _pendingDefault = false;
 
   const commit = () => {
     const n = bacaUang(inp);
     row.classList.remove('editing');
     if(!n || n <= 0){
-      // Guard: jangan timpa jadi 0 kalau field dikosongkan
       renderFixedRow(target, currentVal);
       return;
     }
@@ -2048,7 +2115,6 @@ function startEditFixed(target){
     if(e.key === 'Enter'){ inp.blur(); }
   });
 
-  // Tangkap niat sebelum blur: pakai pointerdown / mousedown / touchstart
   const armDefault = ()=>{ _pendingDefault = true; };
   defaultBtn.addEventListener('pointerdown', armDefault);
   defaultBtn.addEventListener('mousedown', armDefault);
@@ -2078,9 +2144,7 @@ function startEditFixed(target){
 
 async function loadTutup(){
   try{
-    // Jangan timpa input yang sedang diedit user
     const editingFixed = document.querySelector('.fixed-row.editing');
-    const activeId = document.activeElement ? document.activeElement.id : '';
 
     let pengaturan = {...DEFAULT_PENGATURAN};
     try{
@@ -2129,7 +2193,6 @@ async function loadTutup(){
   }
 }
 
-/* BUG #8 fix: disabled + label selama submit */
 document.getElementById('t_submit').addEventListener('click', async ()=>{
   const btn = document.getElementById('t_submit');
   if(btn.disabled) return;
@@ -2235,7 +2298,7 @@ loadBelanja();
 loadCatatan();
 loadNamaBarangOptions();
 
-/* Refresh label tanggal tiap menit (tengah malam) */
+/* Refresh label tanggal tiap menit */
 setInterval(()=>{
   const lbl = document.getElementById('todayLabel');
   if(lbl) lbl.textContent = dateShort();
