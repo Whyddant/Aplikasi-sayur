@@ -32,14 +32,14 @@ html{scroll-padding-top:env(safe-area-inset-top,0px);}
 body{
   margin:0; background:var(--paper); color:var(--ink-900);
   font-family:'Work Sans',sans-serif; font-size:var(--fs-md); line-height:1.45;
-  padding-top:env(safe-area-inset-top,0px);
   min-height:100vh;
 }
 h1,h2,h3{font-family:'Zilla Slab',serif; margin:0; font-weight:700; letter-spacing:-.2px;}
 
 /* ---------- Topbar ---------- */
 .topbar{
-  padding:14px 18px 12px; background:var(--green-700); color:#fff;
+  padding:calc(14px + env(safe-area-inset-top,0px)) 18px 12px;
+  background:var(--green-700); color:#fff;
   display:flex; align-items:baseline; justify-content:space-between;
   position:sticky; top:0; z-index:5;
 }
@@ -81,7 +81,7 @@ h1,h2,h3{font-family:'Zilla Slab',serif; margin:0; font-weight:700; letter-spaci
 .stat .v{font-family:'Zilla Slab',serif; font-size:15px; font-weight:600; margin-top:3px;}
 
 /* ---------- Fields ---------- */
-.field{margin-bottom:12px;}
+.field{margin-bottom:12px; position:relative;}
 .field label{
   font-size:var(--fs-xs); color:var(--ink-600); display:block;
   margin-bottom:5px; font-weight:500;
@@ -93,13 +93,43 @@ h1,h2,h3{font-family:'Zilla Slab',serif; margin:0; font-weight:700; letter-spaci
 }
 .field select{
   appearance:none; -webkit-appearance:none;
-  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'><path d='M1 1l5 5 5-5' stroke='%235B5C50' stroke-width='1.6' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%235B5C50' stroke-width='1.6' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
   background-repeat:no-repeat; background-position:right 12px center; background-size:11px 8px;
   padding-right:34px;
 }
 .field input:focus, .field select:focus{
   outline:none; border-color:var(--green-700); box-shadow:0 0 0 3px rgba(47,82,51,.12);
 }
+
+/* ---------- Autocomplete ---------- */
+.ac-list{
+  position:absolute; top:100%; left:0; right:0;
+  margin-top:2px; z-index:30;
+  background:var(--card); border:1px solid var(--line);
+  border-radius:var(--r-sm);
+  box-shadow:0 6px 20px rgba(31,32,25,.12);
+  max-height:240px; overflow-y:auto;
+  animation:fadeIn .12s ease;
+}
+.ac-item{
+  padding:10px 13px; font-size:var(--fs-md); color:var(--ink-900);
+  cursor:pointer; border-bottom:1px solid var(--line-soft);
+  display:flex; align-items:center; justify-content:space-between;
+}
+.ac-item:last-child{border-bottom:none;}
+.ac-item.active, .ac-item:hover{background:var(--green-100);}
+.ac-item .ac-hint{
+  font-size:10.5px; color:var(--ink-600); font-weight:500;
+}
+.ac-empty{
+  padding:12px 13px; font-size:var(--fs-sm); color:var(--ink-400); text-align:center;
+}
+.ac-free{
+  padding:10px 13px; font-size:var(--fs-sm); color:var(--green-700);
+  cursor:pointer; font-weight:500; border-top:1px dashed var(--line);
+  background:var(--paper);
+}
+.ac-free:active{background:var(--green-100);}
 
 /* ---------- Buttons ---------- */
 .btn{
@@ -444,7 +474,7 @@ h1,h2,h3{font-family:'Zilla Slab',serif; margin:0; font-weight:700; letter-spaci
   padding:10px 18px; border-radius:var(--r-full);
   font-size:var(--fs-sm); font-weight:500;
   opacity:0; transition:opacity .2s, transform .2s;
-  pointer-events:none; z-index:20;
+  pointer-events:none; z-index:120;
   max-width:calc(100% - 32px); text-align:center;
 }
 .toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
@@ -549,15 +579,17 @@ h1,h2,h3{font-family:'Zilla Slab',serif; margin:0; font-weight:700; letter-spaci
 
     <div class="field">
       <label for="b_nama">Nama Barang</label>
-      <input id="b_nama" list="b_nama_list" type="text"
-             placeholder="Ketik atau pilih barang…"
-             autocomplete="off" autocapitalize="words">
-      <datalist id="b_nama_list"></datalist>
+      <input id="b_nama" type="text"
+             placeholder="Ketik nama barang…"
+             autocomplete="off" autocorrect="off" spellcheck="false"
+             autocapitalize="words" enterkeyhint="next">
+      <div class="ac-list" id="b_nama_ac" style="display:none;"></div>
     </div>
 
     <div class="field">
       <label for="b_qty">Qty</label>
-      <input id="b_qty" type="text" inputmode="decimal" placeholder="mis. 5">
+      <input id="b_qty" type="text" inputmode="decimal" placeholder="mis. 5"
+             enterkeyhint="next">
     </div>
 
     <div class="field">
@@ -573,7 +605,8 @@ h1,h2,h3{font-family:'Zilla Slab',serif; margin:0; font-weight:700; letter-spaci
 
     <div class="field">
       <label for="b_harga">Harga Beli (per satuan)</label>
-      <input id="b_harga" type="text" inputmode="numeric" placeholder="mis. 12.000">
+      <input id="b_harga" type="text" inputmode="numeric" placeholder="mis. 12.000"
+             enterkeyhint="done">
     </div>
 
     <button class="btn" id="b_submit">Tambah ke Daftar</button>
@@ -748,19 +781,47 @@ const DEFAULT_PENGATURAN = {
 /* ==========================================================
    HELPERS
    ========================================================== */
+function pad2(n){ return String(n).padStart(2,'0'); }
+
 function todayStr(){
   const d = new Date();
-  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  return d.getFullYear()+'-'+pad2(d.getMonth()+1)+'-'+pad2(d.getDate());
 }
+
+function ymdToDate(ymd){
+  if(!ymd) return null;
+  const [y,m,d] = String(ymd).slice(0,10).split('-').map(Number);
+  if(!y || !m || !d) return null;
+  return new Date(y, m-1, d);
+}
+
+/* Normalisasi berbagai format tanggal dari server ke YYYY-MM-DD */
+function normYmd(v){
+  if(!v) return '';
+  if(v instanceof Date && !isNaN(v.getTime())){
+    return v.getFullYear()+'-'+pad2(v.getMonth()+1)+'-'+pad2(v.getDate());
+  }
+  const s = String(v).trim();
+  if(/^\d{4}-\d{2}-\d{2}/.test(s)) return s.slice(0,10);
+  const d = new Date(s);
+  if(isNaN(d.getTime())) return '';
+  return d.getFullYear()+'-'+pad2(d.getMonth()+1)+'-'+pad2(d.getDate());
+}
+
 function dateShort(){
   return new Date().toLocaleDateString('id-ID',{weekday:'long', day:'numeric', month:'short'});
 }
 function dateLong(){
   return new Date().toLocaleDateString('id-ID',{weekday:'long', day:'numeric', month:'long', year:'numeric'});
 }
+function dateLongFrom(ymd){
+  const d = ymdToDate(ymd) || new Date();
+  return d.toLocaleDateString('id-ID',{weekday:'long', day:'numeric', month:'long', year:'numeric'});
+}
 function formatTanggalPendek(ymd){
-  const [y,m,d] = ymd.split('-').map(Number);
-  return new Date(y, m-1, d).toLocaleDateString('id-ID',{weekday:'long', day:'numeric', month:'short'});
+  const d = ymdToDate(ymd);
+  if(!d) return '';
+  return d.toLocaleDateString('id-ID',{weekday:'long', day:'numeric', month:'short'});
 }
 function rupiah(n){
   return 'Rp ' + Number(n||0).toLocaleString('id-ID');
@@ -821,6 +882,7 @@ function emptyHTML(iconPath, text, ctaLabel, ctaId){
 }
 const ICON_CART = '<circle cx="9" cy="20" r="1.4" fill="currentColor" stroke="none"/><circle cx="18" cy="20" r="1.4" fill="currentColor" stroke="none"/><path d="M2 3h3l2.6 12.4a2 2 0 002 1.6h8a2 2 0 002-1.8L21 8H6"/>';
 const ICON_TAG = '<path d="M20.6 12.4L12.4 20.6a2 2 0 01-2.8 0l-7.2-7.2a2 2 0 010-2.8L10.6 2.4A2 2 0 0112 2h6a2 2 0 012 2v6a2 2 0 01-.6 1.4z"/><circle cx="15.5" cy="8.5" r="1.3" fill="currentColor" stroke="none"/>';
+const ICON_REPORT = '<rect x="4" y="3" width="16" height="18" rx="1.5"/><path d="M8 8h8M8 12h8M8 16h5"/>';
 
 /* ==========================================================
    FORMULA BISNIS
@@ -849,23 +911,14 @@ function getMarkupRate(modal){
   }
   return 0.15;
 }
-function mround(value, multiple){
-  return Math.round(value / multiple) * multiple;
-}
-function ceilTo(value, multiple){
-  return Math.ceil(value / multiple) * multiple;
-}
-/* Harga Jual:
-   - Modal ≤ 30.000 → 1.000 terdekat
-   - Modal > 30.000 → KE ATAS ke 5.000 terdekat */
+function mround(value, multiple){ return Math.round(value / multiple) * multiple; }
+function ceilTo(value, multiple){ return Math.ceil(value / multiple) * multiple; }
 function hitungHargaJual(modal){
   if(!modal || modal <= 0) return 0;
   const raw = modal * (1 + getMarkupRate(modal));
   if(modal <= 30000) return mround(raw, 1000);
   return ceilTo(raw, 5000);
 }
-/* Harga Minimum — HANYA modal ≤ 10.000
-   Formula: HJ − 2.000 */
 function hitungHargaMinimum(modal){
   if(!modal || modal <= 0) return 0;
   if(modal > 10000) return 0;
@@ -898,7 +951,6 @@ async function apiPost(action, data){
    INISIALISASI
    ========================================================== */
 document.getElementById('todayLabel').textContent = dateShort();
-document.getElementById('catatan_date').textContent = dateShort();
 document.getElementById('harga_date').textContent = dateShort();
 
 ['b_harga','t_omzet','t_konsumsi','t_kresek'].forEach(id=>{
@@ -917,6 +969,7 @@ const _biayaHariIni = {
 function goTab(name){
   document.querySelectorAll('.navbar button').forEach(x=>x.classList.toggle('active', x.dataset.t===name));
   document.querySelectorAll('.screen').forEach(x=>x.classList.toggle('active', x.id===name));
+  hideAc();
   if(name==='dashboard') loadDashboard();
   if(name==='belanja'){ loadBelanja(); loadCatatan(); }
   if(name==='harga') loadHarga();
@@ -930,6 +983,8 @@ document.querySelectorAll('.navbar button').forEach(b=>{
 /* ==========================================================
    NAVIGASI TANGGAL (Belanja & Tutup Hari berbagi _activeDate)
    ========================================================== */
+let _activeDate = todayStr();
+
 function updateDateWarnings(){
   const notToday = _activeDate !== todayStr();
   const label = notToday ? formatTanggalPendek(_activeDate) : '';
@@ -941,6 +996,8 @@ function updateDateWarnings(){
     const el = document.getElementById(id);
     if(el) el.textContent = label;
   });
+  const cd = document.getElementById('catatan_date');
+  if(cd) cd.textContent = formatTanggalPendek(_activeDate);
 }
 
 function setActiveDate(newDate){
@@ -953,6 +1010,7 @@ function setActiveDate(newDate){
   _biayaHariIni.sudahDiubah = false;
   updateDateWarnings();
   loadBelanja();
+  loadCatatan();
   loadTutup();
 }
 
@@ -981,6 +1039,171 @@ document.querySelectorAll('.seg-btn').forEach(btn=>{
 });
 
 /* ==========================================================
+   AUTOCOMPLETE NAMA BARANG (custom, free-text friendly)
+   ==========================================================
+   - User bebas mengetik apa saja lewat keyboard.
+   - Saran muncul sebagai dropdown, bukan menggantikan input.
+   - Bisa dipilih pakai tap, atau ↑ ↓ + Enter.
+   - Tidak memaksa; teks yang diketik tetap bisa disimpan apa adanya.
+   ========================================================== */
+let _acItems = [];
+let _acIndex = -1;
+let _acLastQuery = '';
+
+function acListEl(){ return document.getElementById('b_nama_ac'); }
+
+function hideAc(){
+  const box = acListEl();
+  if(!box) return;
+  box.style.display = 'none';
+  box.innerHTML = '';
+  _acItems = [];
+  _acIndex = -1;
+  _acLastQuery = '';
+}
+
+function renderAc(rawQuery){
+  const box = acListEl();
+  if(!box) return;
+  const q = String(rawQuery || '').trim();
+  _acLastQuery = q;
+
+  if(!q){
+    hideAc();
+    return;
+  }
+
+  const ql = q.toLowerCase();
+  const matches = _masterBarang
+    .filter(n => String(n).toLowerCase().includes(ql))
+    .slice(0, 8);
+
+  if(!matches.length){
+    box.innerHTML = `<div class="ac-empty">Tidak ada saran — ketik bebas lalu tekan "+ Tambah"</div>`;
+    box.style.display = 'block';
+    _acItems = [];
+    _acIndex = -1;
+    return;
+  }
+
+  _acItems = matches;
+  _acIndex = -1;
+
+  let html = matches.map((n,i)=>{
+    const info = _infoMap[n];
+    const hint = info && info.harga > 0
+      ? `${rupiah(info.harga)}${info.satuan ? ' / ' + escHtml(info.satuan) : ''}`
+      : '';
+    return `<div class="ac-item" data-idx="${i}" data-nama="${escHtml(n)}">
+      <span>${escHtml(n)}</span>
+      ${hint ? `<span class="ac-hint">${hint}</span>` : ''}
+    </div>`;
+  }).join('');
+
+  box.innerHTML = html;
+  box.style.display = 'block';
+
+  box.querySelectorAll('.ac-item').forEach(el=>{
+    // Pakai pointerdown agar tidak keburu blur (dan konsisten di HP & desktop)
+    el.addEventListener('pointerdown', (e)=>{
+      e.preventDefault();
+      selectAc(el.dataset.nama);
+    });
+  });
+}
+
+function highlightAc(idx){
+  const box = acListEl();
+  if(!box || !_acItems.length) return;
+  const items = box.querySelectorAll('.ac-item');
+  items.forEach((el,i)=> el.classList.toggle('active', i === idx));
+  if(idx >= 0 && items[idx]) items[idx].scrollIntoView({block:'nearest'});
+  _acIndex = idx;
+}
+
+function applyAutofill(nama){
+  const info = _infoMap[nama];
+  if(!info) return;
+
+  if(info.satuan){
+    const selSatuan = document.getElementById('b_satuan');
+    const exists = Array.from(selSatuan.options).find(o => o.value === info.satuan);
+    if(exists){
+      selSatuan.value = info.satuan;
+      document.getElementById('b_satuan_new').style.display = 'none';
+    } else {
+      selSatuan.value = '__other__';
+      document.getElementById('b_satuan_new').value = info.satuan;
+      document.getElementById('b_satuan_new').style.display = 'block';
+    }
+  }
+
+  if(info.harga > 0){
+    document.getElementById('b_harga').value = info.harga.toLocaleString('id-ID');
+  }
+}
+
+function selectAc(nama){
+  if(!nama) return;
+  const input = document.getElementById('b_nama');
+  input.value = nama;
+  hideAc();
+  applyAutofill(nama);
+  // Fokus ke qty supaya user tinggal ketik angka
+  const qty = document.getElementById('b_qty');
+  if(qty) setTimeout(()=>qty.focus(), 30);
+}
+
+function currentAcQuery(){
+  return document.getElementById('b_nama').value;
+}
+
+document.getElementById('b_nama').addEventListener('input', function(){
+  renderAc(this.value);
+});
+
+document.getElementById('b_nama').addEventListener('focus', function(){
+  if(this.value.trim()) renderAc(this.value);
+});
+
+document.getElementById('b_nama').addEventListener('blur', function(){
+  // Delay kecil supaya pointerdown di item sempat jalan
+  setTimeout(()=>{ if(document.activeElement !== acListEl()) hideAc(); }, 160);
+});
+
+document.getElementById('b_nama').addEventListener('keydown', function(e){
+  const box = acListEl();
+  const open = box && box.style.display !== 'none' && _acItems.length > 0;
+
+  if(e.key === 'Escape'){
+    if(open){ e.preventDefault(); hideAc(); }
+    return;
+  }
+  if(!open) return;
+
+  if(e.key === 'ArrowDown'){
+    e.preventDefault();
+    const next = Math.min(_acItems.length - 1, _acIndex + 1);
+    highlightAc(next === -1 ? 0 : next);
+  } else if(e.key === 'ArrowUp'){
+    e.preventDefault();
+    const prev = Math.max(0, _acIndex - 1);
+    highlightAc(prev);
+  } else if(e.key === 'Enter'){
+    if(_acIndex >= 0){
+      e.preventDefault();
+      selectAc(_acItems[_acIndex]);
+    } else if(_acItems.length === 1){
+      e.preventDefault();
+      selectAc(_acItems[0]);
+    } else {
+      // Enter tanpa pilihan → biarkan; user bisa tab/ketik lanjut
+      hideAc();
+    }
+  }
+});
+
+/* ==========================================================
    MODUL: BELANJA (Input) — draft + edit + reminder
    ========================================================== */
 let _belanjaCache = [];
@@ -988,7 +1211,6 @@ let _draft = [];
 let _editingKey = null;
 let _masterBarang = [];
 let _infoMap = {};
-let _activeDate = todayStr(); // tanggal yang sedang dibuka di tab Belanja & Tutup Hari
 
 function draftStorageKey(){ return 'sayur_draft_' + _activeDate; }
 function loadDraftFromStorage(){
@@ -1006,20 +1228,15 @@ function clearDraftStorage(){
   try{ localStorage.removeItem(draftStorageKey()); }catch(e){}
 }
 
+/* BUG #4 fix: buang .replace(',', '.') yang redundan & berbahaya */
 function hitungSubtotal(it){
   const fromTotal  = parseNum(it.Total);
   const fromSub    = parseNum(it.Subtotal);
   const fromServer = fromTotal > 0 ? fromTotal : fromSub;
   if(fromServer > 0) return fromServer;
   const beli = parseNum(it.HargaBeli != null ? it.HargaBeli : it.hargaBeli);
-  const qty  = parseNum(String(it.Qty != null ? it.Qty : it.qty).replace(',', '.'));
+  const qty  = parseNum(it.Qty != null ? it.Qty : it.qty);
   return beli * qty;
-}
-
-function renderDatalist(){
-  const dl = document.getElementById('b_nama_list');
-  if(!dl) return;
-  dl.innerHTML = _masterBarang.map(n => `<option value="${escHtml(n)}">`).join('');
 }
 
 function computeReminder(){
@@ -1094,7 +1311,7 @@ function renderBelanja(){
   const draftItems = _draft || [];
 
   if(!serverItems.length && !draftItems.length){
-    listEl.innerHTML = emptyHTML(ICON_CART, 'Belum ada belanja hari ini', null);
+    listEl.innerHTML = emptyHTML(ICON_CART, 'Belum ada belanja untuk tanggal ini', null);
     draftBar.style.display = 'none';
     reminderEl.style.display = 'none';
     bTotal.textContent = rupiah(0);
@@ -1165,13 +1382,15 @@ function attachBelanjaHandlers(){
       } else {
         const id = key.slice(7);
         const item = btn.closest('.ledger-item');
-        const nama = item ? item.querySelector('.name').childNodes[0].textContent.trim() : '';
+        const namaEl = item ? item.querySelector('.name') : null;
+        const nama = namaEl ? namaEl.childNodes[0].textContent.trim() : '';
         if(!confirm(`Hapus "${nama}" dari daftar belanja?`)) return;
         try{
           await apiPost('deleteBelanja', {id});
           showToast('Item dihapus');
-          loadBelanja();
+          await loadBelanja();
           loadCatatan();
+          loadNamaBarangOptions(); // refresh master, karena item dihapus
         }catch(e){ showToast('Gagal hapus: ' + e.message); }
       }
     });
@@ -1217,8 +1436,9 @@ function attachBelanjaHandlers(){
           await apiPost('updateBelanja', {id, qty: newQty, hargaBeli: newHarga});
           _editingKey = null;
           showToast('Item diperbarui');
-          loadBelanja();
+          await loadBelanja();
           loadCatatan();
+          loadNamaBarangOptions();
         }catch(e){
           showToast('Gagal simpan: ' + e.message);
           saveBtn.disabled = false;
@@ -1275,39 +1495,26 @@ async function loadNamaBarangOptions(){
       };
     });
 
-    renderDatalist();
+    // Refresh AC jika sedang terbuka
+    const box = acListEl();
+    if(box && box.style.display !== 'none') renderAc(currentAcQuery());
     renderBelanja();
   }catch(e){}
 }
 
-/* Autofill satuan & harga terakhir saat pilih barang */
-document.getElementById('b_nama').addEventListener('input', function(){
-  const val = this.value.trim();
-  if(!val || !_masterBarang.includes(val)) return;
-  const info = _infoMap[val];
-  if(!info) return;
-
-  if(info.satuan){
-    const selSatuan = document.getElementById('b_satuan');
-    const exists = Array.from(selSatuan.options).find(o => o.value === info.satuan);
-    if(exists){
-      selSatuan.value = info.satuan;
-      document.getElementById('b_satuan_new').style.display = 'none';
-    } else {
-      selSatuan.value = '__other__';
-      document.getElementById('b_satuan_new').value = info.satuan;
-      document.getElementById('b_satuan_new').style.display = 'block';
-    }
-  }
-
-  if(info.harga > 0){
-    document.getElementById('b_harga').value = info.harga.toLocaleString('id-ID');
-  }
-});
-
 document.getElementById('b_satuan').addEventListener('change', function(){
   document.getElementById('b_satuan_new').style.display = this.value==='__other__' ? 'block' : 'none';
   if(this.value==='__other__') document.getElementById('b_satuan_new').focus();
+});
+
+/* Enter di qty → langsung ke harga */
+document.getElementById('b_qty').addEventListener('keydown', function(e){
+  if(e.key === 'Enter'){ e.preventDefault(); document.getElementById('b_harga').focus(); }
+});
+
+/* Enter di harga → tambah ke draft */
+document.getElementById('b_harga').addEventListener('keydown', function(e){
+  if(e.key === 'Enter'){ e.preventDefault(); document.getElementById('b_submit').click(); }
 });
 
 /* Tambah ke draft */
@@ -1339,6 +1546,7 @@ document.getElementById('b_submit').addEventListener('click', ()=>{
   document.getElementById('b_satuan_new').value = '';
   document.getElementById('b_satuan_new').style.display = 'none';
   document.getElementById('b_harga').value = '';
+  hideAc();
 
   renderBelanja();
   document.getElementById('b_nama').focus();
@@ -1361,10 +1569,8 @@ document.getElementById('b_save_all').addEventListener('click', ()=>{
     el.addEventListener('click', ()=>{
       const nama = el.dataset.nama;
       closeModal();
-      const inp = document.getElementById('b_nama');
-      inp.value = nama;
-      inp.dispatchEvent(new Event('input'));
-      document.getElementById('b_qty').focus();
+      // Langsung isi + autofill, tanpa harus menunggu ketikan user
+      selectAc(nama);
     });
   });
   document.getElementById('modal_confirm').style.display = 'flex';
@@ -1390,25 +1596,32 @@ function closeModal(){
   document.getElementById('modal_confirm').style.display = 'none';
 }
 
+/* BUG #6 fix: POST sekuensial, bukan Promise.all */
 async function saveAllDrafts(){
   if(!_draft.length) return;
   const btn = document.getElementById('b_save_all');
   btn.disabled = true;
-  btn.textContent = 'Menyimpan…';
+  const total = _draft.length;
 
-  const results = await Promise.all(_draft.map(item => {
-    return apiPost('addBelanja', {
-      namaBarang: item.NamaBarang,
-      qty: item.qty,
-      satuan: item.satuan,
-      hargaBeli: item.hargaBeli,
-      tanggal: _activeDate
-    }).then(() => ({ok:true, item}))
-      .catch(e => ({ok:false, item, error: e.message}));
-  }));
+  const succeeded = [];
+  const failed = [];
 
-  const failed = results.filter(r => !r.ok);
-  const succeeded = results.filter(r => r.ok);
+  for(let i = 0; i < _draft.length; i++){
+    const item = _draft[i];
+    btn.textContent = `Menyimpan ${i+1}/${total}…`;
+    try{
+      await apiPost('addBelanja', {
+        namaBarang: item.NamaBarang,
+        qty: item.qty,
+        satuan: item.satuan,
+        hargaBeli: item.hargaBeli,
+        tanggal: _activeDate
+      });
+      succeeded.push(item);
+    }catch(e){
+      failed.push(item);
+    }
+  }
 
   if(failed.length === 0){
     clearDraftStorage();
@@ -1418,7 +1631,7 @@ async function saveAllDrafts(){
     loadCatatan();
     loadNamaBarangOptions();
   } else {
-    _draft = failed.map(f => f.item);
+    _draft = failed;
     saveDraftToStorage();
     renderBelanja();
     showToast(`${succeeded.length} sukses, ${failed.length} gagal — coba lagi`);
@@ -1428,7 +1641,7 @@ async function saveAllDrafts(){
   btn.textContent = 'Simpan Semua';
 }
 
-/* Share gabungan */
+/* Share gabungan — BUG #3 fix: pakai _activeDate */
 document.getElementById('share_belanja_input').addEventListener('click', ()=>{
   const all = [
     ..._draft.map(d=>({
@@ -1437,7 +1650,7 @@ document.getElementById('share_belanja_input').addEventListener('click', ()=>{
     })),
     ..._belanjaCache
   ];
-  if(!all.length){ showToast('Belum ada belanja hari ini'); return; }
+  if(!all.length){ showToast('Belum ada belanja untuk tanggal ini'); return; }
   const lines = all.map(it=>{
     const beli = parseNum(it.HargaBeli);
     const sub  = hitungSubtotal(it);
@@ -1445,7 +1658,7 @@ document.getElementById('share_belanja_input').addEventListener('click', ()=>{
   });
   const total = all.reduce((s,it)=>s + hitungSubtotal(it), 0);
   const text =
-`*Modal Belanja* — ${dateLong()}
+`*Modal Belanja* — ${dateLongFrom(_activeDate)}
 
 ${lines.join('\n')}
 
@@ -1462,16 +1675,23 @@ window.addEventListener('beforeunload', (e)=>{
 
 /* ==========================================================
    MODUL: CATATAN
+   BUG #7 fix: ikuti _activeDate, bukan todayStr()
    ========================================================== */
 let _catatanCache = [];
 async function loadCatatan(){
   const listEl = document.getElementById('c_list');
+  const label = document.getElementById('catatan_date');
+  if(label) label.textContent = formatTanggalPendek(_activeDate);
+
   listEl.innerHTML = '<div class="empty-note">Memuat data…</div>';
   try{
-    const items = await apiGet('getBelanja', {tanggal: todayStr()});
-    _catatanCache = items;
-    if(!items.length){
-      listEl.innerHTML = emptyHTML(ICON_CART, 'Belum ada belanja untuk dibawa ke pasar', '+ Tambah Belanja', 'catatan_add');
+    const items = await apiGet('getBelanja', {tanggal: _activeDate});
+    _catatanCache = items || [];
+    if(!_catatanCache.length){
+      const emptyTxt = _activeDate === todayStr()
+        ? 'Belum ada belanja untuk dibawa ke pasar'
+        : 'Belum ada belanja untuk tanggal ini';
+      listEl.innerHTML = emptyHTML(ICON_CART, emptyTxt, '+ Tambah Belanja', 'catatan_add');
       const addBtn = document.getElementById('catatan_add');
       if(addBtn) addBtn.addEventListener('click', ()=>{
         document.querySelector('.seg-btn[data-mode="input"]').click();
@@ -1480,7 +1700,7 @@ async function loadCatatan(){
       return;
     }
     listEl.innerHTML = `<div class="catatan-list">${
-      items.map(it=>`
+      _catatanCache.map(it=>`
         <div class="catatan-item">
           <div class="n">${escHtml(it.NamaBarang)}</div>
           <div class="q">${escHtml(it.Qty)} ${escHtml(it.Satuan)}</div>
@@ -1489,7 +1709,7 @@ async function loadCatatan(){
     }</div>
     <div class="total-bar" style="background:var(--line-soft);">
       <span class="lbl">Total item</span>
-      <span class="val" style="color:var(--ink-900);">${items.length} barang</span>
+      <span class="val" style="color:var(--ink-900);">${_catatanCache.length} barang</span>
     </div>`;
   }catch(e){
     listEl.innerHTML = `<div class="empty-note">Gagal memuat: ${escHtml(e.message)}</div>`;
@@ -1500,7 +1720,7 @@ document.getElementById('share_catatan').addEventListener('click', ()=>{
   if(!_catatanCache.length){ showToast('Belum ada item untuk dibagikan'); return; }
   const lines = _catatanCache.map((it,i)=>`${i+1}. ${it.NamaBarang} — ${it.Qty} ${it.Satuan}`);
   const text =
-`*Catatan Belanja* — ${dateLong()}
+`*Catatan Belanja* — ${dateLongFrom(_activeDate)}
 
 ${lines.join('\n')}
 
@@ -1513,8 +1733,8 @@ Total: ${_catatanCache.length} item${shareFooter()}`;
    ========================================================== */
 let _hargaCache = [];
 let _hargaFilter = '';
-let _hargaJualManual = {}; // { NamaBarang: {harga, tanggal} }
-let _editingJual = null;   // NamaBarang yang sedang diedit
+let _hargaJualManual = {};
+let _editingJual = null;
 
 async function fetchHargaMaster(){
   const [belanjaToday, namaMaster, hargaMasterOpt] = await Promise.all([
@@ -1563,8 +1783,12 @@ async function loadHarga(){
     ]);
     _hargaCache = items || [];
     _hargaJualManual = {};
+    // BUG #1 fix: normalisasi tanggal ke YYYY-MM-DD
     (manualList || []).forEach(m=>{
-      _hargaJualManual[m.NamaBarang] = { harga: parseNum(m.HargaJualTerakhir), tanggal: m.TanggalUpdate };
+      _hargaJualManual[m.NamaBarang] = {
+        harga: parseNum(m.HargaJualTerakhir),
+        tanggal: normYmd(m.TanggalUpdate)
+      };
     });
     if(!items.length){
       listEl.innerHTML = emptyHTML(ICON_TAG, 'Belum ada barang. Isi lewat tab Belanja dulu.', 'Ke Belanja', 'harga_go_belanja');
@@ -1590,7 +1814,8 @@ function renderHargaList(){
     return;
   }
 
-  listEl.innerHTML = filtered.map(it=>{
+  // BUG #5 fix: pakai index sebagai id unik
+  listEl.innerHTML = filtered.map((it, idx)=>{
     const beli = parseNum(it.HargaBeli);
     const otomatis = hitungHargaJual(beli);
     const manual = _hargaJualManual[it.NamaBarang];
@@ -1631,8 +1856,8 @@ function renderHargaList(){
         <span class="lbl">Harga Minimum</span>
         <span class="val">${rupiah(minimum)}</span>
       </div>` : ''}
-      ${beli > 0 ? `<button class="detail-toggle" data-target="${escHtml(it.NamaBarang)}">▾ Rincian</button>
-      <div class="price-detail" id="detail-${escHtml(it.NamaBarang).replace(/\s/g,'_')}" style="display:none;">
+      ${beli > 0 ? `<button class="detail-toggle" data-idx="${idx}">▾ Rincian</button>
+      <div class="price-detail" id="detail-${idx}" style="display:none;">
         <div class="price-detail-row margin">
           <span>Margin kotor</span>
           <span>${rupiah(margin)} · ${marginPct}%</span>
@@ -1652,8 +1877,7 @@ function renderHargaList(){
 
   listEl.querySelectorAll('.detail-toggle').forEach(btn=>{
     btn.addEventListener('click', ()=>{
-      const key = btn.dataset.target.replace(/\s/g,'_');
-      const detail = document.getElementById('detail-' + key);
+      const detail = document.getElementById('detail-' + btn.dataset.idx);
       if(!detail) return;
       const isOpen = detail.style.display !== 'none';
       detail.style.display = isOpen ? 'none' : 'flex';
@@ -1710,7 +1934,7 @@ document.getElementById('h_search').addEventListener('input', function(){
   renderHargaList();
 });
 
-/* Share Harga Beli */
+/* Share Harga Beli (tetap berbasis hari ini, konsisten dgn fetch-nya) */
 document.getElementById('share_beli').addEventListener('click', async ()=>{
   if(!_hargaCache.length){ showToast('Belum ada data harga'); return; }
   try{
@@ -1795,25 +2019,40 @@ function startEditFixed(target){
   inp.focus();
   inp.select();
 
+  // BUG #2 fix: pakai flag pointerdown, bukan e.relatedTarget
+  let _pendingDefault = false;
+
   const commit = () => {
     const n = bacaUang(inp);
+    row.classList.remove('editing');
+    if(!n || n <= 0){
+      // Guard: jangan timpa jadi 0 kalau field dikosongkan
+      renderFixedRow(target, currentVal);
+      return;
+    }
     if(target === 'ops') _biayaHariIni.OperasionalBelanja = n;
     else _biayaHariIni.Bensin = n;
     _biayaHariIni.sudahDiubah = true;
-    row.classList.remove('editing');
     renderFixedRow(target, n);
     showToast('Biaya diubah untuk hari ini');
   };
 
-  inp.addEventListener('blur', (e)=>{
-    // Kalau fokus pindah ke tombol "Jadikan default", biarkan tombol itu
-    // yang menangani commit — supaya klik tombolnya tidak keburu batal.
-    if(e.relatedTarget === defaultBtn) return;
+  inp.addEventListener('blur', ()=>{
+    if(_pendingDefault){
+      _pendingDefault = false;
+      return;
+    }
     commit();
   });
   inp.addEventListener('keydown', (e)=>{
     if(e.key === 'Enter'){ inp.blur(); }
   });
+
+  // Tangkap niat sebelum blur: pakai pointerdown / mousedown / touchstart
+  const armDefault = ()=>{ _pendingDefault = true; };
+  defaultBtn.addEventListener('pointerdown', armDefault);
+  defaultBtn.addEventListener('mousedown', armDefault);
+  defaultBtn.addEventListener('touchstart', armDefault, {passive:true});
 
   defaultBtn.addEventListener('click', async ()=>{
     const n = bacaUang(inp);
@@ -1839,6 +2078,10 @@ function startEditFixed(target){
 
 async function loadTutup(){
   try{
+    // Jangan timpa input yang sedang diedit user
+    const editingFixed = document.querySelector('.fixed-row.editing');
+    const activeId = document.activeElement ? document.activeElement.id : '';
+
     let pengaturan = {...DEFAULT_PENGATURAN};
     try{
       const p = await apiGet('getPengaturan');
@@ -1857,11 +2100,15 @@ async function loadTutup(){
       _biayaHariIni.Bensin = bensinToday > 0 ? bensinToday : pengaturan.Bensin;
     }
 
-    renderFixedRow('ops', _biayaHariIni.OperasionalBelanja);
-    renderFixedRow('bensin', _biayaHariIni.Bensin);
+    if(!editingFixed){
+      renderFixedRow('ops', _biayaHariIni.OperasionalBelanja);
+      renderFixedRow('bensin', _biayaHariIni.Bensin);
+    }
 
     const setMoney = (id, val) => {
       const el = document.getElementById(id);
+      if(!el) return;
+      if(document.activeElement === el) return;
       const n = parseNum(val);
       el.value = n ? n.toLocaleString('id-ID') : '';
     };
@@ -1882,11 +2129,20 @@ async function loadTutup(){
   }
 }
 
+/* BUG #8 fix: disabled + label selama submit */
 document.getElementById('t_submit').addEventListener('click', async ()=>{
+  const btn = document.getElementById('t_submit');
+  if(btn.disabled) return;
+
   const omzet = bacaUang(document.getElementById('t_omzet'));
   if(!omzet){ showToast('Isi total omzet dulu'); return; }
   const konsumsi = bacaUang(document.getElementById('t_konsumsi'));
   const kresek = bacaUang(document.getElementById('t_kresek'));
+
+  const prevLabel = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = 'Menyimpan…';
+
   try{
     await apiPost('setOmzet', {totalOmzet: omzet, tanggal: _activeDate});
     await apiPost('setBiayaOperasional', {
@@ -1901,6 +2157,9 @@ document.getElementById('t_submit').addEventListener('click', async ()=>{
     _biayaHariIni.sudahDiubah = false;
   }catch(e){
     showToast('Gagal simpan: ' + e.message);
+  }finally{
+    btn.disabled = false;
+    btn.textContent = prevLabel;
   }
 });
 
@@ -1940,17 +2199,18 @@ async function loadLaporan(){
     const rows = await apiGet('getLaporanList', {limit: 30});
     if(!rows.length){
       listEl.innerHTML = emptyHTML(
-        '<rect x="4" y="3" width="16" height="18" rx="1.5"/><path d="M8 8h8M8 12h8M8 16h5"/>',
+        ICON_REPORT,
         'Belum ada laporan. Isi lewat Tutup Hari.',
         null
       );
       return;
     }
     listEl.innerHTML = rows.map(r=>{
-      const tgl = new Date(r.Tanggal).toLocaleDateString('id-ID',{weekday:'long', day:'numeric', month:'short'});
+      const ymd = normYmd(r.Tanggal);
+      const tgl = ymd ? formatTanggalPendek(ymd) : '-';
       return `<div class="ledger-item">
         <div>
-          <div class="name">${tgl}</div>
+          <div class="name">${escHtml(tgl)}</div>
           <div class="sub">Omzet ${rupiah(parseNum(r.Omzet))} · Modal ${rupiah(parseNum(r.ModalKemarin))}</div>
         </div>
         <div class="amt">${rupiah(parseNum(r.LabaBersih))}</div>
@@ -1974,6 +2234,12 @@ loadDashboard();
 loadBelanja();
 loadCatatan();
 loadNamaBarangOptions();
+
+/* Refresh label tanggal tiap menit (tengah malam) */
+setInterval(()=>{
+  const lbl = document.getElementById('todayLabel');
+  if(lbl) lbl.textContent = dateShort();
+}, 60000);
 
 /* ==========================================================
    PWA: registrasi service worker
