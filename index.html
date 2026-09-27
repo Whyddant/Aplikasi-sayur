@@ -37,6 +37,16 @@ body{
 }
 h1,h2,h3{font-family:'Zilla Slab',serif; margin:0; font-weight:700; letter-spacing:-.2px;}
 
+.topbar-brand{
+  display:flex; align-items:center; gap:10px;
+}
+.topbar-logo{
+  width:28px; height:28px;
+  border-radius:6px;
+  object-fit:cover;
+  flex-shrink:0;
+}
+
 .topbar{
   padding:calc(14px + env(safe-area-inset-top,0px)) 18px 12px;
   background:var(--green-700); color:#fff;
@@ -434,7 +444,10 @@ h1,h2,h3{font-family:'Zilla Slab',serif; margin:0; font-weight:700; letter-spaci
 <body>
 
 <div class="topbar">
-  <h1>Sayur App</h1>
+  <div class="topbar-brand">
+    <img src="./icons/logo.png" alt="" class="topbar-logo">
+    <h1>Sayur App</h1>
+  </div>
   <span id="todayLabel"></span>
 </div>
 
