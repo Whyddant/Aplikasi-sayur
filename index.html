@@ -517,6 +517,269 @@ h1,h2,h3{font-family:'Zilla Slab',serif; margin:0; font-weight:700; letter-spaci
 <div class="screen active" id="dashboard">
   <div class="hero" id="dash_hero">
     <div class="k">Laba bersih hari ini</div>
+    <div class="v" id="dash_laba">Rp r(--r-md);
+  padding:14px 14px 12px; margin-bottom:10px;
+}
+.price-name{font-size:var(--fs-md); font-weight:600; margin-bottom:10px;}
+.price-grid{display:grid; grid-template-columns:1fr 1fr; gap:8px;}
+.price-cell{background:var(--paper); border-radius:var(--r-sm); padding:8px 10px;}
+.price-cell.buy{background:var(--line-soft);}
+.price-cell.sell{background:var(--green-100);}
+.price-label{
+  font-size:10.5px; color:var(--ink-600); text-transform:uppercase;
+  letter-spacing:.8px; font-weight:600; margin-bottom:2px;
+}
+.cell-head{display:flex; justify-content:space-between; align-items:center; margin-bottom:2px;}
+.cell-head .price-label{margin-bottom:0;}
+.jual-edit-btn{
+  background:none; border:none; color:var(--green-700);
+  font-size:13px; padding:2px 4px; cursor:pointer; line-height:1;
+}
+.manual-badge{
+  display:inline-block; font-size:9.5px; font-weight:700;
+  color:var(--green-700); background:#fff;
+  padding:1px 6px; border-radius:4px;
+  text-transform:uppercase; letter-spacing:.4px;
+  margin-left:6px; vertical-align:middle;
+}
+.jual-edit-form{display:flex; flex-direction:column; gap:6px;}
+.jual-edit-form input{
+  width:100%; padding:7px 8px; border:1px solid var(--line); border-radius:var(--r-sm);
+  font-family:'Zilla Slab',serif; font-size:15px; font-weight:600;
+  background:var(--card); color:var(--ink-900);
+}
+.jual-edit-form input:focus{
+  outline:none; border-color:var(--green-700);
+  box-shadow:0 0 0 2px rgba(47,82,51,.12);
+}
+.jual-edit-hint{font-size:10px; color:var(--ink-600);}
+.jual-edit-actions{display:flex; gap:6px;}
+.jual-edit-actions .btn-mini{flex:1; padding:6px 8px; font-size:11.5px;}
+
+/* ---------- Navigasi tanggal (Belanja / Tutup Hari) ---------- */
+.date-field{display:flex; align-items:center; gap:8px; margin-bottom:12px;}
+.date-field label{font-size:var(--fs-xs); color:var(--ink-600); font-weight:500;}
+.date-field input[type="date"]{
+  flex:1; padding:8px 10px; border:1px solid var(--line); border-radius:var(--r-sm);
+  font-family:'Work Sans',sans-serif; font-size:13.5px; color:var(--ink-900);
+  background:var(--card);
+}
+.date-warn{
+  display:none; margin:0 0 14px; padding:9px 12px;
+  background:#FFF3E0; border-left:3px solid var(--rust-600);
+  border-radius:4px; font-size:12px; color:#7A3410;
+  align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap;
+  line-height:1.4;
+}
+.date-warn strong{display:block; font-weight:700;}
+.date-warn button{
+  background:var(--rust-600); color:#fff; border:none; border-radius:var(--r-full);
+  padding:6px 12px; font-size:11px; font-weight:600; cursor:pointer; white-space:nowrap;
+}
+.price-value{
+  font-family:'Zilla Slab',serif; font-size:16px; font-weight:600; color:var(--ink-900);
+}
+.min-row{
+  margin-top:10px; padding:10px 12px;
+  background:var(--rust-600); color:#fff;
+  border-radius:var(--r-sm);
+  display:flex; justify-content:space-between; align-items:center;
+}
+.min-row .lbl{
+  font-size:var(--fs-xs); font-weight:600;
+  text-transform:uppercase; letter-spacing:.8px;
+  opacity:.85;
+}
+.min-row .val{
+  font-family:'Zilla Slab',serif;
+  font-size:18px; font-weight:700;
+}
+.detail-toggle{
+  display:block; margin:8px auto 0; padding:5px 12px;
+  background:none; border:1px dashed var(--line);
+  border-radius:var(--r-full); color:var(--ink-600);
+  font:500 11.5px 'Work Sans',sans-serif; cursor:pointer;
+  transition:all .15s;
+}
+.detail-toggle:active{background:var(--green-100);}
+.detail-toggle.open{border-style:solid; color:var(--green-700);}
+.price-detail{
+  margin-top:10px; padding-top:10px;
+  border-top:1px dashed var(--line);
+  display:flex; flex-direction:column; gap:5px;
+}
+.price-detail-row{
+  display:flex; justify-content:space-between; align-items:center;
+  font-size:var(--fs-xs); color:var(--ink-600);
+}
+.price-detail-row strong{
+  font-family:'Zilla Slab',serif; font-size:14px; font-weight:600;
+  color:var(--ink-900);
+}
+.price-detail-row.margin span:last-child{font-weight:600; color:var(--green-700);}
+.price-detail-row.susut span:last-child{color:var(--rust-600);}
+.price-detail-divider{border-top:1px dashed var(--line); margin:3px 0;}
+.price-detail-row.bersih strong{font-size:15px; color:var(--green-700);}
+
+/* ---------- Fixed cost rows ---------- */
+.fixed-row{
+  display:flex; justify-content:space-between; align-items:center;
+  padding:12px 13px; background:var(--green-100);
+  border-radius:var(--r-sm); margin-bottom:8px;
+  border:1px solid transparent;
+  transition:border-color .15s;
+}
+.fixed-row.editing{
+  border-color:var(--rust-600); background:var(--card);
+  flex-direction:column; align-items:stretch; gap:8px;
+}
+.fixed-edit-group{display:flex; gap:8px; align-items:center;}
+.fixed-row.editing input.fixed-input{width:auto; flex:1; text-align:left;}
+.fixed-default-btn{
+  background:none; border:1px dashed var(--green-700); color:var(--green-700);
+  border-radius:var(--r-sm); padding:0 10px; height:34px;
+  font-size:11.5px; font-weight:600; cursor:pointer; white-space:nowrap; flex-shrink:0;
+}
+.fixed-default-btn:active{background:var(--green-100);}
+.fixed-row .lbl{
+  font-size:var(--fs-sm); color:var(--ink-700);
+  display:flex; align-items:center; gap:6px;
+}
+.fixed-row .val{
+  font-family:'Zilla Slab',serif; font-weight:600; font-size:16px;
+  color:var(--green-700);
+}
+.fixed-row .edit-btn{
+  background:none; border:none; padding:4px 6px; cursor:pointer;
+  color:var(--ink-600); font-size:14px; margin-left:6px;
+}
+.fixed-row .edit-btn:active{color:var(--rust-600);}
+.fixed-row input.fixed-input{
+  width:120px; padding:6px 10px; font-size:15px;
+  border:1px solid var(--line); border-radius:var(--r-sm);
+  background:var(--card); font-family:'Zilla Slab',serif; font-weight:600;
+  text-align:right; color:var(--green-700);
+}
+.fixed-row input.fixed-input:focus{outline:none; border-color:var(--green-700);}
+
+/* ---------- Total bar ---------- */
+.total-bar{
+  margin-top:14px; display:flex; justify-content:space-between; align-items:center;
+  background:var(--green-100); border-radius:var(--r-md); padding:13px 16px;
+}
+.total-bar .lbl{font-size:var(--fs-sm); color:var(--ink-700); font-weight:500;}
+.total-bar .val{
+  font-family:'Zilla Slab',serif; font-size:19px; font-weight:700; color:var(--green-700);
+}
+
+/* ---------- Empty / error ---------- */
+.empty{text-align:center; padding:36px 16px; color:var(--ink-400);}
+.empty svg{width:36px; height:36px; opacity:.35; margin-bottom:10px; stroke:currentColor; fill:none; stroke-width:1.4;}
+.empty p{font-size:var(--fs-sm); margin:0 0 14px; color:var(--ink-600);}
+.empty-note{font-size:var(--fs-sm); color:var(--ink-600); padding:20px 0; text-align:center;}
+
+/* ---------- Navbar ---------- */
+.navbar{
+  display:grid; grid-template-columns:repeat(5,1fr);
+  border-top:1px solid var(--line);
+  background:rgba(255,254,251,.94);
+  backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px);
+  padding:6px 4px calc(6px + env(safe-area-inset-bottom,0px));
+  position:fixed; bottom:0; left:0; right:0;
+  max-width:480px; margin:0 auto; z-index:10;
+}
+.navbar button{
+  background:none; border:none; cursor:pointer;
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;
+  color:var(--ink-400); padding:6px 0; min-height:52px;
+  transition:color .15s; font-family:inherit;
+}
+.navbar button svg{width:21px; height:21px; stroke:currentColor; fill:none; stroke-width:1.7; stroke-linecap:round; stroke-linejoin:round;}
+.navbar button span{font-size:10px; font-weight:500; letter-spacing:.1px;}
+.navbar button.active{color:var(--green-700);}
+.navbar button.active span{font-weight:600;}
+
+/* ---------- Toast ---------- */
+.toast{
+  position:fixed; left:50%; transform:translateX(-50%) translateY(10px);
+  bottom:calc(88px + env(safe-area-inset-bottom,0px));
+  background:var(--ink-900); color:#fff;
+  padding:10px 18px; border-radius:var(--r-full);
+  font-size:var(--fs-sm); font-weight:500;
+  opacity:0; transition:opacity .2s, transform .2s;
+  pointer-events:none; z-index:20;
+  max-width:calc(100% - 32px); text-align:center;
+}
+.toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
+
+/* ---------- Modal ---------- */
+.modal-overlay{
+  position:fixed; inset:0;
+  background:rgba(31,32,25,.55);
+  display:flex; align-items:center; justify-content:center;
+  padding:20px; z-index:100;
+  animation:fadeIn .15s ease;
+}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes scaleIn{from{transform:scale(.95);opacity:0}to{transform:scale(1);opacity:1}}
+.modal-box{
+  background:var(--card); border-radius:var(--r-lg);
+  max-width:400px; width:100%;
+  max-height:85vh; display:flex; flex-direction:column;
+  box-shadow:0 12px 40px rgba(0,0,0,.25);
+  animation:scaleIn .2s ease;
+}
+.modal-head{
+  padding:20px 20px 10px;
+  display:flex; align-items:center; gap:10px;
+}
+.modal-head h3{font-size:16px;}
+.modal-icon{
+  width:32px; height:32px; border-radius:50%;
+  background:#FFF9E6; color:#8A5D00;
+  display:flex; align-items:center; justify-content:center;
+  font-size:18px; flex-shrink:0;
+}
+.modal-desc{
+  padding:0 20px 12px; margin:0;
+  font-size:13px; color:var(--ink-600); line-height:1.5;
+}
+.modal-list{
+  padding:0 8px 8px;
+  overflow-y:auto; flex:1; max-height:40vh;
+}
+.modal-item{
+  padding:10px 12px;
+  border-radius:var(--r-sm);
+  cursor:pointer; display:flex;
+  align-items:center; justify-content:space-between;
+  font-size:14.5px; font-weight:500;
+  transition:background .12s;
+}
+.modal-item:active{background:var(--green-100);}
+.modal-item::after{
+  content:'+'; color:var(--green-700);
+  font-weight:700; font-size:16px;
+}
+.modal-actions{
+  padding:12px 16px 16px;
+  display:flex; gap:8px;
+  border-top:1px solid var(--line-soft);
+}
+.modal-actions .btn-mini{flex:1; padding:11px 16px; font-size:13.5px;}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <h1>Sayur App</h1>
+  <span id="todayLabel"></span>
+</div>
+
+<!-- ============ DASHBOARD ============ -->
+<div class="screen active" id="dashboard">
+  <div class="hero" id="dash_hero">
+    <div class="k">Laba bersih hari ini</div>
     <div class="v" id="dash_laba">Rp 0</div>
   </div>
   <div class="stat-grid">
