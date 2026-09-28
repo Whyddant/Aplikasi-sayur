@@ -1034,16 +1034,31 @@ function hitungHargaMinimum(modal){
 }
 
 /* API */
+// Dedupe GET identik yang berdekatan (mis. getBelanja dipanggil 3x saat startup): TTL singkat,
+// dibersihkan setiap ada apiPost, dan tiap pemanggil menerima salinan sendiri.
+const _GET_TTL = 4000;
+const _getCache = new Map();
+function _clone(v){ try{ return structuredClone(v); }catch(e){ return JSON.parse(JSON.stringify(v)); } }
 async function apiGet(action, params={}){
   const qs = new URLSearchParams({action, token: API_TOKEN, ...params}).toString();
-  const res = await fetch(`${API_URL}?${qs}`);
-  const json = await res.json();
-  if(!json.ok) throw new Error(json.error || 'Gagal');
-  return json.data;
+  const hit = _getCache.get(qs);
+  if(hit && Date.now() - hit.t < _GET_TTL) return _clone(await hit.p);
+  const p = (async () => {
+    const res = await fetch(`${API_URL}?${qs}`);
+    const json = await res.json();
+    if(!json.ok) throw new Error(json.error || 'Gagal');
+    return json.data;
+  })();
+  const entry = {t: Date.now(), p};
+  _getCache.set(qs, entry);
+  p.catch(() => { if(_getCache.get(qs) === entry) _getCache.delete(qs); });
+  return _clone(await p);
 }
 async function apiPost(action, data){
+  _getCache.clear();
   const res = await fetch(API_URL, {method:'POST', body: JSON.stringify({action, token: API_TOKEN, data})});
   const json = await res.json();
+  _getCache.clear();
   if(!json.ok) throw new Error(json.error || 'Gagal');
   return json.data;
 }
@@ -1563,6 +1578,10 @@ async function saveAllDrafts(){
       succeeded.push(item);
     }catch(e){ failed.push(item); }
   }
+  if(succeeded.length){
+    btn.textContent = 'Memperbarui laporan…';
+    try{ await apiPost('refreshLaporan', { tanggal: _activeDate }); }catch(e){}
+  }
   if(failed.length === 0){
     clearDraftStorage(); _draft = [];
     showToast(`${succeeded.length} item tersimpan`);
@@ -2033,28 +2052,42 @@ document.getElementById('t_submit').addEventListener('click', async ()=>{
 });
 
 /* MODUL DASHBOARD */
+function _renderDashKpi(lap, saldo){
+  document.getElementById('dash_laba').textContent = rupiah(parseNum(lap.labaBersih));
+  document.getElementById('dash_omzet').textContent = rupiah(parseNum(lap.totalOmzet));
+  document.getElementById('dash_belanja').textContent = rupiah(parseNum(lap.belanjaHariIni));
+  document.getElementById('dash_ops').textContent = rupiah(parseNum(lap.totalBiaya));
+  const hero = document.getElementById('dash_hero');
+  const _belumTutup = parseNum(lap.totalOmzet) <= 0;
+  hero.classList.toggle('neg', !_belumTutup && parseNum(lap.labaBersih) < 0);
+  const _hk = hero.querySelector('.k'); if(_hk) _hk.textContent = _belumTutup ? 'Laba bersih hari ini (belum tutup)' : 'Laba bersih hari ini';
+  document.getElementById('dash_cash_in').textContent = rupiah(parseNum(lap.omzetCash));
+  document.getElementById('dash_cash_out').textContent = 'Keluar: ' + rupiah(parseNum(lap.biayaCash) + parseNum(lap.belanjaCash));
+  document.getElementById('dash_qris_in').textContent = rupiah(parseNum(lap.omzetQris));
+  document.getElementById('dash_qris_out').textContent = 'Keluar: ' + rupiah(parseNum(lap.biayaQris) + parseNum(lap.belanjaQris));
+  if(saldo){
+    document.getElementById('dash_saldo_total').textContent = rupiah(saldo.total);
+    document.getElementById('dash_saldo_breakdown').textContent = `Cash ${rupiah(saldo.saldoCash)} · QRIS ${rupiah(saldo.saldoQris)}`;
+  }
+}
 async function loadDashboard(){
+  // 1) Tampilkan data terakhir dari cache dulu (instan), 2) lalu segarkan dari server dalam 1 request
   try{
-    const lap = await apiGet('getLaporan', {tanggal: todayStr()});
-    document.getElementById('dash_laba').textContent = rupiah(parseNum(lap.labaBersih));
-    document.getElementById('dash_omzet').textContent = rupiah(parseNum(lap.totalOmzet));
-    document.getElementById('dash_belanja').textContent = rupiah(parseNum(lap.belanjaHariIni));
-    document.getElementById('dash_ops').textContent = rupiah(parseNum(lap.totalBiaya));
-    const hero = document.getElementById('dash_hero');
-    const _belumTutup = parseNum(lap.totalOmzet) <= 0;
-    hero.classList.toggle('neg', !_belumTutup && parseNum(lap.labaBersih) < 0);
-    const _hk = hero.querySelector('.k'); if(_hk) _hk.textContent = _belumTutup ? 'Laba bersih hari ini (belum tutup)' : 'Laba bersih hari ini';
-    document.getElementById('dash_cash_in').textContent = rupiah(parseNum(lap.omzetCash));
-    document.getElementById('dash_cash_out').textContent = 'Keluar: ' + rupiah(parseNum(lap.biayaCash) + parseNum(lap.belanjaCash));
-    document.getElementById('dash_qris_in').textContent = rupiah(parseNum(lap.omzetQris));
-    document.getElementById('dash_qris_out').textContent = 'Keluar: ' + rupiah(parseNum(lap.biayaQris) + parseNum(lap.belanjaQris));
-    try{
-      const saldo = await apiGet('getSaldoSekarang');
-      document.getElementById('dash_saldo_total').textContent = rupiah(saldo.total);
-      document.getElementById('dash_saldo_breakdown').textContent = `Cash ${rupiah(saldo.saldoCash)} · QRIS ${rupiah(saldo.saldoQris)}`;
-    }catch(e){}
-  }catch(e){ showToast('Gagal: ' + e.message); }
-  renderDashboardChart();
+    const c = JSON.parse(localStorage.getItem('sayur_dash_cache') || 'null');
+    if(c && c.lap){
+      if(c.tanggal === todayStr()) _renderDashKpi(c.lap, c.saldo);
+      renderDashboardChart(c.rows);
+    }
+  }catch(e){}
+  try{
+    const d = await apiGet('getDashboard', {tanggal: todayStr()});
+    _renderDashKpi(d.lap, d.saldo);
+    try{ localStorage.setItem('sayur_dash_cache', JSON.stringify(d)); }catch(e){}
+    renderDashboardChart(d.rows);
+  }catch(e){
+    showToast('Gagal: ' + e.message);
+    renderDashboardChart();
+  }
 }
 document.getElementById('dashSaldoCard').addEventListener('click', ()=>{
   goTab('laporan');
@@ -2066,13 +2099,13 @@ document.getElementById('dashSaldoCard').addEventListener('click', ()=>{
 
 /* CHART */
 const HARI_ID = ['Min','Sen','Sel','Rab','Kam','Jum','Sab'];
-async function renderDashboardChart(){
+async function renderDashboardChart(rowsArg){
   const barsEl = document.getElementById('dash_chart_bars');
   const labelsEl = document.getElementById('dash_chart_labels');
   const summaryEl = document.getElementById('dash_chart_summary');
   if(!barsEl || !labelsEl || !summaryEl) return;
   try{
-    const rows = await apiGet('getLaporanList', {limit: 7});
+    const rows = rowsArg || await apiGet('getLaporanList', {limit: 7});
     const today = new Date();
     const days = [];
     for(let i = 6; i >= 0; i--){
@@ -2429,11 +2462,13 @@ updateDateWarnings();
   attachMoneyInput(document.getElementById(id));
 });
 
-loadDashboard();
-loadBelanja();
-loadCatatan();
-loadNamaBarangOptions();
-loadLainLain();
+// Dashboard dulu (yang pertama terlihat); data tab lain dimuat setelahnya agar tidak berebut dengan server
+Promise.resolve(loadDashboard()).finally(()=>{
+  loadBelanja();
+  loadCatatan();
+  loadNamaBarangOptions();
+  loadLainLain();
+});
 
 setInterval(()=>{
   const lbl = document.getElementById('topbarDate');
