@@ -946,7 +946,7 @@ body.dark .doc-content .highlight p{color:var(--ink-900);}
    KONFIGURASI
    ========================================================== */
 const API_URL = 'https://script.google.com/macros/s/AKfycbyj3eXJV0qSa0-3HFuph0AaV1y5dft9Zjsqt-en7j_DU9mM4huxGoctMD52KTbivuN6/exec';
-const API_TOKEN = '401fbcb1-d2f4-4de6-9d3b-5c95c9989fca';
+const API_TOKEN = 'T_ps2ImXNPwz51wWz-bb7qjHjT4dNgFh';
 const SUSUT_RATE = 0.30;
 
 const DEFAULT_PENGATURAN = {
@@ -2041,7 +2041,9 @@ async function loadDashboard(){
     document.getElementById('dash_belanja').textContent = rupiah(parseNum(lap.belanjaHariIni));
     document.getElementById('dash_ops').textContent = rupiah(parseNum(lap.totalBiaya));
     const hero = document.getElementById('dash_hero');
-    hero.classList.toggle('neg', parseNum(lap.labaBersih) < 0);
+    const _belumTutup = parseNum(lap.totalOmzet) <= 0;
+    hero.classList.toggle('neg', !_belumTutup && parseNum(lap.labaBersih) < 0);
+    const _hk = hero.querySelector('.k'); if(_hk) _hk.textContent = _belumTutup ? 'Laba bersih hari ini (belum tutup)' : 'Laba bersih hari ini';
     document.getElementById('dash_cash_in').textContent = rupiah(parseNum(lap.omzetCash));
     document.getElementById('dash_cash_out').textContent = 'Keluar: ' + rupiah(parseNum(lap.biayaCash) + parseNum(lap.belanjaCash));
     document.getElementById('dash_qris_in').textContent = rupiah(parseNum(lap.omzetQris));
@@ -2079,7 +2081,8 @@ async function renderDashboardChart(){
       days.push({ ymd, dow: d.getDay() });
     }
     const byDate = {};
-    (rows || []).forEach(r => { const ymd = normYmd(r.Tanggal); if(ymd) byDate[ymd] = r; });
+    // Hanya hari yang sudah tutup (omzet > 0) yang dihitung; hari berjalan/baris mutasi saja diabaikan
+    (rows || []).forEach(r => { const ymd = normYmd(r.Tanggal); if(ymd && parseNum(r.TotalOmzet) > 0) byDate[ymd] = r; });
     let maxVal = 0;
     days.forEach(d => {
       const r = byDate[d.ymd]; if(!r) return;
