@@ -2475,6 +2475,11 @@ setInterval(()=>{
   if(lbl) lbl.textContent = dateShort();
 }, 60000);
 
+  // Warming schedule — cegah cold start Apps Script
+setInterval(()=>{
+  fetch(`${API_URL}?action=getPengaturan&token=${API_TOKEN}`).catch(()=>{});
+}, 4 * 60 * 1000);
+
 if('serviceWorker' in navigator){
   window.addEventListener('load', ()=>{
     navigator.serviceWorker.register('./service-worker.js')
