@@ -378,6 +378,8 @@ body.dark .mutasi-icon.tarik{background:#3A1F18;}
 .settings-item.danger .lbl{color:var(--rust-600);}
 .settings-item-static{cursor:default;}
 .settings-item-static:active{background:transparent;}
+.settings-item.primary .lbl{color:var(--green-700); font-weight:600;}
+.settings-item.primary .val{color:var(--green-700);}
 
 /* EMPTY */
 .empty{text-align:center; padding:36px 16px; color:var(--ink-400);}
@@ -751,6 +753,10 @@ body.dark .doc-content .highlight p{color:var(--ink-900);}
   <div class="settings-section">
     <div class="settings-section-title">📦 Data</div>
     <div class="settings-group">
+      <div class="settings-item primary" id="set_refresh">
+        <span class="lbl">🔄 Refresh Laporan</span>
+        <span class="val" id="val_refresh_status">›</span>
+      </div>
       <div class="settings-item" id="set_download">
         <span class="lbl">Download Backup (CSV)</span>
         <span class="val">›</span>
@@ -2370,6 +2376,24 @@ document.getElementById('set_bensin').addEventListener('click', ()=>{
     await apiPost('setPengaturan', {Bensin: n});
     showToast('Disimpan'); loadPengaturan();
   });
+});
+document.getElementById('set_refresh').addEventListener('click', async ()=>{
+  if(!confirm('Refresh semua Laporan?\n\nIni akan menghitung ulang Laba & Saldo dari data terkini.\nProses ~5-10 detik.')) return;
+  const statusEl = document.getElementById('val_refresh_status');
+  statusEl.textContent = 'Memproses…';
+  try{
+    await apiPost('rebuildSemuaLaporan', {});
+    statusEl.textContent = '✅ Selesai';
+    showToast('Laporan berhasil di-refresh');
+    setTimeout(()=>{ statusEl.textContent = '›'; }, 3000);
+    // Refresh tampilan yang mungkin berubah
+    try{ loadDashboard(); }catch(e){}
+    try{ if(document.getElementById('laporan').classList.contains('active')) loadLaporan(); }catch(e){}
+  }catch(e){
+    statusEl.textContent = '❌ Gagal';
+    showToast('Gagal: ' + e.message);
+    setTimeout(()=>{ statusEl.textContent = '›'; }, 3000);
+  }
 });
 document.getElementById('set_download').addEventListener('click', async ()=>{
   showToast('Menyiapkan backup…');
