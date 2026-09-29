@@ -144,8 +144,8 @@ body.dark .hutang-toggle-wrap.on{background:#2A2415;}
 .expense-row .er-name{font-size:var(--fs-sm); font-weight:600; color:var(--ink-700);}
 .expense-row .er-body{display:flex; gap:6px; align-items:center; min-width:0;}
 .expense-row .er-input{flex:1 1 auto; min-width:0; padding:8px 10px; border:1px solid var(--line); border-radius:var(--r-sm); font-family:'Zilla Slab',serif; font-size:15px; font-weight:600; background:var(--paper); text-align:left; color:var(--ink-900);}
-.expense-row .er-body .method-toggle{flex:0 0 auto;}
 .expense-row .er-input:focus{outline:none; border-color:var(--green-700);}
+.expense-row .er-body .method-toggle{flex:0 0 auto;}
 .method-toggle{display:inline-flex; align-items:center; justify-content:center; gap:4px; padding:7px 10px; border-radius:var(--r-full); border:1px solid var(--line); background:var(--card); font:600 12px 'Work Sans',sans-serif; cursor:pointer; white-space:nowrap; transition:all .12s; flex-shrink:0; max-width:100%;}
 .method-toggle[data-metode="Cash"]{background:var(--green-100); color:var(--green-700); border-color:#C8D8B5;}
 .method-toggle[data-metode="QRIS"]{background:var(--blue-100); color:var(--blue-600); border-color:#B9D2E8;}
@@ -210,6 +210,12 @@ body.dark .bon-section{background:#2A2415;}
 .btn{width:100%; padding:13px; border:none; border-radius:var(--r-sm); background:var(--rust-600); color:#fff; font:600 var(--fs-md) 'Work Sans',sans-serif; cursor:pointer; transition:background .12s;}
 .btn:active{background:var(--rust-700);}
 .btn:disabled{opacity:.6; cursor:default;}
+.btn-omzet{background:var(--blue-600);}
+.btn-omzet:active{background:#1B4570;}
+.btn-biaya{background:var(--rust-600);}
+.btn-biaya:active{background:var(--rust-700);}
+.btn-lengkap{background:var(--green-700);}
+.btn-lengkap:active{background:var(--green-900);}
 .btn-secondary{background:var(--green-700);}
 .btn-ghost{background:none; border:1px solid var(--line); color:var(--green-700); padding:9px 16px; border-radius:var(--r-full); font:600 var(--fs-sm) 'Work Sans',sans-serif; cursor:pointer;}
 .btn-ghost:active{background:var(--green-100);}
@@ -757,6 +763,8 @@ body.dark .doc-content .highlight p{color:var(--ink-900);}
 
   <div class="field" style="margin-top:16px;"><label>Total Omzet (Cash + QRIS + Bon)</label><div class="price-value" id="t_total_omzet" style="padding:8px 0; font-size:18px;">Rp 0</div></div>
 
+  <button class="btn btn-omzet" id="t_save_omzet" style="margin-top:12px;">💾 Simpan Omzet</button>
+
   <div class="field-label-sore">Biaya Sore</div>
   <div class="field" style="margin-bottom:8px;"><label>Operasional Pasar</label><div class="fixed-row" id="t_ops_row"></div></div>
   <div class="field" style="margin-bottom:16px;"><label>Bensin</label><div class="fixed-row" id="t_bensin_row"></div></div>
@@ -789,6 +797,8 @@ body.dark .doc-content .highlight p{color:var(--ink-900);}
     </div>
   </div>
 
+  <button class="btn btn-biaya" id="t_save_biaya" style="margin-top:14px;">💰 Simpan Pengeluaran Sore</button>
+
   <details class="catatan-pagi-box">
     <summary><span>Catatan Pengeluaran Pagi</span><span class="badge-opsional">opsional</span></summary>
     <p class="hint-text">Hanya untuk rekap bulanan. Tidak memengaruhi laba.</p>
@@ -800,7 +810,7 @@ body.dark .doc-content .highlight p{color:var(--ink-900);}
     </div>
   </details>
 
-  <button class="btn" id="t_submit" style="margin-top:16px;">Simpan Tutup Hari</button>
+  <button class="btn btn-lengkap" id="t_submit" style="margin-top:16px;">✅ Simpan Lengkap</button>
 </div>
 
 <!-- LAPORAN -->
@@ -941,7 +951,7 @@ body.dark .doc-content .highlight p{color:var(--ink-900);}
     <div class="settings-group">
       <div class="settings-item settings-item-static">
         <span class="lbl">Versi</span>
-        <span class="val">4.0</span>
+        <span class="val">4.1</span>
       </div>
       <div class="settings-item settings-item-static">
         <span class="lbl">Terakhir Sinkron</span>
@@ -961,9 +971,9 @@ body.dark .doc-content .highlight p{color:var(--ink-900);}
   <div class="doc-content">
     <h3>Alur Usaha Anda</h3>
     <div class="highlight"><p><strong>Pagi (05.00)</strong> — Buka lapak, jual barang dari belanja kemarin.<br>
-    <strong>Siang (11.00)</strong> — Pulang, hitung omzet. Input di Tutup Hari.<br>
+    <strong>Siang (11.00)</strong> — Pulang, hitung omzet. Input di Tutup Hari → <strong>Simpan Omzet</strong>.<br>
     <strong>Sore (16.00)</strong> — Belanja untuk besok. Input di Belanja.<br>
-    <strong>Malam</strong> — Cek Beranda, lihat laba dan saldo.</p></div>
+    <strong>Malam</strong> — Isi pengeluaran sore di Tutup Hari → <strong>Simpan Pengeluaran</strong>.</p></div>
 
     <h3>Rumus Laba</h3>
     <p><code>Laba = Omzet − Belanja Hari Ini − Biaya Sore</code></p>
@@ -979,6 +989,14 @@ body.dark .doc-content .highlight p{color:var(--ink-900);}
       <li>💰 <strong>Piutang Saya</strong> — Pelanggan belum bayar ke Anda (bon). Catat di Tutup Hari. Saldo baru bertambah saat pelanggan bayar.</li>
     </ul>
     <p>Hutang/piutang <strong>tidak mengubah Laba</strong> — hanya menggeser kapan uang masuk/keluar dari kas. Cicilan bisa sebagian-sebagian (tidak harus lunas sekaligus).</p>
+
+    <h3>3 Tombol Simpan di Tutup Hari</h3>
+    <ul>
+      <li>💾 <strong>Simpan Omzet</strong> — Simpan omzet & bon saja (untuk siang hari, saat pengeluaran sore belum diketahui)</li>
+      <li>💰 <strong>Simpan Pengeluaran Sore</strong> — Simpan biaya operasional + konsumsi + lain-lain</li>
+      <li>✅ <strong>Simpan Lengkap</strong> — Simpan semua sekaligus (omzet + pengeluaran)</li>
+    </ul>
+    <p>Urutan tidak masalah — yang terakhir disimpan akan menimpa yang lama. Tidak ada data dobel.</p>
 
     <h3>Lain-lain Dinamis</h3>
     <p>Di Tutup Hari, bagian "Lain-lain Sore" bisa diisi banyak pengeluaran dengan keterangan masing-masing.</p>
@@ -997,7 +1015,7 @@ body.dark .doc-content .highlight p{color:var(--ink-900);}
   <div class="doc-content">
     <h3>Sayur App</h3>
     <p>Aplikasi pencatatan usaha sayur — untuk pedagang yang ingin tahu untung ruginya setiap hari.</p>
-    <p><strong>Versi:</strong> 4.0</p>
+    <p><strong>Versi:</strong> 4.1</p>
     <p><strong>Fitur:</strong></p>
     <ul>
       <li>Catat belanja & omzet harian</li>
@@ -1009,6 +1027,7 @@ body.dark .doc-content .highlight p{color:var(--ink-900);}
       <li>Grafik 7 hari</li>
       <li>Arus kas Cash & QRIS</li>
       <li>Auto-potong fee QRIS 0.7%</li>
+      <li>3 tombol simpan fleksibel di Tutup Hari</li>
     </ul>
     <p style="margin-top:20px; color:var(--ink-600); font-size:13px;">Dibuat dengan ❤️ untuk membantu pedagang kecil.</p>
   </div>
@@ -1027,6 +1046,9 @@ body.dark .doc-content .highlight p{color:var(--ink-900);}
 
     <p><strong>Q: Bagaimana kalau pelanggan bon?</strong></p>
     <p>A: Di Tutup Hari, isi Cash dengan uang yang benar-benar di tangan. Lalu tambah Bon di bagian "Bon Pelanggan" dengan nama + nominal. Saat pelanggan bayar, buka tab Laporan → Hutang → tap "Terima".</p>
+
+    <p><strong>Q: Kapan pakai tombol "Simpan Omzet" saja?</strong></p>
+    <p>A: Saat siang, Anda sudah tahu omzet tapi pengeluaran sore belum. Tap "Simpan Omzet" — laba di Beranda langsung update. Nanti sore tinggal isi pengeluaran → tap "Simpan Pengeluaran Sore".</p>
 
     <p><strong>Q: Bisa bayar hutang sebagian-sebagian?</strong></p>
     <p>A: Ya. Setiap kali bayar, sistem mencatat cicilan. Status otomatis berubah: Belum → Sebagian → Lunas.</p>
@@ -1554,11 +1576,12 @@ function renderItem(it, isDraft){
   const subtotal = hitungSubtotal(it);
   const key = isDraft ? ('draft:' + it._draftId) : ('server:' + it.ID);
   const metodeBadge = metode === 'QRIS' ? '<span class="qris-badge">QRIS</span>' : '';
+  const hutangBadge = it.bayarNanti ? '<span class="hutang-badge">HUTANG</span>' : '';
 
   if(_editingKey === key){
     return `<div class="ledger-item editing" data-key="${escHtml(key)}">
       <div style="width:100%;">
-        <div class="name" style="margin-bottom:8px;">${escHtml(nama)} ${isDraft ? '<span class="draft-badge">draft</span>' : ''} ${metodeBadge}</div>
+        <div class="name" style="margin-bottom:8px;">${escHtml(nama)} ${isDraft ? '<span class="draft-badge">draft</span>' : ''} ${metodeBadge} ${hutangBadge}</div>
         <div class="edit-form">
           <div class="edit-row"><label>Qty</label><input type="text" inputmode="decimal" class="edit-qty" value="${escHtml(qty)}"></div>
           <div class="edit-row"><label>Harga Beli</label><input type="text" inputmode="numeric" class="edit-harga" value="${beli ? beli.toLocaleString('id-ID') : ''}"></div>
@@ -1570,7 +1593,7 @@ function renderItem(it, isDraft){
   }
   return `<div class="ledger-item ${isDraft ? 'draft' : ''}" data-key="${escHtml(key)}">
     <div>
-      <div class="name">${escHtml(nama)} ${isDraft ? '<span class="draft-badge">draft</span>' : ''} ${metodeBadge}</div>
+      <div class="name">${escHtml(nama)} ${isDraft ? '<span class="draft-badge">draft</span>' : ''} ${metodeBadge} ${hutangBadge}</div>
       <div class="sub">${escHtml(qty)} ${escHtml(satuan)} × ${rupiah(beli)}</div>
     </div>
     <div style="display:flex;align-items:center;">
@@ -1769,7 +1792,7 @@ document.getElementById('b_submit').addEventListener('click', ()=>{
     if(!supplier){ showToast('Isi nama supplier dulu'); return; }
     item.bayarNanti = true;
     item.supplier = supplier;
-    item.metode = 'Cash'; // default, akan diabaikan server
+    item.metode = 'Cash';
   } else {
     item.metode = metode;
   }
@@ -1783,7 +1806,6 @@ document.getElementById('b_submit').addEventListener('click', ()=>{
   document.getElementById('b_harga').value = '';
   document.getElementById('b_supplier').value = '';
   setMethodToggle(document.getElementById('b_metode'), 'Cash');
-  // reset toggle bayar nanti
   _bayarNanti = false;
   bBayarNantiEl.classList.remove('on');
   bSupplierWrap.classList.remove('show');
@@ -1826,7 +1848,6 @@ async function saveAllDrafts(){
     btn.textContent = `Menyimpan ${i+1}/${total}…`;
     try{
       if(item.bayarNanti){
-        // Catat sebagai Hutang Saya di sheet Hutang
         await apiPost('addHutang', {
           tipe: 'HutangSaya',
           nama: item.supplier,
@@ -2315,16 +2336,86 @@ async function loadTutup(){
     updateTotalOmzetPreview();
     applyPagiToForm();
     loadLainLain();
-    // Load bon tersimpan
     _bonDraft = loadBonFromStorage();
     renderBon();
     updateTotalOmzetPreview();
     const submitBtn = document.getElementById('t_submit');
     if(submitBtn){
-      submitBtn.textContent = _activeDate === todayStr() ? 'Simpan Tutup Hari' : 'Simpan untuk ' + formatTanggalPendek(_activeDate);
+      submitBtn.textContent = _activeDate === todayStr() ? '✅ Simpan Lengkap' : '✅ Simpan untuk ' + formatTanggalPendek(_activeDate);
     }
   }catch(e){ showToast('Gagal: ' + e.message); }
 }
+
+/* ==========================================================
+   TOMBOL: SIMPAN OMZET SAJA (untuk disimpan siang dulu)
+   ========================================================== */
+document.getElementById('t_save_omzet').addEventListener('click', async ()=>{
+  const btn = document.getElementById('t_save_omzet'); if(btn.disabled) return;
+  const cash = bacaUang(document.getElementById('t_cash'));
+  const qris = bacaUang(document.getElementById('t_qris'));
+  const bonTotal = _bonDraft.reduce((s,b) => s + (b.jumlah || 0), 0);
+  if(!cash && !qris && !bonTotal){ showToast('Isi Cash, QRIS, atau Bon dulu'); return; }
+  const prev = btn.textContent;
+  btn.disabled = true; btn.textContent = 'Menyimpan omzet…';
+  try{
+    for(const b of _bonDraft){
+      try{
+        await apiPost('addHutang', {
+          tipe: 'PiutangSaya', nama: b.nama, jumlah: b.jumlah,
+          catatan: 'Bon ' + formatTanggalPendek(_activeDate),
+          tanggal: _activeDate
+        });
+      }catch(e){ /* lanjut walau bon gagal */ }
+    }
+    await apiPost('setOmzet', {cash: cash + bonTotal, qris, tanggal: _activeDate});
+    await apiPost('simpanLaporan', {tanggal: _activeDate});
+    showToast('✅ Omzet tersimpan');
+    clearBonStorage(); _bonDraft = []; renderBon(); updateTotalOmzetPreview();
+    try{ localStorage.setItem('sayur_last_sync', new Date().toISOString()); }catch(e){}
+    loadDashboard();
+  }catch(e){ showToast('Gagal simpan omzet: ' + e.message); }
+  finally{ btn.disabled = false; btn.textContent = prev; }
+});
+
+/* ==========================================================
+   TOMBOL: SIMPAN PENGELUARAN SAJA
+   ========================================================== */
+document.getElementById('t_save_biaya').addEventListener('click', async ()=>{
+  const btn = document.getElementById('t_save_biaya'); if(btn.disabled) return;
+  const konsumsi = bacaUang(document.getElementById('t_konsumsi'));
+  const konsumsiMetode = getMethodToggle(document.getElementById('t_konsumsi_metode'));
+  savePagiLocal({
+    kresek: bacaUang(document.getElementById('tp_kresek')),
+    konsumsi: bacaUang(document.getElementById('tp_konsumsi')),
+    iuran: bacaUang(document.getElementById('tp_iuran')),
+    lain: bacaUang(document.getElementById('tp_lain'))
+  });
+  const prev = btn.textContent;
+  btn.disabled = true; btn.textContent = 'Menyimpan…';
+  try{
+    await apiPost('setBiayaOperasional', {
+      operasionalBelanja: _biayaHariIni.OperasionalBelanja,
+      operasionalMetode: _biayaHariIni.OperasionalMetode,
+      bensin: _biayaHariIni.Bensin, bensinMetode: _biayaHariIni.BensinMetode,
+      konsumsi, konsumsiMetode,
+      pagiKresek: bacaUang(document.getElementById('tp_kresek')),
+      pagiKonsumsi: bacaUang(document.getElementById('tp_konsumsi')),
+      pagiIuran: bacaUang(document.getElementById('tp_iuran')),
+      pagiLain: bacaUang(document.getElementById('tp_lain')),
+      tanggal: _activeDate
+    });
+    await apiPost('simpanLaporan', {tanggal: _activeDate});
+    showToast('✅ Pengeluaran tersimpan');
+    _biayaHariIni.sudahDiubah = false;
+    try{ localStorage.setItem('sayur_last_sync', new Date().toISOString()); }catch(e){}
+    loadDashboard();
+  }catch(e){ showToast('Gagal simpan pengeluaran: ' + e.message); }
+  finally{ btn.disabled = false; btn.textContent = prev; }
+});
+
+/* ==========================================================
+   TOMBOL: SIMPAN LENGKAP
+   ========================================================== */
 document.getElementById('t_submit').addEventListener('click', async ()=>{
   const btn = document.getElementById('t_submit'); if(btn.disabled) return;
   const cash = bacaUang(document.getElementById('t_cash'));
@@ -2342,7 +2433,6 @@ document.getElementById('t_submit').addEventListener('click', async ()=>{
   const prev = btn.textContent;
   btn.disabled = true; btn.textContent = 'Menyimpan…';
   try{
-    // Simpan bon sebagai PiutangSaya
     for(const b of _bonDraft){
       try{
         await apiPost('addHutang', {
@@ -2354,7 +2444,6 @@ document.getElementById('t_submit').addEventListener('click', async ()=>{
         });
       }catch(e){ /* lanjut walau bon gagal */ }
     }
-    // Omzet Cash = uang tunai di tangan + bon (bon tetap dihitung sebagai omzet, nanti uangnya masuk saat bayar)
     await apiPost('setOmzet', {cash: cash + bonTotal, qris, tanggal: _activeDate});
     await apiPost('setBiayaOperasional', {
       operasionalBelanja: _biayaHariIni.OperasionalBelanja,
@@ -2368,11 +2457,10 @@ document.getElementById('t_submit').addEventListener('click', async ()=>{
       tanggal: _activeDate
     });
     await apiPost('simpanLaporan', {tanggal: _activeDate});
-    showToast('Tutup hari tersimpan');
-    clearBonStorage(); _bonDraft = []; renderBon();
+    showToast('✅ Tutup hari tersimpan');
+    clearBonStorage(); _bonDraft = []; renderBon(); updateTotalOmzetPreview();
     _biayaHariIni.sudahDiubah = false;
     try{ localStorage.setItem('sayur_last_sync', new Date().toISOString()); }catch(e){}
-    // Refresh data laporan & dashboard
     loadLaporan();
   }catch(e){ showToast('Gagal simpan: ' + e.message); }
   finally{ btn.disabled = false; btn.textContent = prev; }
@@ -2398,7 +2486,6 @@ function _renderDashKpi(lap, saldo, hutang){
     document.getElementById('dash_saldo_total').textContent = rupiah(saldo.total);
     document.getElementById('dash_saldo_breakdown').textContent = `Cash ${rupiah(saldo.saldoCash)} · QRIS ${rupiah(saldo.saldoQris)}`;
   }
-  // Alert hutang/piutang
   const alertEl = document.getElementById('dashHutangAlert');
   if(hutang && (hutang.hutangSaya > 0 || hutang.piutangSaya > 0)){
     alertEl.style.display = 'block';
@@ -2722,7 +2809,7 @@ document.getElementById('mutasi_save').addEventListener('click', async ()=>{
 });
 
 /* MODUL HUTANG */
-let _hutangCache = [], _hutangFilter = 'all';
+let _hutangCache = [], _hutangFilter = 'all', _hutangTipeFilter = null;
 
 async function loadHutang(){
   const listEl = document.getElementById('hutang_list');
@@ -2743,6 +2830,7 @@ async function loadHutang(){
 function renderHutangList(){
   const listEl = document.getElementById('hutang_list');
   let filtered = _hutangCache;
+  if(_hutangTipeFilter) filtered = filtered.filter(h => h.Tipe === _hutangTipeFilter);
   if(_hutangFilter === 'belum') filtered = filtered.filter(h => h.Status !== 'Lunas');
   if(_hutangFilter === 'lunas') filtered = filtered.filter(h => h.Status === 'Lunas');
   if(!filtered.length){ listEl.innerHTML = '<div class="empty-note">Belum ada data</div>'; return; }
@@ -2835,6 +2923,7 @@ document.querySelectorAll('.period-tab[data-hfilter]').forEach(btn=>{
     document.querySelectorAll('.period-tab[data-hfilter]').forEach(b=>b.classList.remove('active'));
     btn.classList.add('active');
     _hutangFilter = btn.dataset.hfilter;
+    _hutangTipeFilter = null;
     renderHutangList();
   });
 });
@@ -2843,31 +2932,12 @@ document.querySelectorAll('.period-tab[data-hfilter]').forEach(btn=>{
 document.querySelectorAll('.hutang-summary .card').forEach(card=>{
   card.addEventListener('click', ()=>{
     const tipe = card.dataset.tipe;
-    // Filter by tipe: atur ke 'belum' dulu biar ringkas
     _hutangFilter = 'belum';
-    document.querySelectorAll('.period-tab[data-hfilter]').forEach(b=>b.classList.toggle('active', b.dataset.hfilter==='belum'));
-    // Simpan filter tipe ke state
     _hutangTipeFilter = tipe;
-    renderHutangListByTipe();
+    document.querySelectorAll('.period-tab[data-hfilter]').forEach(b=>b.classList.toggle('active', b.dataset.hfilter==='belum'));
+    renderHutangList();
   });
 });
-let _hutangTipeFilter = null;
-function renderHutangListByTipe(){
-  const listEl = document.getElementById('hutang_list');
-  let filtered = _hutangCache;
-  if(_hutangTipeFilter) filtered = filtered.filter(h => h.Tipe === _hutangTipeFilter);
-  if(_hutangFilter === 'belum') filtered = filtered.filter(h => h.Status !== 'Lunas');
-  if(_hutangFilter === 'lunas') filtered = filtered.filter(h => h.Status === 'Lunas');
-  if(!filtered.length){
-    listEl.innerHTML = `<div class="empty-note">Tidak ada ${_hutangTipeFilter === 'HutangSaya' ? 'hutang' : 'piutang'} ${_hutangFilter === 'belum' ? 'belum lunas' : ''}</div>`;
-    return;
-  }
-  // Panggil render ulang dengan list terfilter
-  const backup = _hutangCache;
-  _hutangCache = filtered;
-  renderHutangList();
-  _hutangCache = backup;
-}
 
 /* TOMBOL TAMBAH HUTANG */
 document.getElementById('hutang_add_hs').addEventListener('click', ()=>openHutangBaru('HutangSaya'));
