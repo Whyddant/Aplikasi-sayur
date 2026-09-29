@@ -304,9 +304,12 @@ body.dark .date-warn{background:#2E1F14;}
 .flow-head .sub{font-size:var(--fs-xs); color:var(--ink-600);}
 .flow-row{display:flex; justify-content:space-between; padding:5px 0; font-size:var(--fs-sm); color:var(--ink-700);}
 .flow-row .amt{font-family:'Zilla Slab',serif; font-weight:600;}
+.flow-row.fee{color:var(--rust-600); font-size:12px;}
+.flow-row.fee .amt{color:var(--rust-600);}
 .flow-div{border-top:1px dashed var(--line); margin:6px 0;}
 .flow-row.total{padding-top:8px; font-weight:700;}
 .flow-row.total .amt{font-size:16px;}
+.fee-note{font-size:10.5px; color:var(--ink-600); margin-top:6px; padding-top:6px; border-top:1px dashed var(--line-soft); line-height:1.4;}
 
 /* SALDO HALAMAN */
 .saldo-2col{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:14px;}
@@ -317,6 +320,7 @@ body.dark .date-warn{background:#2E1F14;}
 .saldo-big.cash .k{color:var(--green-700);}
 .saldo-big.qris .k{color:var(--blue-600);}
 .saldo-big .v{font-family:'Zilla Slab',serif; font-size:20px; font-weight:700;}
+.saldo-big .fee-hint{font-size:10px; color:var(--ink-600); margin-top:4px; line-height:1.3;}
 .saldo-big .actions{display:flex; gap:6px; margin-top:10px;}
 .saldo-big .actions button{flex:1; padding:7px 8px; border:none; border-radius:var(--r-sm); font:600 11.5px 'Work Sans',sans-serif; cursor:pointer; background:var(--card); color:var(--ink-700); border:1px solid var(--line);}
 .saldo-big .actions button:active{background:var(--paper);}
@@ -616,6 +620,7 @@ body.dark .doc-content .highlight p{color:var(--ink-900);}
   <div class="field">
     <label for="t_qris">Omzet QRIS</label>
     <input id="t_qris" type="text" inputmode="numeric" placeholder="mis. 200.000">
+    <div class="field-hint">Nominal sesuai yang tampil di merchant BCA (sebelum fee 0.7%).</div>
   </div>
   <div class="field"><label>Total Omzet</label><div class="price-value" id="t_total_omzet" style="padding:8px 0; font-size:18px;">Rp 0</div></div>
 
@@ -697,6 +702,7 @@ body.dark .doc-content .highlight p{color:var(--ink-900);}
       <div class="saldo-big qris">
         <div class="k">📱 Saldo QRIS</div>
         <div class="v" id="saldo_qris_val">Rp 0</div>
+        <div class="fee-hint" id="saldo_qris_hint">Sudah dipotong fee 0.7%</div>
         <div class="actions">
           <button data-tipe="Tarik" data-metode="QRIS">Tarik</button>
           <button data-tipe="Setor" data-metode="QRIS">Setor</button>
@@ -802,6 +808,7 @@ body.dark .doc-content .highlight p{color:var(--ink-900);}
 
     <h3>Saldo</h3>
     <p><code>Saldo hari ini = Saldo kemarin + Laba hari ini</code></p>
+    <p>Khusus QRIS, saldo dipotong fee merchant 0.7% dari setiap omzet QRIS yang masuk. Card "QRIS Hari Ini" tetap menampilkan nominal kotor sesuai merchant BCA.</p>
 
     <h3>Lain-lain Dinamis</h3>
     <p>Di Tutup Hari, bagian "Lain-lain Sore" bisa diisi banyak pengeluaran dengan keterangan masing-masing. Setiap item tersimpan otomatis.</p>
@@ -830,6 +837,7 @@ body.dark .doc-content .highlight p{color:var(--ink-900);}
       <li>Lain-lain dinamis</li>
       <li>Grafik 7 hari</li>
       <li>Arus kas Cash & QRIS</li>
+      <li>Auto-potong fee QRIS 0.7%</li>
     </ul>
     <p style="margin-top:20px; color:var(--ink-600); font-size:13px;">Dibuat dengan ❤️ untuk membantu pedagang kecil.</p>
   </div>
@@ -842,6 +850,9 @@ body.dark .doc-content .highlight p{color:var(--ink-900);}
     <h3>Pertanyaan Umum</h3>
     <p><strong>Q: Kenapa laba hari ini berbeda dengan perkiraan?</strong></p>
     <p>A: Laba = Omzet − Belanja − Biaya. Cek salah satu dari 3 komponen.</p>
+
+    <p><strong>Q: Kenapa saldo QRIS lebih kecil dari omzet QRIS?</strong></p>
+    <p>A: Karena ada fee merchant QRIS 0.7% yang dipotong setiap omzet QRIS masuk. Saldo QRIS = Omzet × 0.993 − belanja QRIS − biaya QRIS.</p>
 
     <p><strong>Q: Kenapa saldo bisa minus?</strong></p>
     <p>A: Kalau Anda tarik lebih besar dari saldo. Artinya Anda "utang" ke tabungan sendiri.</p>
@@ -948,7 +959,7 @@ body.dark .doc-content .highlight p{color:var(--ink-900);}
 const API_URL = 'https://script.google.com/macros/s/AKfycbyj3eXJV0qSa0-3HFuph0AaV1y5dft9Zjsqt-en7j_DU9mM4huxGoctMD52KTbivuN6/exec';
 const API_TOKEN = 'T_ps2ImXNPwz51wWz-bb7qjHjT4dNgFh';
 const SUSUT_RATE = 0.30;
-const QRIS_FEE_RATE = 0.007;
+const QRIS_FEE_RATE = 0.007;  // Fee merchant QRIS 0.7%
 
 const DEFAULT_PENGATURAN = {
   OperasionalBelanja: 100000,
@@ -1035,8 +1046,6 @@ function hitungHargaMinimum(modal){
 }
 
 /* API */
-// Dedupe GET identik yang berdekatan (mis. getBelanja dipanggil 3x saat startup): TTL singkat,
-// dibersihkan setiap ada apiPost, dan tiap pemanggil menerima salinan sendiri.
 const _GET_TTL = 4000;
 const _getCache = new Map();
 function _clone(v){ try{ return structuredClone(v); }catch(e){ return JSON.parse(JSON.stringify(v)); } }
@@ -2062,17 +2071,20 @@ function _renderDashKpi(lap, saldo){
   const _belumTutup = parseNum(lap.totalOmzet) <= 0;
   hero.classList.toggle('neg', !_belumTutup && parseNum(lap.labaBersih) < 0);
   const _hk = hero.querySelector('.k'); if(_hk) _hk.textContent = _belumTutup ? 'Laba bersih hari ini (belum tutup)' : 'Laba bersih hari ini';
+  // Card "QRIS Hari Ini" menampilkan NOMINAL KOTOR (sesuai merchant BCA, sebelum fee 0.7%)
   document.getElementById('dash_cash_in').textContent = rupiah(parseNum(lap.omzetCash));
   document.getElementById('dash_cash_out').textContent = 'Keluar: ' + rupiah(parseNum(lap.biayaCash) + parseNum(lap.belanjaCash));
   document.getElementById('dash_qris_in').textContent = rupiah(parseNum(lap.omzetQris));
-  document.getElementById('dash_qris_out').textContent = 'Keluar: ' + rupiah(parseNum(lap.biayaQris) + parseNum(lap.belanjaQris));
+  // Info keluar termasuk fee QRIS 0.7%
+  const qrisFee = Math.round(parseNum(lap.omzetQris) * QRIS_FEE_RATE);
+  const qrisKeluar = parseNum(lap.biayaQris) + parseNum(lap.belanjaQris) + qrisFee;
+  document.getElementById('dash_qris_out').innerHTML = 'Keluar: ' + rupiah(qrisKeluar) + (qrisFee > 0 ? ` <span style="opacity:.75;">(fee ${rupiah(qrisFee)})</span>` : '');
   if(saldo){
     document.getElementById('dash_saldo_total').textContent = rupiah(saldo.total);
     document.getElementById('dash_saldo_breakdown').textContent = `Cash ${rupiah(saldo.saldoCash)} · QRIS ${rupiah(saldo.saldoQris)}`;
   }
 }
 async function loadDashboard(){
-  // 1) Tampilkan data terakhir dari cache dulu (instan), 2) lalu segarkan dari server dalam 1 request
   try{
     const c = JSON.parse(localStorage.getItem('sayur_dash_cache') || 'null');
     if(c && c.lap){
@@ -2115,7 +2127,6 @@ async function renderDashboardChart(rowsArg){
       days.push({ ymd, dow: d.getDay() });
     }
     const byDate = {};
-    // Hanya hari yang sudah tutup (omzet > 0) yang dihitung; hari berjalan/baris mutasi saja diabaikan
     (rows || []).forEach(r => { const ymd = normYmd(r.Tanggal); if(ymd && parseNum(r.TotalOmzet) > 0) byDate[ymd] = r; });
     let maxVal = 0;
     days.forEach(d => {
@@ -2205,6 +2216,10 @@ function renderArusKas(data){
   const cash = data.cash || {masuk:0, keluar:0, saldo:0};
   const qris = data.qris || {masuk:0, keluar:0, saldo:0};
   const total = data.total || {masuk:0, keluar:0, saldo:0};
+  // Hitung estimasi fee QRIS dari saldo masuk (omzet QRIS kotor)
+  const qrisFee = Math.round(parseNum(qris.masuk) * QRIS_FEE_RATE);
+  const qrisKeluarWithFee = parseNum(qris.keluar) + qrisFee;
+  const totalKeluarWithFee = parseNum(total.keluar) + qrisFee;
   body.innerHTML = `
     <div class="flow-card cash">
       <div class="flow-head cash"><div class="title">💵 Cash</div><div class="sub">${periodLabel(_aruskasPeriod)}</div></div>
@@ -2217,13 +2232,16 @@ function renderArusKas(data){
       <div class="flow-head qris"><div class="title">📱 QRIS</div><div class="sub">${periodLabel(_aruskasPeriod)}</div></div>
       <div class="flow-row"><span>Masuk</span><span class="amt">${rupiah(qris.masuk)}</span></div>
       <div class="flow-row"><span>Keluar</span><span class="amt">${rupiah(qris.keluar)}</span></div>
+      ${qrisFee > 0 ? `<div class="flow-row fee"><span>Fee merchant 0.7%</span><span class="amt">− ${rupiah(qrisFee)}</span></div>` : ''}
       <div class="flow-div"></div>
       <div class="flow-row total"><span>Saldo</span><span class="amt">${rupiah(qris.saldo)}</span></div>
+      ${qrisFee > 0 ? `<div class="fee-note">Saldo QRIS sudah dipotong fee merchant 0.7% (${rupiah(qrisFee)}).</div>` : ''}
     </div>
     <div class="flow-card">
       <div class="flow-head"><div class="title">Gabungan</div><div class="sub">Cash + QRIS</div></div>
       <div class="flow-row"><span>Total masuk</span><span class="amt">${rupiah(total.masuk)}</span></div>
       <div class="flow-row"><span>Total keluar</span><span class="amt">${rupiah(total.keluar)}</span></div>
+      ${qrisFee > 0 ? `<div class="flow-row fee"><span>Fee QRIS</span><span class="amt">− ${rupiah(qrisFee)}</span></div>` : ''}
       <div class="flow-div"></div>
       <div class="flow-row total"><span>Selisih</span><span class="amt">${rupiah(total.saldo)}</span></div>
     </div>`;
@@ -2233,7 +2251,14 @@ document.getElementById('share_aruskas').addEventListener('click', async ()=>{
     const {dari, sampai} = periodToRange(_aruskasPeriod);
     const data = await apiGet('getArusKas', {dari, sampai});
     const c = data.cash, q = data.qris, t = data.total;
-    shareText(`*Arus Kas* — ${periodLabel(_aruskasPeriod)}\n\n💵 Cash\nMasuk: ${rupiah(c.masuk)}\nKeluar: ${rupiah(c.keluar)}\nSaldo: ${rupiah(c.saldo)}\n\n📱 QRIS\nMasuk: ${rupiah(q.masuk)}\nKeluar: ${rupiah(q.keluar)}\nSaldo: ${rupiah(q.saldo)}\n\n*Gabungan*\nMasuk: ${rupiah(t.masuk)}\nKeluar: ${rupiah(t.keluar)}\nSelisih: ${rupiah(t.saldo)}`);
+    const qrisFee = Math.round(parseNum(q.masuk) * QRIS_FEE_RATE);
+    let text = `*Arus Kas* — ${periodLabel(_aruskasPeriod)}\n\n`;
+    text += `💵 Cash\nMasuk: ${rupiah(c.masuk)}\nKeluar: ${rupiah(c.keluar)}\nSaldo: ${rupiah(c.saldo)}\n\n`;
+    text += `📱 QRIS\nMasuk: ${rupiah(q.masuk)}\nKeluar: ${rupiah(q.keluar)}\n`;
+    if(qrisFee > 0) text += `Fee 0.7%: −${rupiah(qrisFee)}\n`;
+    text += `Saldo: ${rupiah(q.saldo)}\n\n`;
+    text += `*Gabungan*\nMasuk: ${rupiah(t.masuk)}\nKeluar: ${rupiah(t.keluar)}\nSelisih: ${rupiah(t.saldo)}`;
+    shareText(text);
   }catch(e){ showToast('Gagal: ' + e.message); }
 });
 
@@ -2250,15 +2275,6 @@ async function loadSaldo(){
     _saldoCache = {cash: saldo.saldoCash, qris: saldo.saldoQris, total: saldo.total};
     document.getElementById('saldo_cash_val').textContent = rupiah(saldo.saldoCash);
     document.getElementById('saldo_qris_val').textContent = rupiah(saldo.saldoQris);
-    // Cari elemen saldo-big qris, tambahkan hint
-const qrisBox = document.querySelector('.saldo-big.qris');
-if(qrisBox && !qrisBox.querySelector('.fee-hint')){
-  const hint = document.createElement('div');
-  hint.className = 'fee-hint';
-  hint.style.cssText = 'font-size:10.5px; color:var(--ink-600); margin-top:4px;';
-  hint.textContent = `Sudah dipotong fee QRIS 0.7%`;
-  qrisBox.appendChild(hint);
-}
     document.getElementById('saldo_total_val').textContent = rupiah(saldo.total);
     if(!mutasi.length){ listEl.innerHTML = '<div class="empty-note">Belum ada mutasi saldo</div>'; return; }
     listEl.innerHTML = mutasi.map(m => {
@@ -2313,7 +2329,11 @@ function updateMutasiPreview(){
   const jumlah = bacaUang(document.getElementById('mutasi_jumlah'));
   const saldo = _mutasiState.metode === 'QRIS' ? _saldoCache.qris : _saldoCache.cash;
   const sisa = _mutasiState.tipe === 'Tarik' ? saldo - jumlah : saldo + jumlah;
-  document.getElementById('mutasi_preview').innerHTML = `Saldo saat ini: ${rupiah(saldo)}<br>Setelah ${_mutasiState.tipe}: <strong>${rupiah(sisa)}</strong>`;
+  let html = `Saldo saat ini: ${rupiah(saldo)}<br>Setelah ${_mutasiState.tipe}: <strong>${rupiah(sisa)}</strong>`;
+  if(_mutasiState.metode === 'QRIS'){
+    html += `<br><span style="font-size:11px; color:var(--ink-600);">Saldo QRIS sudah dipotong fee merchant 0.7% dari setiap omzet.</span>`;
+  }
+  document.getElementById('mutasi_preview').innerHTML = html;
 }
 document.getElementById('mutasi_jumlah').addEventListener('input', updateMutasiPreview);
 document.getElementById('mutasi_metode').addEventListener('click', ()=>{
@@ -2432,7 +2452,6 @@ document.getElementById('set_refresh').addEventListener('click', async ()=>{
     statusEl.textContent = '✅ Selesai';
     showToast('Laporan berhasil di-refresh');
     setTimeout(()=>{ statusEl.textContent = '›'; }, 3000);
-    // Refresh tampilan yang mungkin berubah
     try{ loadDashboard(); }catch(e){}
     try{ if(document.getElementById('laporan').classList.contains('active')) loadLaporan(); }catch(e){}
   }catch(e){
@@ -2472,7 +2491,6 @@ updateDateWarnings();
   attachMoneyInput(document.getElementById(id));
 });
 
-// Dashboard dulu (yang pertama terlihat); data tab lain dimuat setelahnya agar tidak berebut dengan server
 Promise.resolve(loadDashboard()).finally(()=>{
   loadBelanja();
   loadCatatan();
@@ -2484,11 +2502,6 @@ setInterval(()=>{
   const lbl = document.getElementById('topbarDate');
   if(lbl) lbl.textContent = dateShort();
 }, 60000);
-
-  // Warming schedule — cegah cold start Apps Script
-setInterval(()=>{
-  fetch(`${API_URL}?action=getPengaturan&token=${API_TOKEN}`).catch(()=>{});
-}, 4 * 60 * 1000);
 
 if('serviceWorker' in navigator){
   window.addEventListener('load', ()=>{
