@@ -3160,6 +3160,2221 @@ if('serviceWorker' in navigator){
       .catch(err => console.warn('SW gagal:', err));
   });
 }
+
+<script>
+/* ==========================================================
+   KONFIGURASI
+   ========================================================== */
+const API_URL = 'https://script.google.com/macros/s/AKfycbyj3eXJV0qSa0-3HFuph0AaV1y5dft9Zjsqt-en7j_DU9mM4huxGoctMD52KTbivuN6/exec';
+const API_TOKEN = 'T_ps2ImXNPwz51wWz-bb7qjHjT4dNgFh';
+const SUSUT_RATE = 0.30;
+const QRIS_FEE_RATE = 0.007;
+
+const DEFAULT_PENGATURAN = {
+  OperasionalBelanja: 100000,
+  Bensin: 50000,
+  TargetLabaHarian: 250000,
+  NamaLapak: '',
+  NamaPemilik: '',
+  NoHP: ''
+};
+
+/* HELPERS */
+function pad2(n){ return String(n).padStart(2,'0'); }
+function todayStr(){ const d = new Date(); return d.getFullYear()+'-'+pad2(d.getMonth()+1)+'-'+pad2(d.getDate()); }
+function ymdToDate(ymd){ if(!ymd) return null; const [y,m,d] = String(ymd).slice(0,10).split('-').map(Number); if(!y||!m||!d) return null; return new Date(y, m-1, d); }
+function normYmd(v){
+  if(!v) return '';
+  if(v instanceof Date && !isNaN(v.getTime())) return v.getFullYear()+'-'+pad2(v.getMonth()+1)+'-'+pad2(v.getDate());
+  const s = String(v).trim();
+  if(/^\d{4}-\d{2}-\d{2}/.test(s)) return s.slice(0,10);
+  const d = new Date(s);
+  if(isNaN(d.getTime())) return '';
+  return d.getFullYear()+'-'+pad2(d.getMonth()+1)+'-'+pad2(d.getDate());
+}
+function dateShort(){ return new Date().toLocaleDateString('id-ID',{weekday:'short', day:'numeric', month:'short'}); }
+function dateLong(){ return new Date().toLocaleDateString('id-ID',{weekday:'long', day:'numeric', month:'long', year:'numeric'}); }
+function dateLongFrom(ymd){ const d = ymdToDate(ymd) || new Date(); return d.toLocaleDateString('id-ID',{weekday:'long', day:'numeric', month:'long', year:'numeric'}); }
+function formatTanggalPendek(ymd){ const d = ymdToDate(ymd); if(!d) return ''; return d.toLocaleDateString('id-ID',{weekday:'long', day:'numeric', month:'short'}); }
+function rupiah(n){ return 'Rp ' + Number(n||0).toLocaleString('id-ID'); }
+function bacaUang(el){ return Number(String(el.value||'').replace(/\D/g,'')) || 0; }
+function parseNum(v){
+  if(typeof v === 'number') return isFinite(v) ? v : 0;
+  if(v == null || v === '') return 0;
+  let s = String(v).trim().replace(/[^\d.,-]/g, '');
+  if(!s) return 0;
+  if(/,\d{1,2}$/.test(s)){ s = s.replace(/\./g,'').replace(',', '.'); }
+  else { s = s.replace(/[.,]/g, ''); }
+  const n = Number(s);
+  return isFinite(n) ? n : 0;
+}
+function attachMoneyInput(el){
+  if(!el) return;
+  el.addEventListener('input', ()=>{ const raw = el.value.replace(/\D/g,''); el.value = raw ? Number(raw).toLocaleString('id-ID') : ''; });
+}
+function setMoney(el, val){ if(!el) return; const n = parseNum(val); el.value = n ? n.toLocaleString('id-ID') : ''; }
+function escHtml(s){ return String(s==null?'':s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(t._t); t._t = setTimeout(()=>t.classList.remove('show'), 1900);
+}
+async function shareText(text){
+  if(navigator.share){ try{ await navigator.share({text}); return; }catch(e){ if(e.name==='AbortError') return; } }
+  try{ await navigator.clipboard.writeText(text); showToast('Disalin ke clipboard'); }
+  catch(e){ showToast('Gagal membagikan'); }
+}
+function emptyHTML(iconPath, text, ctaLabel, ctaId){
+  return `<div class="empty"><svg viewBox="0 0 24 24">${iconPath}</svg><p>${escHtml(text)}</p>${ctaLabel ? `<button class="btn-ghost" id="${ctaId}">${escHtml(ctaLabel)}</button>` : ''}</div>`;
+}
+const ICON_CART = '<circle cx="9" cy="20" r="1.4" fill="currentColor" stroke="none"/><circle cx="18" cy="20" r="1.4" fill="currentColor" stroke="none"/><path d="M2 3h3l2.6 12.4a2 2 0 002 1.6h8a2 2 0 002-1.8L21 8H6"/>';
+const ICON_TAG = '<path d="M20.6 12.4L12.4 20.6a2 2 0 01-2.8 0l-7.2-7.2a2 2 0 010-2.8L10.6 2.4A2 2 0 0112 2h6a2 2 0 012 2v6a2 2 0 01-.6 1.4z"/><circle cx="15.5" cy="8.5" r="1.3" fill="currentColor" stroke="none"/>';
+
+/* FORMULA HARGA JUAL */
+function getMarkupRate(modal){
+  if(!modal || modal <= 0) return 0;
+  if(modal <= 5000) return 1.00;
+  if(modal <= 10000){ const t = (modal - 5000) / 5000; return 1.00 + (0.50 - 1.00) * t; }
+  if(modal <= 30000){ const t = (modal - 10000) / 20000; return 0.50 + (0.30 - 0.50) * t; }
+  if(modal <= 100000){ const t = (modal - 30000) / 70000; return 0.30 + (0.15 - 0.30) * t; }
+  return 0.15;
+}
+function mround(v, m){ return Math.round(v / m) * m; }
+function ceilTo(v, m){ return Math.ceil(v / m) * m; }
+function hitungHargaJual(modal){
+  if(!modal || modal <= 0) return 0;
+  const raw = modal * (1 + getMarkupRate(modal));
+  if(modal <= 30000) return mround(raw, 1000);
+  return ceilTo(raw, 5000);
+}
+function hitungHargaMinimum(modal){
+  if(!modal || modal <= 0) return 0;
+  if(modal > 10000) return 0;
+  const hj = hitungHargaJual(modal);
+  const hm = hj - 2000;
+  return hm > 0 ? hm : 0;
+}
+
+/* API */
+const _GET_TTL = 4000;
+const _getCache = new Map();
+function _clone(v){ try{ return structuredClone(v); }catch(e){ return JSON.parse(JSON.stringify(v)); } }
+async function apiGet(action, params={}){
+  const qs = new URLSearchParams({action, token: API_TOKEN, ...params}).toString();
+  const hit = _getCache.get(qs);
+  if(hit && Date.now() - hit.t < _GET_TTL) return _clone(await hit.p);
+  const p = (async () => {
+    const res = await fetch(`${API_URL}?${qs}`);
+    const json = await res.json();
+    if(!json.ok) throw new Error(json.error || 'Gagal');
+    return json.data;
+  })();
+  const entry = {t: Date.now(), p};
+  _getCache.set(qs, entry);
+  p.catch(() => { if(_getCache.get(qs) === entry) _getCache.delete(qs); });
+  return _clone(await p);
+}
+async function apiPost(action, data){
+  _getCache.clear();
+  const res = await fetch(API_URL, {method:'POST', body: JSON.stringify({action, token: API_TOKEN, data})});
+  const json = await res.json();
+  _getCache.clear();
+  if(!json.ok) throw new Error(json.error || 'Gagal');
+  return json.data;
+}
+
+/* DARK MODE */
+function applyDarkMode(on){
+  document.body.classList.toggle('dark', on);
+  document.getElementById('darkSwitch').classList.toggle('on', on);
+  try{ localStorage.setItem('sayur_dark', on ? '1' : '0'); }catch(e){}
+}
+(function initDarkMode(){
+  let saved = '0';
+  try{ saved = localStorage.getItem('sayur_dark') || '0'; }catch(e){}
+  applyDarkMode(saved === '1');
+})();
+
+/* MENU */
+const kebabBtn = document.getElementById('kebabBtn');
+const menuPanel = document.getElementById('menuPanel');
+const menuOverlay = document.getElementById('menuOverlay');
+function openMenu(){ menuPanel.classList.add('show'); menuOverlay.classList.add('show'); }
+function closeMenu(){ menuPanel.classList.remove('show'); menuOverlay.classList.remove('show'); }
+kebabBtn.addEventListener('click', (e)=>{ e.stopPropagation(); menuPanel.classList.contains('show') ? closeMenu() : openMenu(); });
+menuOverlay.addEventListener('click', closeMenu);
+document.getElementById('menuPengaturan').addEventListener('click', ()=>{ closeMenu(); goTab('pengaturan'); });
+document.getElementById('menuPanduan').addEventListener('click', ()=>{ closeMenu(); goTab('panduan'); });
+document.getElementById('menuBagikan').addEventListener('click', ()=>{
+  closeMenu();
+  shareText('Coba aplikasi Sayur App — pencatatan usaha sayur.\n' + window.location.href);
+});
+document.getElementById('menuDark').addEventListener('click', ()=>{
+  applyDarkMode(!document.body.classList.contains('dark'));
+});
+document.getElementById('menuTentang').addEventListener('click', ()=>{ closeMenu(); goTab('tentang'); });
+document.getElementById('menuBantuan').addEventListener('click', ()=>{ closeMenu(); goTab('bantuan'); });
+
+/* NAVIGASI */
+function goTab(name){
+  document.querySelectorAll('.navbar button').forEach(x=>x.classList.toggle('active', x.dataset.t===name));
+  document.querySelectorAll('.screen').forEach(x=>x.classList.toggle('active', x.id===name));
+  hideAc();
+  window.scrollTo({top:0, behavior:'instant'});
+  if(name==='dashboard') loadDashboard();
+  if(name==='belanja'){ loadCatatanList(); loadBelanja(); }
+  if(name==='harga') loadHarga();
+  if(name==='tutup') loadTutup();
+  if(name==='laporan') loadLaporan();
+  if(name==='pengaturan') loadPengaturan();
+}
+document.querySelectorAll('.navbar button').forEach(b=>{
+  b.addEventListener('click', ()=>goTab(b.dataset.t));
+});
+
+/* TANGGAL */
+let _activeDate = todayStr();
+function updateDateWarnings(){
+  const notToday = _activeDate !== todayStr();
+  const label = notToday ? formatTanggalPendek(_activeDate) : '';
+  ['b_date_warn', 't_date_warn'].forEach(id=>{
+    const el = document.getElementById(id);
+    if(el) el.style.display = notToday ? 'flex' : 'none';
+  });
+  ['b_date_warn_txt', 't_date_warn_txt'].forEach(id=>{
+    const el = document.getElementById(id);
+    if(el) el.textContent = label;
+  });
+}
+function setActiveDate(newDate){
+  if(!newDate || newDate > todayStr()) newDate = todayStr();
+  _activeDate = newDate;
+  const bDate = document.getElementById('b_date');
+  const tDate = document.getElementById('t_date');
+  if(bDate) bDate.value = _activeDate;
+  if(tDate) tDate.value = _activeDate;
+  _biayaHariIni.sudahDiubah = false;
+  updateDateWarnings();
+  loadBelanja(); loadTutup(); loadNamaBarangOptions(); loadLainLain();
+}
+document.getElementById('b_date').addEventListener('change', function(){ if(this.value) setActiveDate(this.value); });
+document.getElementById('t_date').addEventListener('change', function(){ if(this.value) setActiveDate(this.value); });
+document.querySelectorAll('.date-reset').forEach(btn=>{
+  btn.addEventListener('click', ()=> setActiveDate(todayStr()));
+});
+
+/* SEGMENTED — mode belanja (Catatan vs Aktual) */
+document.querySelectorAll('.seg-btn[data-mode]').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.seg-btn[data-mode]').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    const mode = btn.dataset.mode;
+    document.getElementById('mode_catatan').style.display = mode==='catatan' ? 'block' : 'none';
+    document.getElementById('mode_aktual').style.display = mode==='aktual' ? 'block' : 'none';
+    if(mode==='catatan') loadCatatanList();
+    if(mode==='aktual'){ loadBelanja(); updateCekModal(); }
+  });
+});
+
+/* SEGMENTED — laporan */
+document.querySelectorAll('.seg-btn[data-laporan]').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.seg-btn[data-laporan]').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    const sub = btn.dataset.laporan;
+    document.getElementById('laporan_aruskas').style.display = sub==='aruskas' ? 'block' : 'none';
+    document.getElementById('laporan_saldo').style.display = sub==='saldo' ? 'block' : 'none';
+    document.getElementById('laporan_hutang').style.display = sub==='hutang' ? 'block' : 'none';
+    if(sub==='aruskas') loadArusKas();
+    if(sub==='saldo') loadSaldo();
+    if(sub==='hutang') loadHutang();
+  });
+});
+
+/* METHOD TOGGLE */
+function makeMethodToggle(btn){
+  if(!btn) return;
+  btn.addEventListener('click', ()=>{
+    const cur = btn.dataset.metode || 'Cash';
+    const next = cur === 'Cash' ? 'QRIS' : 'Cash';
+    btn.dataset.metode = next;
+    btn.textContent = next === 'Cash' ? '💵 Cash' : '📱 QRIS';
+  });
+}
+function setMethodToggle(btn, metode){
+  if(!btn) return;
+  const m = metode === 'QRIS' ? 'QRIS' : 'Cash';
+  btn.dataset.metode = m;
+  btn.textContent = m === 'Cash' ? '💵 Cash' : '📱 QRIS';
+}
+function getMethodToggle(btn){ return (btn && btn.dataset.metode) || 'Cash'; }
+
+['b_metode','t_konsumsi_metode','ll_metode','mutasi_metode','bayar_metode'].forEach(id=>{
+  makeMethodToggle(document.getElementById(id));
+});
+
+/* AUTOCOMPLETE */
+let _acItems = [], _acIndex = -1, _acLastQuery = '';
+function acListEl(){ return document.getElementById('b_nama_ac'); }
+function hideAc(){
+  const box = acListEl(); if(!box) return;
+  box.style.display = 'none'; box.innerHTML = '';
+  _acItems = []; _acIndex = -1; _acLastQuery = '';
+}
+function renderAc(rawQuery){
+  const box = acListEl(); if(!box) return;
+  const q = String(rawQuery || '').trim();
+  _acLastQuery = q;
+  if(!q){ hideAc(); return; }
+  const ql = q.toLowerCase();
+  const matches = _masterBarang.filter(n => String(n).toLowerCase().includes(ql)).slice(0, 8);
+  if(!matches.length){
+    const safe = escHtml(q);
+    box.innerHTML = `<div class="ac-empty">Barang baru: "${safe}"</div><div class="ac-free" id="ac_free_add">Pakai "${safe}"</div>`;
+    box.style.display = 'block';
+    _acItems = []; _acIndex = -1;
+    const freeBtn = box.querySelector('#ac_free_add');
+    if(freeBtn){
+      freeBtn.addEventListener('pointerdown', (e)=>{
+        e.preventDefault();
+        const inp = document.getElementById('b_nama');
+        const qty = document.getElementById('b_qty');
+        const harga = document.getElementById('b_harga');
+        inp.value = q; hideAc();
+        if(qty.value.trim() && bacaUang(harga)) document.getElementById('b_submit').click();
+        else if(!qty.value.trim()) setTimeout(()=>qty.focus(), 60);
+        else setTimeout(()=>harga.focus(), 60);
+      });
+    }
+    return;
+  }
+  _acItems = matches; _acIndex = -1;
+  box.innerHTML = matches.map((n,i)=>{
+    const info = _infoMap[n];
+    const hint = info && info.harga > 0 ? `${rupiah(info.harga)}${info.satuan ? ' / ' + escHtml(info.satuan) : ''}` : '';
+    return `<div class="ac-item" data-idx="${i}" data-nama="${escHtml(n)}"><span>${escHtml(n)}</span>${hint ? `<span class="ac-hint">${hint}</span>` : ''}</div>`;
+  }).join('');
+  box.style.display = 'block';
+  box.querySelectorAll('.ac-item').forEach(el=>{
+    el.addEventListener('pointerdown', (e)=>{ e.preventDefault(); selectAc(el.dataset.nama); });
+  });
+}
+function highlightAc(idx){
+  const box = acListEl(); if(!box || !_acItems.length) return;
+  const items = box.querySelectorAll('.ac-item');
+  items.forEach((el,i)=> el.classList.toggle('active', i === idx));
+  if(idx >= 0 && items[idx]) items[idx].scrollIntoView({block:'nearest'});
+  _acIndex = idx;
+}
+function applyAutofill(nama){
+  const info = _infoMap[nama]; if(!info) return;
+  if(info.satuan){
+    const selSatuan = document.getElementById('b_satuan');
+    const exists = Array.from(selSatuan.options).find(o => o.value === info.satuan);
+    if(exists){ selSatuan.value = info.satuan; document.getElementById('b_satuan_new').style.display = 'none'; }
+    else { selSatuan.value = '__other__'; document.getElementById('b_satuan_new').value = info.satuan; document.getElementById('b_satuan_new').style.display = 'block'; }
+  }
+  if(info.harga > 0) document.getElementById('b_harga').value = info.harga.toLocaleString('id-ID');
+}
+function selectAc(nama){
+  if(!nama) return;
+  document.getElementById('b_nama').value = nama;
+  hideAc(); applyAutofill(nama);
+  const qty = document.getElementById('b_qty');
+  if(qty) setTimeout(()=>qty.focus(), 30);
+}
+document.getElementById('b_nama').addEventListener('input', function(){ renderAc(this.value); });
+document.getElementById('b_nama').addEventListener('focus', function(){ if(this.value.trim()) renderAc(this.value); });
+document.getElementById('b_nama').addEventListener('blur', function(){
+  setTimeout(()=>{ const box = acListEl(); if(box && !box.contains(document.activeElement)) hideAc(); }, 180);
+});
+document.getElementById('b_nama').addEventListener('keydown', function(e){
+  const box = acListEl();
+  const open = box && box.style.display !== 'none' && _acItems.length > 0;
+  if(e.key === 'Escape'){ if(open){ e.preventDefault(); hideAc(); } return; }
+  if(!open) return;
+  if(e.key === 'ArrowDown'){ e.preventDefault(); const n = Math.min(_acItems.length - 1, _acIndex + 1); highlightAc(n === -1 ? 0 : n); }
+  else if(e.key === 'ArrowUp'){ e.preventDefault(); highlightAc(Math.max(0, _acIndex - 1)); }
+  else if(e.key === 'Enter'){
+    if(_acIndex >= 0){ e.preventDefault(); selectAc(_acItems[_acIndex]); }
+    else if(_acItems.length === 1){ e.preventDefault(); selectAc(_acItems[0]); }
+    else hideAc();
+  }
+});
+
+/* ==========================================================
+   TAB CATATAN (RENCANA)
+   ========================================================== */
+let _catatanDraft = [];
+function catatanStorageKey(){ return 'sayur_catatan_' + _activeDate; }
+function loadCatatanFromStorage(){ try{ const raw = localStorage.getItem(catatanStorageKey()); if(!raw) return []; const arr = JSON.parse(raw); return Array.isArray(arr) ? arr : []; }catch(e){ return []; } }
+function saveCatatanToStorage(){ try{ localStorage.setItem(catatanStorageKey(), JSON.stringify(_catatanDraft)); }catch(e){} }
+function clearCatatanStorage(){ try{ localStorage.removeItem(catatanStorageKey()); }catch(e){} }
+
+function loadCatatanList(){
+  _catatanDraft = loadCatatanFromStorage();
+  renderCatatanList();
+}
+
+function renderCatatanList(){
+  const listEl = document.getElementById('cat_list');
+  if(!_catatanDraft.length){
+    listEl.innerHTML = '<div class="empty-note">Belum ada rencana belanja</div>';
+    document.getElementById('cat_total').textContent = rupiah(0);
+    return;
+  }
+  listEl.innerHTML = `<div class="catatan-list">${_catatanDraft.map((it, i) => `
+    <div class="catatan-item" style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
+      <div style="flex:1;min-width:0;">
+        <div class="n" style="font-size:14.5px;font-weight:600;">${escHtml(it.nama)}</div>
+        <div class="q" style="font-size:12.5px;">${escHtml(it.qty)} ${escHtml(it.satuan)} × ${rupiah(it.harga)}</div>
+      </div>
+      <div style="font-family:'Zilla Slab',serif;font-weight:600;font-size:14.5px;">${rupiah(parseNum(it.qty) * it.harga)}</div>
+      <button class="del" data-idx="${i}" type="button" style="background:none;border:none;color:var(--ink-400);font-size:18px;padding:4px 8px;cursor:pointer;">×</button>
+    </div>
+  `).join('')}</div>`;
+  listEl.querySelectorAll('.del').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const i = Number(btn.dataset.idx);
+      _catatanDraft.splice(i, 1);
+      saveCatatanToStorage();
+      renderCatatanList();
+    });
+  });
+  const total = _catatanDraft.reduce((s, it) => s + parseNum(it.qty) * it.harga, 0);
+  document.getElementById('cat_total').textContent = rupiah(total);
+}
+
+document.getElementById('cat_satuan').addEventListener('change', function(){
+  // auto-tampilkan input baru kalau pilih "lain"
+  let newInput = document.getElementById('cat_satuan_new');
+  if(this.value === '__other__'){
+    if(!newInput){
+      newInput = document.createElement('input');
+      newInput.id = 'cat_satuan_new';
+      newInput.type = 'text';
+      newInput.placeholder = 'Ketik satuan';
+      newInput.style.marginTop = '8px';
+      this.parentElement.appendChild(newInput);
+    }
+    newInput.style.display = 'block';
+    newInput.focus();
+  } else if(newInput){
+    newInput.style.display = 'none';
+  }
+});
+
+document.getElementById('cat_add').addEventListener('click', ()=>{
+  const nama = document.getElementById('cat_nama').value.trim();
+  const qty = document.getElementById('cat_qty').value.trim();
+  const satuanSel = document.getElementById('cat_satuan').value;
+  const satuanNew = document.getElementById('cat_satuan_new');
+  const satuan = satuanSel === '__other__' ? (satuanNew ? satuanNew.value.trim() : '') : satuanSel;
+  const harga = bacaUang(document.getElementById('cat_harga'));
+  if(!nama){ showToast('Isi nama barang dulu'); return; }
+  if(!qty){ showToast('Isi qty dulu'); return; }
+  if(!satuan){ showToast('Isi satuan dulu'); return; }
+  _catatanDraft.push({ nama, qty, satuan, harga });
+  saveCatatanToStorage();
+  document.getElementById('cat_nama').value = '';
+  document.getElementById('cat_qty').value = '';
+  document.getElementById('cat_satuan').value = 'kg';
+  if(satuanNew){ satuanNew.value = ''; satuanNew.style.display = 'none'; }
+  document.getElementById('cat_harga').value = '';
+  renderCatatanList();
+  document.getElementById('cat_nama').focus();
+  showToast('Ditambahkan ke catatan');
+});
+
+document.getElementById('cat_mulai').addEventListener('click', ()=>{
+  if(!_catatanDraft.length){
+    // Tanpa catatan: langsung pindah tab
+    document.querySelector('.seg-btn[data-mode="aktual"]').click();
+    return;
+  }
+  // Copy catatan ke aktual (draft belanja)
+  const existing = loadDraftFromStorage();
+  const existingNames = new Set(existing.map(e => e.NamaBarang));
+  let added = 0;
+  _catatanDraft.forEach(it=>{
+    if(existingNames.has(it.nama)) return; // skip kalau sudah ada di aktual
+    existing.push({
+      _draftId: 'd' + Date.now() + Math.random().toString(36).slice(2,6),
+      NamaBarang: it.nama,
+      qty: it.qty,
+      satuan: it.satuan,
+      hargaBeli: it.harga,
+      metode: 'Cash',
+      Total: parseNum(it.qty) * it.harga,
+      fromCatatan: true
+    });
+    added++;
+  });
+  saveDraftToStorage();
+  document.querySelector('.seg-btn[data-mode="aktual"]').click();
+  showToast(added > 0 ? `${added} item dipindah ke Aktual` : 'Semua item sudah ada di Aktual');
+});
+
+document.getElementById('share_catatan').addEventListener('click', ()=>{
+  if(!_catatanDraft.length){ showToast('Belum ada catatan'); return; }
+  const lines = _catatanDraft.map((it, i) => {
+    return `${i+1}. ${it.nama} — ${it.qty} ${it.satuan} × ${rupiah(it.harga)} = ${rupiah(parseNum(it.qty) * it.harga)}`;
+  });
+  const total = _catatanDraft.reduce((s, it) => s + parseNum(it.qty) * it.harga, 0);
+  shareText(`*Catatan Rencana Belanja* — ${dateLongFrom(_activeDate)}\n\n${lines.join('\n')}\n\nPerkiraan total: ${rupiah(total)}`);
+});
+
+/* ==========================================================
+   TOGGLE BAYAR NANTI
+   ========================================================== */
+let _bayarNanti = false;
+const bBayarNantiEl = document.getElementById('b_bayar_nanti');
+const bSupplierWrap = document.getElementById('b_supplier_wrap');
+const bMetodeWrap = document.getElementById('b_metode_wrap');
+bBayarNantiEl.addEventListener('click', ()=>{
+  _bayarNanti = !_bayarNanti;
+  bBayarNantiEl.classList.toggle('on', _bayarNanti);
+  bSupplierWrap.classList.toggle('show', _bayarNanti);
+  bMetodeWrap.style.display = _bayarNanti ? 'none' : 'block';
+  if(_bayarNanti) setTimeout(()=>document.getElementById('b_supplier').focus(), 100);
+});
+
+/* ==========================================================
+   MODUL BELANJA AKTUAL
+   ========================================================== */
+let _belanjaCache = [];
+let _draft = [];
+let _editingKey = null;
+let _masterBarang = [];
+let _infoMap = {};
+
+function draftStorageKey(){ return 'sayur_draft_' + _activeDate; }
+function loadDraftFromStorage(){ try{ const raw = localStorage.getItem(draftStorageKey()); if(!raw) return []; const arr = JSON.parse(raw); return Array.isArray(arr) ? arr : []; }catch(e){ return []; } }
+function saveDraftToStorage(){ try{ localStorage.setItem(draftStorageKey(), JSON.stringify(_draft)); }catch(e){} }
+function clearDraftStorage(){ try{ localStorage.removeItem(draftStorageKey()); }catch(e){} }
+
+function hitungSubtotal(it){
+  const fromTotal = parseNum(it.Total);
+  const fromSub = parseNum(it.Subtotal);
+  const fromServer = fromTotal > 0 ? fromTotal : fromSub;
+  if(fromServer > 0) return fromServer;
+  const beli = parseNum(it.HargaBeli != null ? it.HargaBeli : it.hargaBeli);
+  const qty = parseNum(it.Qty != null ? it.Qty : it.qty);
+  return beli * qty;
+}
+function computeReminder(){
+  const totalInput = _draft.length + _belanjaCache.length;
+  if(totalInput === 0) return [];
+  const inCart = new Set([..._draft.map(d => d.NamaBarang), ..._belanjaCache.map(b => b.NamaBarang)]);
+  return _masterBarang.filter(n => !inCart.has(n));
+}
+function renderItem(it, isDraft){
+  const nama = it.NamaBarang || it.namaBarang || '';
+  const qty = it.Qty != null ? it.Qty : it.qty;
+  const satuan = it.Satuan || it.satuan || '';
+  const beli = parseNum(it.HargaBeli != null ? it.HargaBeli : it.hargaBeli);
+  const metode = (it.Metode || it.metode || 'Cash') === 'QRIS' ? 'QRIS' : 'Cash';
+  const subtotal = hitungSubtotal(it);
+  const key = isDraft ? ('draft:' + it._draftId) : ('server:' + it.ID);
+  const metodeBadge = metode === 'QRIS' ? '<span class="qris-badge">QRIS</span>' : '';
+  const hutangBadge = it.bayarNanti ? '<span class="hutang-badge">HUTANG</span>' : '';
+  const catatanBadge = it.fromCatatan ? '<span class="draft-badge" style="background:#DCEAF6;color:#2563A0;">DARI CATATAN</span>' : '';
+
+  if(_editingKey === key){
+    return `<div class="ledger-item editing" data-key="${escHtml(key)}">
+      <div style="width:100%;">
+        <div class="name" style="margin-bottom:8px;">${escHtml(nama)} ${isDraft ? '<span class="draft-badge">draft</span>' : ''} ${metodeBadge} ${hutangBadge}</div>
+        <div class="edit-form">
+          <div class="edit-row"><label>Qty</label><input type="text" inputmode="decimal" class="edit-qty" value="${escHtml(qty)}"></div>
+          <div class="edit-row"><label>Harga Beli</label><input type="text" inputmode="numeric" class="edit-harga" value="${beli ? beli.toLocaleString('id-ID') : ''}"></div>
+          <div class="edit-row"><label>Metode</label><button type="button" class="method-toggle edit-metode" data-metode="${metode}">${metode === 'Cash' ? '💵 Cash' : '📱 QRIS'}</button></div>
+          <div class="edit-actions"><button class="btn-mini ghost edit-cancel" type="button">Batal</button><button class="btn-mini primary edit-save" type="button">Simpan</button></div>
+        </div>
+      </div>
+    </div>`;
+  }
+  return `<div class="ledger-item ${isDraft ? 'draft' : ''}" data-key="${escHtml(key)}">
+    <div>
+      <div class="name">${escHtml(nama)} ${isDraft ? '<span class="draft-badge">draft</span>' : ''} ${metodeBadge} ${hutangBadge} ${catatanBadge}</div>
+      <div class="sub">${escHtml(qty)} ${escHtml(satuan)} × ${rupiah(beli)}</div>
+    </div>
+    <div style="display:flex;align-items:center;">
+      <div class="amt">${rupiah(subtotal)}</div>
+      <button class="edit-trigger" data-key="${escHtml(key)}" type="button">Ubah</button>
+      <button class="del" data-key="${escHtml(key)}" type="button">×</button>
+    </div>
+  </div>`;
+}
+function renderBelanja(){
+  const listEl = document.getElementById('b_list');
+  const draftBar = document.getElementById('b_draft_bar');
+  const draftCount = document.getElementById('b_draft_count');
+  const draftTotal = document.getElementById('b_draft_total');
+  const bTotal = document.getElementById('b_total');
+  const reminderEl = document.getElementById('b_reminder');
+  const reminderNames = document.getElementById('b_reminder_names');
+  const serverItems = _belanjaCache || [];
+  const draftItems = _draft || [];
+
+  if(!serverItems.length && !draftItems.length){
+    listEl.innerHTML = emptyHTML(ICON_CART, 'Belum ada belanja untuk tanggal ini', null);
+    draftBar.style.display = 'none'; reminderEl.style.display = 'none';
+    bTotal.textContent = rupiah(0);
+    updateCekModal();
+    return;
+  }
+  let html = '';
+  if(draftItems.length){
+    html += `<div class="section-divider">Belum Disimpan (${draftItems.length})</div>`;
+    html += draftItems.map(it => renderItem(it, true)).join('');
+  }
+  if(serverItems.length){
+    if(draftItems.length) html += `<div class="section-divider saved">Tersimpan (${serverItems.length})</div>`;
+    html += serverItems.map(it => renderItem(it, false)).join('');
+  }
+  listEl.innerHTML = html;
+
+  const totalServer = serverItems.reduce((s,it) => s + hitungSubtotal(it), 0);
+  const totalDraft = draftItems.reduce((s,it) => s + hitungSubtotal(it), 0);
+  bTotal.textContent = rupiah(totalServer + totalDraft);
+  if(draftItems.length){
+    draftBar.style.display = 'block';
+    draftCount.textContent = draftItems.length;
+    draftTotal.textContent = rupiah(totalDraft);
+  } else draftBar.style.display = 'none';
+
+  const reminder = computeReminder();
+  if(reminder.length && draftItems.length){
+    reminderEl.style.display = 'block';
+    const preview = reminder.slice(0, 5).join(', ');
+    const more = reminder.length > 5 ? ` +${reminder.length - 5} lagi` : '';
+    reminderNames.textContent = preview + more;
+  } else reminderEl.style.display = 'none';
+  attachBelanjaHandlers();
+  updateCekModal();
+}
+function attachBelanjaHandlers(){
+  const listEl = document.getElementById('b_list');
+  listEl.querySelectorAll('.edit-trigger').forEach(btn => {
+    btn.addEventListener('click', () => {
+      _editingKey = btn.dataset.key;
+      renderBelanja();
+      setTimeout(()=>{
+        const q = document.querySelector('#b_list .edit-qty');
+        if(q){ q.focus(); q.select(); }
+        const mt = document.querySelector('#b_list .edit-metode');
+        if(mt) makeMethodToggle(mt);
+      }, 40);
+    });
+  });
+  listEl.querySelectorAll('.del').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const key = btn.dataset.key;
+      if(key.startsWith('draft:')){
+        const id = key.slice(6);
+        _draft = _draft.filter(x => x._draftId !== id);
+        saveDraftToStorage(); renderBelanja(); showToast('Draft dihapus');
+      } else {
+        const id = key.slice(7);
+        const item = btn.closest('.ledger-item');
+        const namaEl = item ? item.querySelector('.name') : null;
+        const nama = namaEl ? namaEl.childNodes[0].textContent.trim() : '';
+        if(!confirm(`Hapus "${nama}" dari daftar belanja?`)) return;
+        try{
+          await apiPost('deleteBelanja', {id});
+          showToast('Item dihapus');
+          await loadBelanja(); loadNamaBarangOptions();
+        }catch(e){ showToast('Gagal hapus: ' + e.message); }
+      }
+    });
+  });
+  const cancelBtn = listEl.querySelector('.edit-cancel');
+  if(cancelBtn) cancelBtn.addEventListener('click', () => { _editingKey = null; renderBelanja(); });
+  const saveBtn = listEl.querySelector('.edit-save');
+  if(saveBtn){
+    const commit = async () => {
+      const editingItem = listEl.querySelector('.ledger-item.editing');
+      if(!editingItem) return;
+      const key = editingItem.dataset.key;
+      const newQty = editingItem.querySelector('.edit-qty').value.trim();
+      const newHarga = bacaUang(editingItem.querySelector('.edit-harga'));
+      const newMetode = getMethodToggle(editingItem.querySelector('.edit-metode'));
+      if(!newQty){ showToast('Qty tidak boleh kosong'); return; }
+      if(!newHarga){ showToast('Harga tidak boleh kosong'); return; }
+      if(key.startsWith('draft:')){
+        const id = key.slice(6);
+        const item = _draft.find(x => x._draftId === id);
+        if(item){ item.qty = newQty; item.hargaBeli = newHarga; item.metode = newMetode; item.Total = parseNum(newQty) * newHarga; }
+        saveDraftToStorage(); _editingKey = null; renderBelanja(); showToast('Draft diperbarui');
+      } else {
+        const id = key.slice(7);
+        saveBtn.disabled = true; saveBtn.textContent = '…';
+        try{
+          await apiPost('updateBelanja', {id, qty: newQty, hargaBeli: newHarga, metode: newMetode});
+          _editingKey = null; showToast('Item diperbarui');
+          await loadBelanja(); loadNamaBarangOptions();
+        }catch(e){ showToast('Gagal: ' + e.message); saveBtn.disabled = false; saveBtn.textContent = 'Simpan'; }
+      }
+    };
+    saveBtn.addEventListener('click', commit);
+    const editingItem = listEl.querySelector('.ledger-item.editing');
+    if(editingItem){
+      editingItem.querySelectorAll('input').forEach(inp => {
+        inp.addEventListener('keydown', e => {
+          if(e.key === 'Enter'){ e.preventDefault(); commit(); }
+          if(e.key === 'Escape'){ _editingKey = null; renderBelanja(); }
+        });
+      });
+    }
+  }
+}
+async function loadBelanja(){
+  const listEl = document.getElementById('b_list');
+  const titleEl = document.getElementById('b_list_title');
+  if(titleEl) titleEl.textContent = _activeDate === todayStr() ? 'Belanja Hari Ini' : 'Belanja — ' + formatTanggalPendek(_activeDate);
+  listEl.innerHTML = '<div class="empty-note">Memuat data…</div>';
+  _draft = loadDraftFromStorage();
+  try{
+    const items = await apiGet('getBelanja', {tanggal: _activeDate});
+    _belanjaCache = items || [];
+    renderBelanja();
+  }catch(e){ listEl.innerHTML = `<div class="empty-note">Gagal memuat: ${escHtml(e.message)}</div>`; }
+}
+async function loadNamaBarangOptions(){
+  try{
+    const [names, hargaMaster, belanjaHariIni] = await Promise.all([
+      apiGet('getNamaBarangMaster').catch(()=>[]),
+      apiGet('getHargaMaster').catch(()=>[]),
+      apiGet('getBelanja', {tanggal: _activeDate}).catch(()=>[])
+    ]);
+    _infoMap = {};
+    (hargaMaster || []).forEach(h => {
+      if(!h || !h.NamaBarang) return;
+      _infoMap[h.NamaBarang] = { harga: parseNum(h.HargaBeli), satuan: String(h.Satuan || '').trim() };
+    });
+    const set = new Set();
+    const push = (n) => {
+      if(!n) return;
+      const nama = typeof n === 'string' ? n : (n && (n.NamaBarang || n.nama));
+      if(!nama) return;
+      const trimmed = String(nama).trim();
+      if(trimmed) set.add(trimmed);
+    };
+    (names || []).forEach(push);
+    (hargaMaster || []).forEach(h => push(h && h.NamaBarang));
+    (belanjaHariIni || []).forEach(b => push(b && b.NamaBarang));
+    (_belanjaCache || []).forEach(b => push(b && b.NamaBarang));
+    (_draft || []).forEach(d => push(d && d.NamaBarang));
+    _masterBarang = Array.from(set).sort((a,b) => String(a).localeCompare(String(b), 'id'));
+    renderBelanja();
+  }catch(e){}
+}
+document.getElementById('b_satuan').addEventListener('change', function(){
+  document.getElementById('b_satuan_new').style.display = this.value==='__other__' ? 'block' : 'none';
+  if(this.value==='__other__') document.getElementById('b_satuan_new').focus();
+});
+document.getElementById('b_qty').addEventListener('keydown', function(e){ if(e.key === 'Enter'){ e.preventDefault(); document.getElementById('b_harga').focus(); } });
+document.getElementById('b_harga').addEventListener('keydown', function(e){ if(e.key === 'Enter'){ e.preventDefault(); document.getElementById('b_submit').click(); } });
+
+document.getElementById('b_submit').addEventListener('click', ()=>{
+  const nama = document.getElementById('b_nama').value.trim();
+  const qty = document.getElementById('b_qty').value.trim();
+  const satuanSel = document.getElementById('b_satuan').value;
+  const satuan = satuanSel === '__other__' ? document.getElementById('b_satuan_new').value.trim() : satuanSel;
+  const harga = bacaUang(document.getElementById('b_harga'));
+  const metode = getMethodToggle(document.getElementById('b_metode'));
+  if(!nama){ showToast('Isi nama barang dulu'); return; }
+  if(!qty){ showToast('Isi qty dulu'); return; }
+  if(!satuan){ showToast('Isi satuan dulu'); return; }
+  if(!harga){ showToast('Isi harga beli dulu'); return; }
+  const item = {
+    _draftId: 'd' + Date.now() + Math.random().toString(36).slice(2,6),
+    NamaBarang: nama, qty, satuan, hargaBeli: harga,
+    Total: parseNum(qty) * harga
+  };
+  if(_bayarNanti){
+    const supplier = document.getElementById('b_supplier').value.trim();
+    if(!supplier){ showToast('Isi nama supplier dulu'); return; }
+    item.bayarNanti = true;
+    item.supplier = supplier;
+    item.metode = 'Cash';
+  } else {
+    item.metode = metode;
+  }
+  _draft.push(item);
+  saveDraftToStorage();
+  document.getElementById('b_nama').value = '';
+  document.getElementById('b_qty').value = '';
+  document.getElementById('b_satuan').value = 'kg';
+  document.getElementById('b_satuan_new').value = '';
+  document.getElementById('b_satuan_new').style.display = 'none';
+  document.getElementById('b_harga').value = '';
+  document.getElementById('b_supplier').value = '';
+  setMethodToggle(document.getElementById('b_metode'), 'Cash');
+  _bayarNanti = false;
+  bBayarNantiEl.classList.remove('on');
+  bSupplierWrap.classList.remove('show');
+  bMetodeWrap.style.display = 'block';
+  hideAc();
+  const set = new Set(_masterBarang);
+  set.add(nama);
+  _masterBarang = Array.from(set).sort((a,b) => String(a).localeCompare(String(b), 'id'));
+  renderBelanja();
+  document.getElementById('b_nama').focus();
+  showToast('Ditambahkan ke daftar');
+});
+document.getElementById('b_save_all').addEventListener('click', ()=>{
+  if(!_draft.length){ showToast('Belum ada item'); return; }
+  const reminder = computeReminder();
+  if(reminder.length === 0){ saveAllDrafts(); return; }
+  const modalList = document.getElementById('modal_list');
+  modalList.innerHTML = reminder.map(n => `<div class="modal-item" data-nama="${escHtml(n)}">${escHtml(n)}</div>`).join('');
+  modalList.querySelectorAll('.modal-item').forEach(el => {
+    el.addEventListener('click', ()=>{ closeModal(); selectAc(el.dataset.nama); });
+  });
+  document.getElementById('modal_confirm').style.display = 'flex';
+});
+document.getElementById('modal_back').addEventListener('click', ()=>{ closeModal(); document.getElementById('b_nama').focus(); });
+document.getElementById('modal_confirm_btn').addEventListener('click', ()=>{
+  const btn = document.getElementById('modal_confirm_btn');
+  btn.disabled = true; btn.textContent = 'Menyimpan…';
+  closeModal();
+  saveAllDrafts().finally(()=>{ btn.disabled = false; btn.textContent = 'Yakin, Simpan'; });
+});
+function closeModal(){ document.getElementById('modal_confirm').style.display = 'none'; }
+async function saveAllDrafts(){
+  if(!_draft.length) return;
+  const btn = document.getElementById('b_save_all');
+  btn.disabled = true;
+  const total = _draft.length;
+  const succeeded = [], failed = [];
+  for(let i = 0; i < _draft.length; i++){
+    const item = _draft[i];
+    btn.textContent = `Menyimpan ${i+1}/${total}…`;
+    try{
+      if(item.bayarNanti){
+        await apiPost('addHutang', {
+          tipe: 'HutangSaya',
+          nama: item.supplier,
+          jumlah: item.Total,
+          catatan: item.NamaBarang + ' ' + item.qty + ' ' + item.satuan + ' × ' + item.hargaBeli,
+          tanggal: _activeDate
+        });
+      } else {
+        await apiPost('addBelanja', {
+          namaBarang: item.NamaBarang, qty: item.qty, satuan: item.satuan,
+          hargaBeli: item.hargaBeli, metode: item.metode || 'Cash',
+          tanggal: _activeDate
+        });
+      }
+      succeeded.push(item);
+    }catch(e){ failed.push(item); }
+  }
+  if(succeeded.length){
+    btn.textContent = 'Memperbarui laporan…';
+    try{ await apiPost('refreshLaporan', { tanggal: _activeDate }); }catch(e){}
+  }
+  if(failed.length === 0){
+    clearDraftStorage(); _draft = [];
+    showToast(`${succeeded.length} item tersimpan`);
+    // Setelah simpan, tawarkan hapus catatan
+    if(_catatanDraft.length > 0){
+      if(confirm('Belanja tersimpan. Kosongkan catatan rencana untuk besok?')){
+        _catatanDraft = []; clearCatatanStorage();
+        renderCatatanList();
+      }
+    }
+    await loadBelanja(); loadNamaBarangOptions();
+  } else {
+    _draft = failed; saveDraftToStorage(); renderBelanja();
+    showToast(`${succeeded.length} sukses, ${failed.length} gagal`);
+  }
+  btn.disabled = false; btn.textContent = 'Simpan Semua';
+}
+document.getElementById('share_belanja_input').addEventListener('click', ()=>{
+  const all = [..._draft.map(d=>({NamaBarang:d.NamaBarang, Qty:d.qty, Satuan:d.satuan, HargaBeli:d.hargaBeli, Total:d.Total, Metode:d.metode, bayarNanti:d.bayarNanti})), ..._belanjaCache];
+  if(!all.length){ showToast('Belum ada belanja'); return; }
+  const lines = all.map(it=>{
+    const beli = parseNum(it.HargaBeli);
+    const sub = hitungSubtotal(it);
+    const m = it.bayarNanti ? ' [HUTANG]' : ((it.Metode === 'QRIS' || it.metode === 'QRIS') ? ' [QRIS]' : '');
+    return `${it.NamaBarang}${m} — ${it.Qty} ${it.Satuan} × ${rupiah(beli)} = ${rupiah(sub)}`;
+  });
+  const total = all.reduce((s,it)=>s + hitungSubtotal(it), 0);
+  shareText(`*Belanja Aktual* — ${dateLongFrom(_activeDate)}\n\n${lines.join('\n')}\n\nTotal belanja: ${rupiah(total)}`);
+});
+window.addEventListener('beforeunload', (e)=>{ if(_draft && _draft.length > 0){ e.preventDefault(); e.returnValue = ''; } });
+
+/* ==========================================================
+   CEK MODAL BELANJA (ALERT)
+   ========================================================== */
+let _omzetHariIni = null;
+let _biayaOpsHariIni = null;
+let _targetLaba = DEFAULT_PENGATURAN.TargetLabaHarian;
+
+async function fetchOmzetAndOps(){
+  try{
+    const [omzet, ops, pengaturan] = await Promise.all([
+      apiGet('getOmzet', {tanggal: _activeDate}).catch(()=>({Cash:0,QRIS:0,TotalOmzet:0})),
+      apiGet('getBiayaOperasional', {tanggal: _activeDate}).catch(()=>({operasionalBelanja:0, bensin:0})),
+      apiGet('getPengaturan').catch(()=>({}))
+    ]);
+    _omzetHariIni = omzet;
+    _biayaOpsHariIni = ops;
+    _targetLaba = parseNum(pengaturan.TargetLabaHarian) || DEFAULT_PENGATURAN.TargetLabaHarian;
+  }catch(e){
+    _omzetHariIni = null;
+    _biayaOpsHariIni = null;
+  }
+}
+
+function updateCekModal(){
+  const box = document.getElementById('cek_modal_box');
+  if(!box) return;
+
+  const omzetCash = parseNum(_omzetHariIni?.Cash);
+  const omzetQrisKotor = parseNum(_omzetHariIni?.QRIS);
+  const omzetQrisBersih = omzetQrisKotor * (1 - QRIS_FEE_RATE);
+  const totalOmzet = omzetCash + omzetQrisBersih;
+
+  // Kalau omzet belum diinput
+  if(totalOmzet <= 0){
+    box.innerHTML = `
+      <div class="cek-modal status-belum">
+        <div class="cm-head">
+          <div class="cm-title">⚠️ Cek Modal Belanja</div>
+          <span class="cm-status" style="background:#FFE9A8;color:#7A5D00;">Belum Ada Omzet</span>
+        </div>
+        <div class="cm-msg">Omzet hari ini belum diinput. Input dulu untuk lihat batas belanja aman Anda.</div>
+        <div class="cm-cta">
+          <span>Buka Tutup Hari → Simpan Omzet</span>
+          <button id="cek_modal_go_tutup">Ke Tutup Hari</button>
+        </div>
+      </div>`;
+    const btn = box.querySelector('#cek_modal_go_tutup');
+    if(btn) btn.addEventListener('click', ()=> goTab('tutup'));
+    return;
+  }
+
+  const opsPasar = parseNum(_biayaOpsHariIni?.operasionalBelanja);
+  const opsBensin = parseNum(_biayaOpsHariIni?.bensin);
+
+  // Modal bersih setelah biaya tetap
+  const modalBersih = totalOmzet - opsPasar - opsBensin;
+  const batasAman = modalBersih - _targetLaba;
+
+  // Total belanja (draft + server)
+  const totalDraft = (_draft || []).reduce((s, it) => s + hitungSubtotal(it), 0);
+  const totalServer = (_belanjaCache || []).reduce((s, it) => s + hitungSubtotal(it), 0);
+  const totalBelanja = totalDraft + totalServer;
+
+  // Hitung status
+  let status, statusLabel, pesan;
+  const persen = batasAman > 0 ? (totalBelanja / batasAman) * 100 : (totalBelanja > 0 ? 999 : 0);
+
+  if(totalBelanja <= 0){
+    status = 'aman';
+    statusLabel = '🟢 Aman';
+    pesan = `Belanja belum diinput. Batas aman: <strong>${rupiah(Math.max(0, batasAman))}</strong>.`;
+  } else if(totalBelanja < modalBersih && totalBelanja <= batasAman * 0.8){
+    status = 'aman';
+    statusLabel = '🟢 Aman';
+    const sisa = batasAman - totalBelanja;
+    pesan = `Aman. Target laba <strong>${rupiah(_targetLaba)}</strong> tetap terjaga. Sisa jatah: <strong>${rupiah(sisa)}</strong>.`;
+  } else if(totalBelanja < modalBersih && totalBelanja <= batasAman){
+    status = 'hampir';
+    statusLabel = '🟡 Hampir Batas';
+    const sisa = batasAman - totalBelanja;
+    pesan = `Hampir batas. Sisa jatah <strong>${rupiah(sisa)}</strong> lagi sebelum target laba terkikis.`;
+  } else if(totalBelanja > modalBersih){
+    status = 'minus';
+    statusLabel = '🔴 Melebihi Omzet';
+    const kelebihan = totalBelanja - modalBersih;
+    pesan = `Belanja melebihi omzet hari ini <strong>${rupiah(kelebihan)}</strong>. Laba hari ini minus — akan mengurangi saldo tabungan Anda.`;
+  } else {
+    // totalBelanja > batasAman tapi < modalBersih
+    status = 'kikis';
+    statusLabel = '🟠 Laba Terkikis';
+    const kikis = totalBelanja - batasAman;
+    const labaTersisa = _targetLaba - kikis;
+    pesan = `Target laba terkikis <strong>${rupiah(kikis)}</strong>. Laba hari ini tinggal <strong>${rupiah(Math.max(0, labaTersisa))}</strong> (dari target ${rupiah(_targetLaba)}).`;
+  }
+
+  const persenBar = Math.min(150, Math.max(0, persen));
+  box.innerHTML = `
+    <div class="cek-modal status-${status}">
+      <div class="cm-head">
+        <div class="cm-title">💰 Cek Modal Belanja</div>
+        <span class="cm-status">${statusLabel}</span>
+      </div>
+      <div class="cm-row"><span class="lbl">Omzet Cash</span><span class="amt">${rupiah(omzetCash)}</span></div>
+      <div class="cm-row"><span class="lbl">Omzet QRIS (bersih)</span><span class="amt">${rupiah(omzetQrisBersih)}</span></div>
+      <div class="cm-div"></div>
+      <div class="cm-row"><span class="lbl">Total omzet</span><span class="amt">${rupiah(totalOmzet)}</span></div>
+      <div class="cm-row"><span class="lbl">− Operasional Pasar</span><span class="amt neg">${rupiah(opsPasar)}</span></div>
+      <div class="cm-row"><span class="lbl">− Bensin</span><span class="amt neg">${rupiah(opsBensin)}</span></div>
+      <div class="cm-div"></div>
+      <div class="cm-row"><span class="lbl">Modal bersih</span><span class="amt">${rupiah(modalBersih)}</span></div>
+      <div class="cm-row"><span class="lbl">− Target laba harian</span><span class="amt neg">${rupiah(_targetLaba)}</span></div>
+      <div class="cm-div"></div>
+      <div class="cm-total">
+        <span class="lbl">Batas belanja aman</span>
+        <span class="amt">${rupiah(Math.max(0, batasAman))}</span>
+      </div>
+      <div class="cm-row" style="margin-top:8px;"><span class="lbl">Belanja Anda</span><span class="amt">${rupiah(totalBelanja)}</span></div>
+      <div class="cm-progress"><div class="cm-progress-fill" style="width:${Math.min(100, persenBar)}%"></div></div>
+      <div class="cm-msg">${pesan}</div>
+    </div>`;
+}
+
+/* ==========================================================
+   MODUL HARGA
+   ========================================================== */
+let _hargaCache = [], _hargaFilter = '', _hargaJualManual = {}, _editingJual = null;
+
+async function fetchHargaMaster(){
+  const [belanjaToday, namaMaster, hargaMasterOpt] = await Promise.all([
+    apiGet('getBelanja', {tanggal: todayStr()}).catch(()=>[]),
+    apiGet('getNamaBarangMaster').catch(()=>[]),
+    apiGet('getHargaMaster').catch(()=>null)
+  ]);
+  const map = {};
+  const ensure = (nama) => { if(!nama) return null; if(!map[nama]) map[nama] = { NamaBarang: nama, HargaBeli: 0 }; return map[nama]; };
+  if(Array.isArray(hargaMasterOpt)){
+    hargaMasterOpt.forEach(h=>{
+      const item = ensure(h.NamaBarang);
+      if(!item) return;
+      const b = parseNum(h.HargaBeli);
+      if(b > 0) item.HargaBeli = b;
+    });
+  }
+  (namaMaster || []).forEach(n => ensure(typeof n === 'string' ? n : (n && (n.NamaBarang || n.nama))));
+  (belanjaToday || []).forEach(b=>{
+    const item = ensure(b.NamaBarang);
+    if(!item) return;
+    const bl = parseNum(b.HargaBeli);
+    if(bl > 0) item.HargaBeli = bl;
+  });
+  return Object.values(map).sort((a,b)=> String(a.NamaBarang).localeCompare(String(b.NamaBarang), 'id'));
+}
+async function loadHarga(){
+  const listEl = document.getElementById('h_list');
+  listEl.innerHTML = '<div class="empty-note">Memuat data…</div>';
+  try{
+    const [items, manualList] = await Promise.all([fetchHargaMaster(), apiGet('getHargaJual').catch(()=>[])]);
+    _hargaCache = items || [];
+    _hargaJualManual = {};
+    (manualList || []).forEach(m=>{
+      _hargaJualManual[m.NamaBarang] = { harga: parseNum(m.HargaJualTerakhir), tanggal: normYmd(m.TanggalUpdate) };
+    });
+    if(!items.length){
+      listEl.innerHTML = emptyHTML(ICON_TAG, 'Belum ada barang', 'Ke Belanja', 'harga_go_belanja');
+      const b = document.getElementById('harga_go_belanja');
+      if(b) b.addEventListener('click', ()=>goTab('belanja'));
+      return;
+    }
+    renderHargaList();
+  }catch(e){ listEl.innerHTML = `<div class="empty-note">Gagal: ${escHtml(e.message)}</div>`; }
+}
+function renderHargaList(){
+  const listEl = document.getElementById('h_list');
+  const filter = _hargaFilter.trim().toLowerCase();
+  const filtered = filter ? _hargaCache.filter(it => String(it.NamaBarang).toLowerCase().includes(filter)) : _hargaCache;
+  if(!filtered.length){ listEl.innerHTML = `<div class="empty-note">Tidak ada cocok</div>`; return; }
+  listEl.innerHTML = filtered.map((it, idx)=>{
+    const beli = parseNum(it.HargaBeli);
+    const otomatis = hitungHargaJual(beli);
+    const manual = _hargaJualManual[it.NamaBarang];
+    const isManualToday = !!(manual && manual.tanggal === todayStr() && manual.harga > 0);
+    const jual = isManualToday ? manual.harga : otomatis;
+    const minimum = hitungHargaMinimum(beli);
+    const margin = jual - beli;
+    const marginPct = beli > 0 ? Math.round(margin / beli * 100) : 0;
+    const netto = Math.round(margin * (1 - SUSUT_RATE));
+    const susutVal = margin - netto;
+    const isEditing = _editingJual === it.NamaBarang;
+    return `<div class="price-card">
+      <div class="price-name">${escHtml(it.NamaBarang)}${isManualToday ? '<span class="manual-badge">Manual</span>' : ''}</div>
+      <div class="price-grid">
+        <div class="price-cell buy"><div class="price-label">Beli</div><div class="price-value">${beli ? rupiah(beli) : '—'}</div></div>
+        <div class="price-cell sell">
+          <div class="cell-head"><div class="price-label">Jual</div>${beli > 0 && !isEditing ? `<button class="jual-edit-btn" data-nama="${escHtml(it.NamaBarang)}" type="button">✎</button>` : ''}</div>
+          ${isEditing ? `<div class="jual-edit-form">
+            <input type="text" inputmode="numeric" class="jual-edit-input" value="${jual ? jual.toLocaleString('id-ID') : ''}">
+            <div class="jual-edit-hint">Otomatis: ${otomatis ? rupiah(otomatis) : '—'}</div>
+            <div class="jual-edit-actions"><button class="btn-mini ghost jual-cancel" type="button">Batal</button><button class="btn-mini primary jual-save" data-nama="${escHtml(it.NamaBarang)}" type="button">Simpan</button></div>
+          </div>` : `<div class="price-value">${jual ? rupiah(jual) : '—'}</div>`}
+        </div>
+      </div>
+      ${minimum > 0 ? `<div class="min-row"><span class="lbl">Harga Minimum</span><span class="val">${rupiah(minimum)}</span></div>` : ''}
+      ${beli > 0 ? `<button class="detail-toggle" data-idx="${idx}">▾ Rincian</button>
+      <div class="price-detail" id="detail-${idx}" style="display:none;">
+        <div class="price-detail-row margin"><span>Margin kotor</span><span>${rupiah(margin)} · ${marginPct}%</span></div>
+        <div class="price-detail-row susut"><span>Estimasi susut (${Math.round(SUSUT_RATE*100)}%)</span><span>− ${rupiah(susutVal)}</span></div>
+        <div class="price-detail-divider"></div>
+        <div class="price-detail-row bersih"><span>Margin bersih</span><strong>${rupiah(netto)}</strong></div>
+      </div>` : ''}
+    </div>`;
+  }).join('');
+
+  listEl.querySelectorAll('.detail-toggle').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const detail = document.getElementById('detail-' + btn.dataset.idx);
+      if(!detail) return;
+      const isOpen = detail.style.display !== 'none';
+      detail.style.display = isOpen ? 'none' : 'flex';
+      btn.textContent = isOpen ? '▾ Rincian' : '▴ Tutup';
+      btn.classList.toggle('open', !isOpen);
+    });
+  });
+  listEl.querySelectorAll('.jual-edit-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      _editingJual = btn.dataset.nama;
+      renderHargaList();
+      setTimeout(()=>{ const inp = listEl.querySelector('.jual-edit-input'); if(inp){ inp.focus(); inp.select(); } }, 30);
+    });
+  });
+  listEl.querySelectorAll('.jual-cancel').forEach(btn=>{ btn.addEventListener('click', ()=>{ _editingJual = null; renderHargaList(); }); });
+  listEl.querySelectorAll('.jual-save').forEach(btn=>{
+    btn.addEventListener('click', async ()=>{
+      const nama = btn.dataset.nama;
+      const card = btn.closest('.price-card');
+      const input = card ? card.querySelector('.jual-edit-input') : null;
+      const val = bacaUang(input);
+      if(!val || val <= 0){ showToast('Harga jual tidak valid'); return; }
+      btn.disabled = true; btn.textContent = '…';
+      try{
+        await apiPost('updateHargaJual', { namaBarang: nama, hargaJualBaru: val });
+        _hargaJualManual[nama] = { harga: val, tanggal: todayStr() };
+        _editingJual = null; showToast('Harga jual disimpan'); renderHargaList();
+      }catch(e){ showToast('Gagal: ' + e.message); btn.disabled = false; btn.textContent = 'Simpan'; }
+    });
+  });
+}
+document.getElementById('h_search').addEventListener('input', function(){
+  _hargaFilter = this.value;
+  if(!_hargaCache.length) return;
+  renderHargaList();
+});
+document.getElementById('share_beli').addEventListener('click', async ()=>{
+  if(!_hargaCache.length){ showToast('Belum ada data'); return; }
+  try{
+    const belanja = await apiGet('getBelanja', {tanggal: todayStr()});
+    if(!belanja.length){ showToast('Belum ada belanja hari ini'); return; }
+    const lines = belanja.map(b=>{
+      const beli = parseNum(b.HargaBeli); const sub = hitungSubtotal(b);
+      const m = b.Metode === 'QRIS' ? ' [QRIS]' : '';
+      return `${b.NamaBarang}${m} — ${b.Qty} ${b.Satuan} × ${rupiah(beli)} = ${rupiah(sub)}`;
+    });
+    const total = belanja.reduce((s,b)=>s + hitungSubtotal(b), 0);
+    shareText(`*Harga Beli* — ${dateLong()}\n\n${lines.join('\n')}\n\nTotal belanja: ${rupiah(total)}`);
+  }catch(e){ showToast('Gagal: ' + e.message); }
+});
+document.getElementById('share_jual').addEventListener('click', async ()=>{
+  if(!_hargaCache.length){ showToast('Belum ada data'); return; }
+  const source = _hargaCache.filter(x=>parseNum(x.HargaBeli)>0);
+  if(!source.length){ showToast('Belum ada harga jual'); return; }
+  const lines = source.map(x=>{
+    const beli = parseNum(x.HargaBeli);
+    const manual = _hargaJualManual[x.NamaBarang];
+    const isManualToday = manual && manual.tanggal === todayStr() && manual.harga > 0;
+    const jual = isManualToday ? manual.harga : hitungHargaJual(beli);
+    return `${x.NamaBarang} — ${rupiah(jual)}`;
+  });
+  shareText(`*Daftar Harga* — ${dateLong()}\n\n${lines.join('\n')}`);
+});
+
+/* ==========================================================
+   MODUL TUTUP HARI
+   ========================================================== */
+const _biayaHariIni = {
+  OperasionalBelanja: DEFAULT_PENGATURAN.OperasionalBelanja,
+  OperasionalMetode: 'Cash',
+  Bensin: DEFAULT_PENGATURAN.Bensin,
+  BensinMetode: 'Cash',
+  sudahDiubah: false
+};
+
+/* LAIN-LAIN DINAMIS */
+let _lainLainCache = [];
+
+async function loadLainLain(){
+  const listEl = document.getElementById('lainlain_list');
+  if(!listEl) return;
+  listEl.innerHTML = '<div class="lainlain-empty">Memuat…</div>';
+  try{
+    const items = await apiGet('getLainLain', {tanggal: _activeDate});
+    _lainLainCache = items || [];
+    renderLainLain();
+  }catch(e){
+    listEl.innerHTML = `<div class="lainlain-empty">Gagal memuat: ${escHtml(e.message)}</div>`;
+  }
+}
+function renderLainLain(){
+  const listEl = document.getElementById('lainlain_list');
+  const totalEl = document.getElementById('lainlain_total');
+  const totalValEl = document.getElementById('lainlain_total_val');
+  if(!_lainLainCache.length){
+    listEl.innerHTML = '<div class="lainlain-empty">Belum ada pengeluaran lain-lain</div>';
+    totalEl.style.display = 'none';
+    return;
+  }
+  listEl.innerHTML = `<div class="lainlain-list">${
+    _lainLainCache.map(item => `
+      <div class="lainlain-item">
+        <span class="ket">${escHtml(item.Keterangan)}</span>
+        <span class="metode-tag ${item.Metode === 'QRIS' ? 'qris' : 'cash'}">${item.Metode === 'QRIS' ? '📱' : '💵'}</span>
+        <span class="amt">${rupiah(item.Jumlah)}</span>
+        <button class="del" data-id="${escHtml(item.ID)}">×</button>
+      </div>
+    `).join('')
+  }</div>`;
+  const total = _lainLainCache.reduce((s, it) => s + (it.Jumlah || 0), 0);
+  totalEl.style.display = 'flex';
+  totalValEl.textContent = rupiah(total);
+  listEl.querySelectorAll('.del').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const id = btn.dataset.id;
+      if(!confirm('Hapus pengeluaran ini?')) return;
+      try{
+        await apiPost('deleteLainLain', {id});
+        showToast('Pengeluaran dihapus');
+        await loadLainLain();
+      }catch(e){ showToast('Gagal hapus: ' + e.message); }
+    });
+  });
+}
+document.getElementById('ll_add').addEventListener('click', async () => {
+  const ket = document.getElementById('ll_ket').value.trim();
+  const jml = bacaUang(document.getElementById('ll_jml'));
+  const metode = getMethodToggle(document.getElementById('ll_metode'));
+  if(!ket){ showToast('Isi keterangan dulu'); return; }
+  if(!jml || jml <= 0){ showToast('Isi jumlah dulu'); return; }
+  const btn = document.getElementById('ll_add');
+  btn.disabled = true; btn.textContent = '…';
+  try{
+    await apiPost('addLainLain', {
+      tanggal: _activeDate,
+      keterangan: ket,
+      jumlah: jml,
+      metode: metode
+    });
+    document.getElementById('ll_ket').value = '';
+    document.getElementById('ll_jml').value = '';
+    setMethodToggle(document.getElementById('ll_metode'), 'Cash');
+    showToast('Pengeluaran ditambahkan');
+    await loadLainLain();
+  }catch(e){ showToast('Gagal: ' + e.message); }
+  finally{ btn.disabled = false; btn.textContent = '+ Tambah'; }
+});
+document.getElementById('ll_ket').addEventListener('keydown', function(e){
+  if(e.key === 'Enter'){ e.preventDefault(); document.getElementById('ll_jml').focus(); }
+});
+document.getElementById('ll_jml').addEventListener('keydown', function(e){
+  if(e.key === 'Enter'){ e.preventDefault(); document.getElementById('ll_add').click(); }
+});
+
+/* BON PELANGGAN */
+let _bonDraft = [];
+function bonStorageKey(){ return 'sayur_bon_' + _activeDate; }
+function loadBonFromStorage(){ try{ const raw = localStorage.getItem(bonStorageKey()); if(!raw) return []; const arr = JSON.parse(raw); return Array.isArray(arr) ? arr : []; }catch(e){ return []; } }
+function saveBonToStorage(){ try{ localStorage.setItem(bonStorageKey(), JSON.stringify(_bonDraft)); }catch(e){} }
+function clearBonStorage(){ try{ localStorage.removeItem(bonStorageKey()); }catch(e){} }
+
+function renderBon(){
+  const listEl = document.getElementById('bon_list');
+  if(!_bonDraft.length){ listEl.innerHTML = ''; return; }
+  listEl.innerHTML = _bonDraft.map(b => `
+    <div class="bon-item">
+      <span class="nm">${escHtml(b.nama)}</span>
+      <span class="amt">${rupiah(b.jumlah)}</span>
+      <button class="del" data-id="${escHtml(b._id)}" type="button">×</button>
+    </div>
+  `).join('');
+  listEl.querySelectorAll('.del').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      _bonDraft = _bonDraft.filter(x => x._id !== btn.dataset.id);
+      saveBonToStorage(); renderBon(); updateTotalOmzetPreview();
+    });
+  });
+}
+document.getElementById('bon_add').addEventListener('click', ()=>{
+  const nama = document.getElementById('bon_nama').value.trim();
+  const jml = bacaUang(document.getElementById('bon_jml'));
+  if(!nama){ showToast('Isi nama pelanggan dulu'); return; }
+  if(!jml || jml <= 0){ showToast('Isi jumlah bon dulu'); return; }
+  _bonDraft.push({ _id: 'b' + Date.now(), nama, jumlah: jml });
+  saveBonToStorage();
+  document.getElementById('bon_nama').value = '';
+  document.getElementById('bon_jml').value = '';
+  renderBon(); updateTotalOmzetPreview();
+  document.getElementById('bon_nama').focus();
+  showToast('Bon ditambahkan');
+});
+document.getElementById('bon_nama').addEventListener('keydown', function(e){ if(e.key === 'Enter'){ e.preventDefault(); document.getElementById('bon_jml').focus(); } });
+document.getElementById('bon_jml').addEventListener('keydown', function(e){ if(e.key === 'Enter'){ e.preventDefault(); document.getElementById('bon_add').click(); } });
+
+function renderFixedRow(target, value, metode){
+  const rowId = target === 'ops' ? 't_ops_row' : 't_bensin_row';
+  const row = document.getElementById(rowId);
+  if(!row || row.classList.contains('editing')) return;
+  const m = metode === 'QRIS' ? 'QRIS' : 'Cash';
+  row.innerHTML = `<span class="lbl">Harian <button class="edit-btn" data-target="${target}">✎</button></span>
+    <span class="val">${rupiah(value)} <button type="button" class="method-toggle fixed-metode" data-metode="${m}">${m === 'Cash' ? '💵' : '📱'}</button></span>`;
+  row.querySelector('.edit-btn').addEventListener('click', ()=>startEditFixed(target));
+  const mt = row.querySelector('.fixed-metode');
+  if(mt){
+    mt.style.padding = '4px 8px'; mt.style.fontSize = '11px'; mt.style.marginLeft = '6px';
+    mt.addEventListener('click', ()=>{
+      const cur = mt.dataset.metode || 'Cash';
+      const next = cur === 'Cash' ? 'QRIS' : 'Cash';
+      mt.dataset.metode = next;
+      mt.textContent = next === 'Cash' ? '💵' : '📱';
+      if(target === 'ops') _biayaHariIni.OperasionalMetode = next;
+      else _biayaHariIni.BensinMetode = next;
+      _biayaHariIni.sudahDiubah = true;
+    });
+  }
+}
+function startEditFixed(target){
+  const rowId = target === 'ops' ? 't_ops_row' : 't_bensin_row';
+  const row = document.getElementById(rowId); if(!row) return;
+  const currentVal = target === 'ops' ? _biayaHariIni.OperasionalBelanja : _biayaHariIni.Bensin;
+  row.classList.add('editing');
+  row.innerHTML = `<span class="lbl">Harian</span>
+    <div class="fixed-edit-group">
+      <input class="fixed-input" type="text" inputmode="numeric" value="${Number(currentVal).toLocaleString('id-ID')}">
+      <button type="button" class="fixed-default-btn">Jadikan default</button>
+    </div>`;
+  const inp = row.querySelector('.fixed-input');
+  const defaultBtn = row.querySelector('.fixed-default-btn');
+  attachMoneyInput(inp); inp.focus(); inp.select();
+  let _pendingDefault = false;
+  const commit = () => {
+    const n = bacaUang(inp);
+    row.classList.remove('editing');
+    if(!n || n <= 0){ const curMetode = target === 'ops' ? _biayaHariIni.OperasionalMetode : _biayaHariIni.BensinMetode; renderFixedRow(target, currentVal, curMetode); return; }
+    if(target === 'ops') _biayaHariIni.OperasionalBelanja = n; else _biayaHariIni.Bensin = n;
+    _biayaHariIni.sudahDiubah = true;
+    const curMetode = target === 'ops' ? _biayaHariIni.OperasionalMetode : _biayaHariIni.BensinMetode;
+    renderFixedRow(target, n, curMetode);
+    showToast('Biaya diubah');
+  };
+  inp.addEventListener('blur', ()=>{ if(_pendingDefault){ _pendingDefault = false; return; } commit(); });
+  inp.addEventListener('keydown', (e)=>{ if(e.key === 'Enter'){ inp.blur(); } });
+  const armDefault = ()=>{ _pendingDefault = true; };
+  defaultBtn.addEventListener('pointerdown', armDefault);
+  defaultBtn.addEventListener('mousedown', armDefault);
+  defaultBtn.addEventListener('touchstart', armDefault, {passive:true});
+  defaultBtn.addEventListener('click', async ()=>{
+    const n = bacaUang(inp);
+    if(!n || n <= 0){ showToast('Isi angkanya dulu'); return; }
+    defaultBtn.disabled = true; defaultBtn.textContent = '…';
+    try{
+      const key = target === 'ops' ? 'OperasionalBelanja' : 'Bensin';
+      await apiPost('setPengaturan', {[key]: n});
+      if(target === 'ops') _biayaHariIni.OperasionalBelanja = n; else _biayaHariIni.Bensin = n;
+      _biayaHariIni.sudahDiubah = true;
+      row.classList.remove('editing');
+      const curMetode = target === 'ops' ? _biayaHariIni.OperasionalMetode : _biayaHariIni.BensinMetode;
+      renderFixedRow(target, n, curMetode);
+      showToast('Default disimpan');
+    }catch(e){ showToast('Gagal: ' + e.message); defaultBtn.disabled = false; defaultBtn.textContent = 'Jadikan default'; }
+  });
+}
+function updateTotalOmzetPreview(){
+  const cash = bacaUang(document.getElementById('t_cash'));
+  const qris = bacaUang(document.getElementById('t_qris'));
+  const bon = _bonDraft.reduce((s,b) => s + (b.jumlah || 0), 0);
+  document.getElementById('t_total_omzet').textContent = rupiah(cash + qris + bon);
+}
+document.getElementById('t_cash').addEventListener('input', updateTotalOmzetPreview);
+document.getElementById('t_qris').addEventListener('input', updateTotalOmzetPreview);
+
+function pagiKey(){ return 'sayur_pagi_' + _activeDate; }
+function loadPagiLocal(){ try{ return JSON.parse(localStorage.getItem(pagiKey()) || '{}'); }catch(e){ return {}; } }
+function savePagiLocal(d){ try{ localStorage.setItem(pagiKey(), JSON.stringify(d)); }catch(e){} }
+function applyPagiToForm(){
+  const p = loadPagiLocal();
+  setMoney(document.getElementById('tp_kresek'), p.kresek || 0);
+  setMoney(document.getElementById('tp_konsumsi'), p.konsumsi || 0);
+  setMoney(document.getElementById('tp_iuran'), p.iuran || 0);
+  setMoney(document.getElementById('tp_lain'), p.lain || 0);
+}
+
+async function loadTutup(){
+  try{
+    const editingFixed = document.querySelector('.fixed-row.editing');
+    let pengaturan = {...DEFAULT_PENGATURAN};
+    try{
+      const p = await apiGet('getPengaturan');
+      if(p && typeof p === 'object'){
+        pengaturan.OperasionalBelanja = parseNum(p.OperasionalBelanja) || DEFAULT_PENGATURAN.OperasionalBelanja;
+        pengaturan.Bensin = parseNum(p.Bensin) || DEFAULT_PENGATURAN.Bensin;
+      }
+    }catch(e){}
+    const ops = await apiGet('getBiayaOperasional', {tanggal: _activeDate});
+    if(!_biayaHariIni.sudahDiubah){
+      const opsToday = parseNum(ops.operasionalBelanja);
+      const bensinToday = parseNum(ops.bensin);
+      _biayaHariIni.OperasionalBelanja = opsToday > 0 ? opsToday : pengaturan.OperasionalBelanja;
+      _biayaHariIni.Bensin = bensinToday > 0 ? bensinToday : pengaturan.Bensin;
+      _biayaHariIni.OperasionalMetode = ops.operasionalMetode || 'Cash';
+      _biayaHariIni.BensinMetode = ops.bensinMetode || 'Cash';
+    }
+    if(!editingFixed){
+      renderFixedRow('ops', _biayaHariIni.OperasionalBelanja, _biayaHariIni.OperasionalMetode);
+      renderFixedRow('bensin', _biayaHariIni.Bensin, _biayaHariIni.BensinMetode);
+    }
+    const setIfNotActive = (id, val) => { const el = document.getElementById(id); if(!el || document.activeElement === el) return; setMoney(el, val); };
+    setIfNotActive('t_konsumsi', ops.konsumsi);
+    setMethodToggle(document.getElementById('t_konsumsi_metode'), ops.konsumsiMetode);
+    const omzet = await apiGet('getOmzet', {tanggal: _activeDate});
+    const elC = document.getElementById('t_cash'); const elQ = document.getElementById('t_qris');
+    if(elC && document.activeElement !== elC) setMoney(elC, omzet.Cash);
+    if(elQ && document.activeElement !== elQ) setMoney(elQ, omzet.QRIS);
+    updateTotalOmzetPreview();
+    applyPagiToForm();
+    loadLainLain();
+    _bonDraft = loadBonFromStorage();
+    renderBon();
+    updateTotalOmzetPreview();
+    const submitBtn = document.getElementById('t_submit');
+    if(submitBtn){
+      submitBtn.textContent = _activeDate === todayStr() ? '✅ Simpan Lengkap' : '✅ Simpan untuk ' + formatTanggalPendek(_activeDate);
+    }
+  }catch(e){ showToast('Gagal: ' + e.message); }
+}
+
+/* TOMBOL SIMPAN OMZET */
+document.getElementById('t_save_omzet').addEventListener('click', async ()=>{
+  const btn = document.getElementById('t_save_omzet'); if(btn.disabled) return;
+  const cash = bacaUang(document.getElementById('t_cash'));
+  const qris = bacaUang(document.getElementById('t_qris'));
+  const bonTotal = _bonDraft.reduce((s,b) => s + (b.jumlah || 0), 0);
+  if(!cash && !qris && !bonTotal){ showToast('Isi Cash, QRIS, atau Bon dulu'); return; }
+  const prev = btn.textContent;
+  btn.disabled = true; btn.textContent = 'Menyimpan omzet…';
+  try{
+    for(const b of _bonDraft){
+      try{
+        await apiPost('addHutang', {
+          tipe: 'PiutangSaya', nama: b.nama, jumlah: b.jumlah,
+          catatan: 'Bon ' + formatTanggalPendek(_activeDate),
+          tanggal: _activeDate
+        });
+      }catch(e){}
+    }
+    await apiPost('setOmzet', {cash: cash + bonTotal, qris, tanggal: _activeDate});
+    await apiPost('simpanLaporan', {tanggal: _activeDate});
+    showToast('✅ Omzet tersimpan');
+    clearBonStorage(); _bonDraft = []; renderBon(); updateTotalOmzetPreview();
+    try{ localStorage.setItem('sayur_last_sync', new Date().toISOString()); }catch(e){}
+    loadDashboard();
+    // Refresh cek modal karena omzet berubah
+    await fetchOmzetAndOps();
+    updateCekModal();
+  }catch(e){ showToast('Gagal simpan omzet: ' + e.message); }
+  finally{ btn.disabled = false; btn.textContent = prev; }
+});
+
+/* TOMBOL SIMPAN PENGELUARAN */
+document.getElementById('t_save_biaya').addEventListener('click', async ()=>{
+  const btn = document.getElementById('t_save_biaya'); if(btn.disabled) return;
+  const konsumsi = bacaUang(document.getElementById('t_konsumsi'));
+  const konsumsiMetode = getMethodToggle(document.getElementById('t_konsumsi_metode'));
+  savePagiLocal({
+    kresek: bacaUang(document.getElementById('tp_kresek')),
+    konsumsi: bacaUang(document.getElementById('tp_konsumsi')),
+    iuran: bacaUang(document.getElementById('tp_iuran')),
+    lain: bacaUang(document.getElementById('tp_lain'))
+  });
+  const prev = btn.textContent;
+  btn.disabled = true; btn.textContent = 'Menyimpan…';
+  try{
+    await apiPost('setBiayaOperasional', {
+      operasionalBelanja: _biayaHariIni.OperasionalBelanja,
+      operasionalMetode: _biayaHariIni.OperasionalMetode,
+      bensin: _biayaHariIni.Bensin, bensinMetode: _biayaHariIni.BensinMetode,
+      konsumsi, konsumsiMetode,
+      pagiKresek: bacaUang(document.getElementById('tp_kresek')),
+      pagiKonsumsi: bacaUang(document.getElementById('tp_konsumsi')),
+      pagiIuran: bacaUang(document.getElementById('tp_iuran')),
+      pagiLain: bacaUang(document.getElementById('tp_lain')),
+      tanggal: _activeDate
+    });
+    await apiPost('simpanLaporan', {tanggal: _activeDate});
+    showToast('✅ Pengeluaran tersimpan');
+    _biayaHariIni.sudahDiubah = false;
+    try{ localStorage.setItem('sayur_last_sync', new Date().toISOString()); }catch(e){}
+    loadDashboard();
+    // Refresh cek modal karena biaya berubah
+    await fetchOmzetAndOps();
+    updateCekModal();
+  }catch(e){ showToast('Gagal simpan pengeluaran: ' + e.message); }
+  finally{ btn.disabled = false; btn.textContent = prev; }
+});
+
+/* TOMBOL SIMPAN LENGKAP */
+document.getElementById('t_submit').addEventListener('click', async ()=>{
+  const btn = document.getElementById('t_submit'); if(btn.disabled) return;
+  const cash = bacaUang(document.getElementById('t_cash'));
+  const qris = bacaUang(document.getElementById('t_qris'));
+  const bonTotal = _bonDraft.reduce((s,b) => s + (b.jumlah || 0), 0);
+  if(!cash && !qris && !bonTotal){ showToast('Isi Cash, QRIS, atau Bon dulu'); return; }
+  const konsumsi = bacaUang(document.getElementById('t_konsumsi'));
+  const konsumsiMetode = getMethodToggle(document.getElementById('t_konsumsi_metode'));
+  savePagiLocal({
+    kresek: bacaUang(document.getElementById('tp_kresek')),
+    konsumsi: bacaUang(document.getElementById('tp_konsumsi')),
+    iuran: bacaUang(document.getElementById('tp_iuran')),
+    lain: bacaUang(document.getElementById('tp_lain'))
+  });
+  const prev = btn.textContent;
+  btn.disabled = true; btn.textContent = 'Menyimpan…';
+  try{
+    for(const b of _bonDraft){
+      try{
+        await apiPost('addHutang', {
+          tipe: 'PiutangSaya',
+          nama: b.nama,
+          jumlah: b.jumlah,
+          catatan: 'Bon ' + formatTanggalPendek(_activeDate),
+          tanggal: _activeDate
+        });
+      }catch(e){}
+    }
+    await apiPost('setOmzet', {cash: cash + bonTotal, qris, tanggal: _activeDate});
+    await apiPost('setBiayaOperasional', {
+      operasionalBelanja: _biayaHariIni.OperasionalBelanja,
+      operasionalMetode: _biayaHariIni.OperasionalMetode,
+      bensin: _biayaHariIni.Bensin, bensinMetode: _biayaHariIni.BensinMetode,
+      konsumsi, konsumsiMetode,
+      pagiKresek: bacaUang(document.getElementById('tp_kresek')),
+      pagiKonsumsi: bacaUang(document.getElementById('tp_konsumsi')),
+      pagiIuran: bacaUang(document.getElementById('tp_iuran')),
+      pagiLain: bacaUang(document.getElementById('tp_lain')),
+      tanggal: _activeDate
+    });
+    await apiPost('simpanLaporan', {tanggal: _activeDate});
+    showToast('✅ Tutup hari tersimpan');
+    clearBonStorage(); _bonDraft = []; renderBon(); updateTotalOmzetPreview();
+    _biayaHariIni.sudahDiubah = false;
+    try{ localStorage.setItem('sayur_last_sync', new Date().toISOString()); }catch(e){}
+    loadLaporan();
+    await fetchOmzetAndOps();
+    updateCekModal();
+  }catch(e){ showToast('Gagal simpan: ' + e.message); }
+  finally{ btn.disabled = false; btn.textContent = prev; }
+});
+
+/* ==========================================================
+   DASHBOARD
+   ========================================================== */
+function _renderDashKpi(lap, saldo, hutang){
+  document.getElementById('dash_laba').textContent = rupiah(parseNum(lap.labaBersih));
+  document.getElementById('dash_omzet').textContent = rupiah(parseNum(lap.totalOmzet));
+  document.getElementById('dash_belanja').textContent = rupiah(parseNum(lap.belanjaHariIni));
+  document.getElementById('dash_ops').textContent = rupiah(parseNum(lap.totalBiaya));
+  const hero = document.getElementById('dash_hero');
+  const _belumTutup = parseNum(lap.totalOmzet) <= 0;
+  hero.classList.toggle('neg', !_belumTutup && parseNum(lap.labaBersih) < 0);
+  const _hk = hero.querySelector('.k'); if(_hk) _hk.textContent = _belumTutup ? 'Laba bersih hari ini (belum tutup)' : 'Laba bersih hari ini';
+  document.getElementById('dash_cash_in').textContent = rupiah(parseNum(lap.omzetCash));
+  document.getElementById('dash_cash_out').textContent = 'Keluar: ' + rupiah(parseNum(lap.biayaCash) + parseNum(lap.belanjaCash));
+  document.getElementById('dash_qris_in').textContent = rupiah(parseNum(lap.omzetQris));
+  const qrisFee = Math.round(parseNum(lap.omzetQris) * QRIS_FEE_RATE);
+  const qrisKeluar = parseNum(lap.biayaQris) + parseNum(lap.belanjaQris) + qrisFee;
+  document.getElementById('dash_qris_out').innerHTML = 'Keluar: ' + rupiah(qrisKeluar) + (qrisFee > 0 ? ` <span style="opacity:.75;">(fee ${rupiah(qrisFee)})</span>` : '');
+  if(saldo){
+    document.getElementById('dash_saldo_total').textContent = rupiah(saldo.total);
+    document.getElementById('dash_saldo_breakdown').textContent = `Cash ${rupiah(saldo.saldoCash)} · QRIS ${rupiah(saldo.saldoQris)}`;
+  }
+  const alertEl = document.getElementById('dashHutangAlert');
+  if(hutang && (hutang.hutangSaya > 0 || hutang.piutangSaya > 0)){
+    alertEl.style.display = 'block';
+    const hsRow = document.getElementById('dash_hs_row');
+    const psRow = document.getElementById('dash_ps_row');
+    if(hutang.hutangSaya > 0){
+      hsRow.style.display = 'flex';
+      document.getElementById('dash_hs_val').textContent = rupiah(hutang.hutangSaya) + ' (' + hutang.hutangSayaCount + ')';
+    } else hsRow.style.display = 'none';
+    if(hutang.piutangSaya > 0){
+      psRow.style.display = 'flex';
+      document.getElementById('dash_ps_val').textContent = rupiah(hutang.piutangSaya) + ' (' + hutang.piutangSayaCount + ')';
+    } else psRow.style.display = 'none';
+  } else {
+    alertEl.style.display = 'none';
+  }
+}
+async function loadDashboard(){
+  try{
+    const c = JSON.parse(localStorage.getItem('sayur_dash_cache') || 'null');
+    if(c && c.lap){
+      if(c.tanggal === todayStr()) _renderDashKpi(c.lap, c.saldo, c.hutang);
+      renderDashboardChart(c.rows);
+    }
+  }catch(e){}
+  try{
+    const d = await apiGet('getDashboard', {tanggal: todayStr()});
+    _renderDashKpi(d.lap, d.saldo, d.hutang);
+    try{ localStorage.setItem('sayur_dash_cache', JSON.stringify(d)); }catch(e){}
+    renderDashboardChart(d.rows);
+  }catch(e){
+    showToast('Gagal: ' + e.message);
+    renderDashboardChart();
+  }
+}
+document.getElementById('dashSaldoCard').addEventListener('click', ()=>{
+  goTab('laporan');
+  document.querySelectorAll('.seg-btn[data-laporan]').forEach(b=>b.classList.toggle('active', b.dataset.laporan==='saldo'));
+  document.getElementById('laporan_aruskas').style.display = 'none';
+  document.getElementById('laporan_saldo').style.display = 'block';
+  document.getElementById('laporan_hutang').style.display = 'none';
+  loadSaldo();
+});
+document.getElementById('dashHutangAlert').addEventListener('click', ()=>{
+  goTab('laporan');
+  document.querySelectorAll('.seg-btn[data-laporan]').forEach(b=>b.classList.toggle('active', b.dataset.laporan==='hutang'));
+  document.getElementById('laporan_aruskas').style.display = 'none';
+  document.getElementById('laporan_saldo').style.display = 'none';
+  document.getElementById('laporan_hutang').style.display = 'block';
+  loadHutang();
+});
+
+/* CHART */
+const HARI_ID = ['Min','Sen','Sel','Rab','Kam','Jum','Sab'];
+async function renderDashboardChart(rowsArg){
+  const barsEl = document.getElementById('dash_chart_bars');
+  const labelsEl = document.getElementById('dash_chart_labels');
+  const summaryEl = document.getElementById('dash_chart_summary');
+  if(!barsEl || !labelsEl || !summaryEl) return;
+  try{
+    const rows = rowsArg || await apiGet('getLaporanList', {limit: 7});
+    const today = new Date();
+    const days = [];
+    for(let i = 6; i >= 0; i--){
+      const d = new Date(today); d.setDate(d.getDate() - i);
+      const ymd = d.getFullYear()+'-'+pad2(d.getMonth()+1)+'-'+pad2(d.getDate());
+      days.push({ ymd, dow: d.getDay() });
+    }
+    const byDate = {};
+    (rows || []).forEach(r => { const ymd = normYmd(r.Tanggal); if(ymd && parseNum(r.TotalOmzet) > 0) byDate[ymd] = r; });
+    let maxVal = 0;
+    days.forEach(d => {
+      const r = byDate[d.ymd]; if(!r) return;
+      const omzet = parseNum(r.TotalOmzet); const laba = Math.abs(parseNum(r.LabaBersih));
+      if(omzet > maxVal) maxVal = omzet; if(laba > maxVal) maxVal = laba;
+    });
+    if(maxVal === 0){
+      barsEl.style.display = 'block'; barsEl.style.height = 'auto';
+      barsEl.innerHTML = '<div class="chart-empty" style="grid-column:1/-1;">Belum ada data</div>';
+      labelsEl.innerHTML = ''; summaryEl.innerHTML = '';
+      return;
+    }
+    barsEl.style.display = 'grid'; barsEl.style.height = '130px';
+    let barsHtml = '', labelsHtml = '', totalOmzet = 0, totalLaba = 0, countHari = 0;
+    days.forEach((d, idx) => {
+      const r = byDate[d.ymd];
+      const omzet = r ? parseNum(r.TotalOmzet) : 0;
+      const labaRaw = r ? parseNum(r.LabaBersih) : 0;
+      const laba = Math.abs(labaRaw);
+      const isToday = d.ymd === todayStr();
+      const isNeg = labaRaw < 0;
+      const hOmzet = r ? Math.max(2, (omzet / maxVal) * 100) : 0;
+      const hLaba = r ? Math.max(2, (laba / maxVal) * 100) : 0;
+      const cls = ['chart-col'];
+      if(isToday) cls.push('today');
+      if(isNeg) cls.push('neg');
+      barsHtml += `<div class="${cls.join(' ')}" data-idx="${idx}"><div class="bar-wrap">${r ? `<div class="bar omzet" style="height:${hOmzet}%"></div>` : ''}${r ? `<div class="bar laba" style="height:${hLaba}%"></div>` : ''}</div></div>`;
+      labelsHtml += `<span class="${isToday ? 'today' : ''}">${HARI_ID[d.dow]}</span>`;
+      if(r){ totalOmzet += omzet; totalLaba += labaRaw; countHari++; }
+    });
+    barsEl.innerHTML = barsHtml; labelsEl.innerHTML = labelsHtml;
+    const avgOmzet = countHari > 0 ? Math.round(totalOmzet / countHari) : 0;
+    const avgLaba = countHari > 0 ? Math.round(totalLaba / countHari) : 0;
+    const marginPct = totalOmzet > 0 ? Math.round((totalLaba / totalOmzet) * 100) : 0;
+    summaryEl.innerHTML = `
+      <div class="item"><div class="k">Rata-rata omzet</div><div class="v">${rupiah(avgOmzet)}</div></div>
+      <div class="item"><div class="k">Rata-rata laba</div><div class="v">${rupiah(avgLaba)}</div></div>
+      <div class="item margin ${marginPct < 0 ? 'neg' : ''}"><div class="k">Margin</div><div class="v">${marginPct}%</div></div>
+      <div class="item"><div class="k">Hari operasi</div><div class="v">${countHari}/7</div></div>`;
+    barsEl.querySelectorAll('.chart-col').forEach(col => {
+      col.addEventListener('click', ()=>{
+        const idx = Number(col.dataset.idx); const d = days[idx]; const r = byDate[d.ymd];
+        if(!r){ showToast(formatTanggalPendek(d.ymd) + ' — belum ada data'); return; }
+        showToast(`${formatTanggalPendek(d.ymd)} — Omzet ${rupiah(parseNum(r.TotalOmzet))}, Laba ${rupiah(parseNum(r.LabaBersih))}`);
+      });
+    });
+  }catch(e){ barsEl.innerHTML = '<div class="chart-empty" style="grid-column:1/-1;">Gagal memuat</div>'; }
+}
+
+/* ==========================================================
+   LAPORAN
+   ========================================================== */
+let _aruskasPeriod = 'today';
+function periodToRange(period){
+  const today = todayStr();
+  if(period === 'today') return {dari: today, sampai: today};
+  if(period === '7d'){ const d = new Date(); d.setDate(d.getDate()-6); return {dari: d.getFullYear()+'-'+pad2(d.getMonth()+1)+'-'+pad2(d.getDate()), sampai: today}; }
+  if(period === '30d'){ const d = new Date(); d.setDate(d.getDate()-29); return {dari: d.getFullYear()+'-'+pad2(d.getMonth()+1)+'-'+pad2(d.getDate()), sampai: today}; }
+  const d = new Date();
+  return {dari: d.getFullYear()+'-'+pad2(d.getMonth()+1)+'-01', sampai: today};
+}
+function periodLabel(period){
+  if(period === 'today') return 'Hari Ini';
+  if(period === '7d') return '7 Hari';
+  if(period === '30d') return '30 Hari';
+  return 'Bulan Ini';
+}
+document.querySelectorAll('.period-tab[data-period]').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.period-tab[data-period]').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    _aruskasPeriod = btn.dataset.period;
+    loadArusKas();
+  });
+});
+async function loadLaporan(){ loadArusKas(); loadSaldo(); loadHutang(); }
+async function loadArusKas(){
+  const body = document.getElementById('aruskas_body');
+  body.innerHTML = '<div class="empty-note">Memuat…</div>';
+  try{
+    const {dari, sampai} = periodToRange(_aruskasPeriod);
+    const data = await apiGet('getArusKas', {dari, sampai});
+    renderArusKas(data);
+  }catch(e){ body.innerHTML = `<div class="empty-note">Gagal: ${escHtml(e.message)}</div>`; }
+}
+function renderArusKas(data){
+  const body = document.getElementById('aruskas_body');
+  const cash = data.cash || {masuk:0, keluar:0, saldo:0, hutangSaya:0, piutangSaya:0};
+  const qris = data.qris || {masuk:0, keluar:0, saldo:0, fee:0, hutangSaya:0, piutangSaya:0};
+  const total = data.total || {masuk:0, keluar:0, saldo:0, hutangSaya:0, piutangSaya:0, fee:0};
+  body.innerHTML = `
+    <div class="flow-card cash">
+      <div class="flow-head cash"><div class="title">💵 Cash</div><div class="sub">${periodLabel(_aruskasPeriod)}</div></div>
+      <div class="flow-row"><span>Masuk (omzet)</span><span class="amt">${rupiah(cash.masuk)}</span></div>
+      ${cash.piutangSaya > 0 ? `<div class="flow-row extra"><span>+ Piutang cair</span><span class="amt">${rupiah(cash.piutangSaya)}</span></div>` : ''}
+      <div class="flow-row"><span>Keluar (belanja+biaya)</span><span class="amt">${rupiah(cash.keluar)}</span></div>
+      ${cash.hutangSaya > 0 ? `<div class="flow-row extra"><span>− Bayar hutang</span><span class="amt">${rupiah(cash.hutangSaya)}</span></div>` : ''}
+      <div class="flow-div"></div>
+      <div class="flow-row total"><span>Saldo</span><span class="amt">${rupiah(cash.saldo)}</span></div>
+    </div>
+    <div class="flow-card qris">
+      <div class="flow-head qris"><div class="title">📱 QRIS</div><div class="sub">${periodLabel(_aruskasPeriod)}</div></div>
+      <div class="flow-row"><span>Masuk (omzet)</span><span class="amt">${rupiah(qris.masuk)}</span></div>
+      ${qris.fee > 0 ? `<div class="flow-row fee"><span>Fee merchant 0.7%</span><span class="amt">− ${rupiah(qris.fee)}</span></div>` : ''}
+      ${qris.piutangSaya > 0 ? `<div class="flow-row extra"><span>+ Piutang cair</span><span class="amt">${rupiah(qris.piutangSaya)}</span></div>` : ''}
+      <div class="flow-row"><span>Keluar (belanja+biaya)</span><span class="amt">${rupiah(qris.keluar)}</span></div>
+      ${qris.hutangSaya > 0 ? `<div class="flow-row extra"><span>− Bayar hutang</span><span class="amt">${rupiah(qris.hutangSaya)}</span></div>` : ''}
+      <div class="flow-div"></div>
+      <div class="flow-row total"><span>Saldo</span><span class="amt">${rupiah(qris.saldo)}</span></div>
+    </div>
+    <div class="flow-card">
+      <div class="flow-head"><div class="title">Gabungan</div><div class="sub">Cash + QRIS</div></div>
+      <div class="flow-row"><span>Total masuk</span><span class="amt">${rupiah(total.masuk)}</span></div>
+      ${total.piutangSaya > 0 ? `<div class="flow-row extra"><span>+ Piutang cair</span><span class="amt">${rupiah(total.piutangSaya)}</span></div>` : ''}
+      <div class="flow-row"><span>Total keluar</span><span class="amt">${rupiah(total.keluar)}</span></div>
+      ${total.hutangSaya > 0 ? `<div class="flow-row extra"><span>− Bayar hutang</span><span class="amt">${rupiah(total.hutangSaya)}</span></div>` : ''}
+      ${total.fee > 0 ? `<div class="flow-row fee"><span>Fee QRIS</span><span class="amt">− ${rupiah(total.fee)}</span></div>` : ''}
+      <div class="flow-div"></div>
+      <div class="flow-row total"><span>Selisih</span><span class="amt">${rupiah(total.saldo)}</span></div>
+    </div>`;
+}
+document.getElementById('share_aruskas').addEventListener('click', async ()=>{
+  try{
+    const {dari, sampai} = periodToRange(_aruskasPeriod);
+    const data = await apiGet('getArusKas', {dari, sampai});
+    const c = data.cash, q = data.qris, t = data.total;
+    let text = `*Arus Kas* — ${periodLabel(_aruskasPeriod)}\n\n`;
+    text += `💵 Cash\nMasuk: ${rupiah(c.masuk)}\n`;
+    if(c.piutangSaya > 0) text += `+ Piutang cair: ${rupiah(c.piutangSaya)}\n`;
+    text += `Keluar: ${rupiah(c.keluar)}\n`;
+    if(c.hutangSaya > 0) text += `- Bayar hutang: ${rupiah(c.hutangSaya)}\n`;
+    text += `Saldo: ${rupiah(c.saldo)}\n\n`;
+    text += `📱 QRIS\nMasuk: ${rupiah(q.masuk)}\n`;
+    if(q.fee > 0) text += `Fee 0.7%: -${rupiah(q.fee)}\n`;
+    if(q.piutangSaya > 0) text += `+ Piutang cair: ${rupiah(q.piutangSaya)}\n`;
+    text += `Keluar: ${rupiah(q.keluar)}\n`;
+    if(q.hutangSaya > 0) text += `- Bayar hutang: ${rupiah(q.hutangSaya)}\n`;
+    text += `Saldo: ${rupiah(q.saldo)}\n\n`;
+    text += `*Gabungan*\nMasuk: ${rupiah(t.masuk)}\nKeluar: ${rupiah(t.keluar)}\nSelisih: ${rupiah(t.saldo)}`;
+    shareText(text);
+  }catch(e){ showToast('Gagal: ' + e.message); }
+});
+
+/* SALDO */
+let _saldoCache = {cash:0, qris:0, total:0};
+async function loadSaldo(){
+  const listEl = document.getElementById('mutasi_list');
+  listEl.innerHTML = '<div class="empty-note">Memuat…</div>';
+  try{
+    const [saldo, mutasi] = await Promise.all([
+      apiGet('getSaldoSekarang').catch(()=>({saldoCash:0, saldoQris:0, total:0})),
+      apiGet('getMutasiSaldo', {limit: 50}).catch(()=>[])
+    ]);
+    _saldoCache = {cash: saldo.saldoCash, qris: saldo.saldoQris, total: saldo.total};
+    document.getElementById('saldo_cash_val').textContent = rupiah(saldo.saldoCash);
+    document.getElementById('saldo_qris_val').textContent = rupiah(saldo.saldoQris);
+    document.getElementById('saldo_total_val').textContent = rupiah(saldo.total);
+    if(!mutasi.length){ listEl.innerHTML = '<div class="empty-note">Belum ada mutasi saldo</div>'; return; }
+    listEl.innerHTML = mutasi.map(m => {
+      const isTarik = m.Tipe === 'Tarik';
+      const sign = isTarik ? '−' : '+';
+      const cls = isTarik ? 'tarik' : 'setor';
+      const icon = isTarik ? '↑' : '↓';
+      return `<div class="mutasi-item">
+        <div class="mutasi-icon ${cls}">${icon}</div>
+        <div class="mutasi-body">
+          <div class="t">${escHtml(m.Tipe)} ${m.Metode === 'QRIS' ? 'QRIS' : 'Cash'}<span class="tag">${escHtml(m.Tujuan || '')}</span></div>
+          <div class="d">${escHtml(formatTanggalPendek(m.Tanggal))}${m.Catatan ? ' · ' + escHtml(m.Catatan) : ''}</div>
+        </div>
+        <div class="mutasi-amt ${cls}">${sign}${rupiah(m.Jumlah)}</div>
+        <button class="mutasi-del" data-id="${escHtml(m.ID)}">×</button>
+      </div>`;
+    }).join('');
+    listEl.querySelectorAll('.mutasi-del').forEach(btn=>{
+      btn.addEventListener('click', async ()=>{
+        if(!confirm('Hapus mutasi ini?')) return;
+        try{
+          await apiPost('hapusMutasi', {id: btn.dataset.id});
+          showToast('Mutasi dihapus');
+          loadSaldo(); loadDashboard();
+        }catch(e){ showToast('Gagal: ' + e.message); }
+      });
+    });
+  }catch(e){ listEl.innerHTML = `<div class="empty-note">Gagal: ${escHtml(e.message)}</div>`; }
+}
+document.querySelectorAll('.saldo-big .actions button').forEach(btn=>{
+  btn.addEventListener('click', ()=>openMutasiModal(btn.dataset.tipe, btn.dataset.metode));
+});
+
+/* MODAL MUTASI */
+let _mutasiState = { tipe: 'Tarik', metode: 'Cash' };
+function openMutasiModal(tipe, metode){
+  _mutasiState.tipe = tipe;
+  _mutasiState.metode = metode;
+  document.getElementById('mutasi_title').textContent = tipe + ' Saldo ' + metode;
+  document.getElementById('mutasi_icon').textContent = metode === 'QRIS' ? '📱' : '💵';
+  document.querySelectorAll('#modal_mutasi .modal-tabs button').forEach(b=>{
+    b.classList.toggle('active', b.dataset.tipe === tipe);
+  });
+  setMethodToggle(document.getElementById('mutasi_metode'), metode);
+  document.getElementById('mutasi_jumlah').value = '';
+  document.getElementById('mutasi_catatan').value = '';
+  document.getElementById('mutasi_tujuan').value = 'Modal';
+  updateMutasiPreview();
+  document.getElementById('modal_mutasi').style.display = 'flex';
+}
+function updateMutasiPreview(){
+  const jumlah = bacaUang(document.getElementById('mutasi_jumlah'));
+  const saldo = _mutasiState.metode === 'QRIS' ? _saldoCache.qris : _saldoCache.cash;
+  const sisa = _mutasiState.tipe === 'Tarik' ? saldo - jumlah : saldo + jumlah;
+  let html = `Saldo saat ini: ${rupiah(saldo)}<br>Setelah ${_mutasiState.tipe}: <strong>${rupiah(sisa)}</strong>`;
+  if(_mutasiState.metode === 'QRIS'){
+    html += `<br><span style="font-size:11px; color:var(--ink-600);">Saldo QRIS sudah dipotong fee merchant 0.7%.</span>`;
+  }
+  document.getElementById('mutasi_preview').innerHTML = html;
+}
+document.getElementById('mutasi_jumlah').addEventListener('input', updateMutasiPreview);
+document.getElementById('mutasi_metode').addEventListener('click', ()=>{
+  _mutasiState.metode = getMethodToggle(document.getElementById('mutasi_metode'));
+  document.getElementById('mutasi_icon').textContent = _mutasiState.metode === 'QRIS' ? '📱' : '💵';
+  document.getElementById('mutasi_title').textContent = _mutasiState.tipe + ' Saldo ' + _mutasiState.metode;
+  updateMutasiPreview();
+});
+document.querySelectorAll('#modal_mutasi .modal-tabs button').forEach(b=>{
+  b.addEventListener('click', ()=>{
+    document.querySelectorAll('#modal_mutasi .modal-tabs button').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active');
+    _mutasiState.tipe = b.dataset.tipe;
+    document.getElementById('mutasi_title').textContent = _mutasiState.tipe + ' Saldo ' + _mutasiState.metode;
+    updateMutasiPreview();
+  });
+});
+document.getElementById('mutasi_cancel').addEventListener('click', ()=>{
+  document.getElementById('modal_mutasi').style.display = 'none';
+});
+document.getElementById('mutasi_save').addEventListener('click', async ()=>{
+  const btn = document.getElementById('mutasi_save');
+  const jumlah = bacaUang(document.getElementById('mutasi_jumlah'));
+  if(!jumlah){ showToast('Isi jumlah dulu'); return; }
+  const tujuan = document.getElementById('mutasi_tujuan').value;
+  const catatan = document.getElementById('mutasi_catatan').value.trim();
+  btn.disabled = true; btn.textContent = '…';
+  try{
+    await apiPost('tambahMutasi', {
+      tipe: _mutasiState.tipe, metode: _mutasiState.metode,
+      jumlah, tujuan, catatan, tanggal: todayStr()
+    });
+    showToast('Mutasi tersimpan');
+    document.getElementById('modal_mutasi').style.display = 'none';
+    loadSaldo(); loadDashboard();
+  }catch(e){ showToast('Gagal: ' + e.message); }
+  finally{ btn.disabled = false; btn.textContent = 'Simpan'; }
+});
+
+/* HUTANG */
+let _hutangCache = [], _hutangFilter = 'all', _hutangTipeFilter = null;
+
+async function loadHutang(){
+  const listEl = document.getElementById('hutang_list');
+  listEl.innerHTML = '<div class="empty-note">Memuat…</div>';
+  try{
+    const [list, ringkasan] = await Promise.all([
+      apiGet('getHutang').catch(()=>[]),
+      apiGet('getRingkasanHutang').catch(()=>({hutangSaya:0,piutangSaya:0,hutangSayaCount:0,piutangSayaCount:0,totalHutang:0}))
+    ]);
+    _hutangCache = list || [];
+    document.getElementById('hs_total').textContent = rupiah(ringkasan.hutangSaya);
+    document.getElementById('hs_count').textContent = ringkasan.hutangSayaCount + ' belum lunas';
+    document.getElementById('ps_total').textContent = rupiah(ringkasan.piutangSaya);
+    document.getElementById('ps_count').textContent = ringkasan.piutangSayaCount + ' belum lunas';
+    renderHutangList();
+  }catch(e){ listEl.innerHTML = `<div class="empty-note">Gagal: ${escHtml(e.message)}</div>`; }
+}
+function renderHutangList(){
+  const listEl = document.getElementById('hutang_list');
+  let filtered = _hutangCache;
+  if(_hutangTipeFilter) filtered = filtered.filter(h => h.Tipe === _hutangTipeFilter);
+  if(_hutangFilter === 'belum') filtered = filtered.filter(h => h.Status !== 'Lunas');
+  if(_hutangFilter === 'lunas') filtered = filtered.filter(h => h.Status === 'Lunas');
+  if(!filtered.length){ listEl.innerHTML = '<div class="empty-note">Belum ada data</div>'; return; }
+  listEl.innerHTML = filtered.map(h => {
+    const isPiutang = h.Tipe === 'PiutangSaya';
+    const cls = 'hutang-item' + (isPiutang ? ' piutang' : '') + (h.Status === 'Lunas' ? ' lunas' : '');
+    const badgeCls = h.Status === 'Lunas' ? 'lunas' : (h.Status === 'Sebagian' ? 'sebagian' : 'belum');
+    const badgeTxt = h.Status === 'Lunas' ? '✅ Lunas' : (h.Status === 'Sebagian' ? 'Sebagian' : 'Belum');
+    const btnLabel = isPiutang ? 'Terima' : 'Bayar';
+    const btnCls = 'primary' + (isPiutang ? ' piutang' : '');
+    let actions = '';
+    if(h.Status !== 'Lunas'){
+      actions = `<div class="actions">
+        <button class="${btnCls}" data-action="bayar" data-id="${escHtml(h.ID)}">${btnLabel}</button>
+        <button data-action="detail" data-id="${escHtml(h.ID)}">Detail</button>
+        <button data-action="hapus" data-id="${escHtml(h.ID)}">Hapus</button>
+      </div>`;
+    } else {
+      actions = `<div class="actions">
+        <button data-action="detail" data-id="${escHtml(h.ID)}">Detail</button>
+        <button data-action="hapus" data-id="${escHtml(h.ID)}">Hapus</button>
+      </div>`;
+    }
+    return `<div class="${cls}">
+      <div class="head">
+        <div>
+          <div class="nm">${escHtml(h.Nama)}</div>
+          <div class="tgl">${escHtml(formatTanggalPendek(h.Tanggal))}${h.Catatan ? ' · ' + escHtml(h.Catatan) : ''}</div>
+        </div>
+        <span class="badge ${badgeCls}">${badgeTxt}</span>
+      </div>
+      <div class="amounts">
+        <span>Total: <strong>${rupiah(h.JumlahAwal)}</strong></span>
+        <span>Dibayar: <strong>${rupiah(h.JumlahDibayar)}</strong></span>
+      </div>
+      <div class="sisa-row">
+        <span class="lbl">Sisa</span>
+        <span class="val">${rupiah(h.Sisa)}</span>
+      </div>
+      ${actions}
+      <div class="riwayat" id="riwayat-${escHtml(h.ID)}" style="display:none;"></div>
+    </div>`;
+  }).join('');
+  listEl.querySelectorAll('button[data-action]').forEach(btn=>{
+    btn.addEventListener('click', async ()=>{
+      const action = btn.dataset.action;
+      const id = btn.dataset.id;
+      if(action === 'bayar') openBayarModal(id);
+      else if(action === 'detail') toggleDetail(id, btn);
+      else if(action === 'hapus') hapusHutangConfirm(id);
+    });
+  });
+}
+async function toggleDetail(id, btn){
+  const el = document.getElementById('riwayat-' + id);
+  if(!el) return;
+  if(el.style.display !== 'none'){ el.style.display = 'none'; btn.textContent = 'Detail'; return; }
+  btn.textContent = '…';
+  try{
+    const detail = await apiGet('getHutangDetail', {id});
+    const list = detail.Pembayaran || [];
+    if(!list.length){
+      el.innerHTML = '<div class="r">Belum ada pembayaran</div>';
+    } else {
+      el.innerHTML = '<div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--ink-600);margin-bottom:6px;">Riwayat</div>' +
+        list.map(p => `<div class="r"><span>${escHtml(formatTanggalPendek(p.Tanggal))} · ${p.Metode}</span><strong>${rupiah(p.Jumlah)}</strong></div>`).join('');
+    }
+    el.style.display = 'block';
+    btn.textContent = 'Tutup';
+  }catch(e){ showToast('Gagal: ' + e.message); btn.textContent = 'Detail'; }
+}
+async function hapusHutangConfirm(id){
+  const h = _hutangCache.find(x => x.ID === id);
+  if(!h) return;
+  if(h.JumlahDibayar > 0){
+    showToast('Tidak bisa hapus: sudah ada pembayaran');
+    return;
+  }
+  if(!confirm(`Hapus ${h.Tipe === 'HutangSaya' ? 'hutang ke' : 'piutang dari'} ${h.Nama}?`)) return;
+  try{
+    await apiPost('hapusHutang', {id});
+    showToast('Dihapus');
+    loadHutang(); loadDashboard();
+  }catch(e){ showToast('Gagal: ' + e.message); }
+}
+document.querySelectorAll('.period-tab[data-hfilter]').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.period-tab[data-hfilter]').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    _hutangFilter = btn.dataset.hfilter;
+    _hutangTipeFilter = null;
+    renderHutangList();
+  });
+});
+document.querySelectorAll('.hutang-summary .card').forEach(card=>{
+  card.addEventListener('click', ()=>{
+    const tipe = card.dataset.tipe;
+    _hutangFilter = 'belum';
+    _hutangTipeFilter = tipe;
+    document.querySelectorAll('.period-tab[data-hfilter]').forEach(b=>b.classList.toggle('active', b.dataset.hfilter==='belum'));
+    renderHutangList();
+  });
+});
+document.getElementById('hutang_add_hs').addEventListener('click', ()=>openHutangBaru('HutangSaya'));
+document.getElementById('hutang_add_ps').addEventListener('click', ()=>openHutangBaru('PiutangSaya'));
+
+let _hbTipe = 'HutangSaya';
+function openHutangBaru(tipe){
+  _hbTipe = tipe;
+  const isHS = tipe === 'HutangSaya';
+  document.getElementById('hb_title').textContent = isHS ? 'Catat Hutang Saya' : 'Catat Piutang Saya';
+  document.getElementById('hb_icon').textContent = isHS ? '💸' : '💰';
+  document.getElementById('hb_tanggal').value = todayStr();
+  document.getElementById('hb_nama').value = '';
+  document.getElementById('hb_jumlah').value = '';
+  document.getElementById('hb_catatan').value = '';
+  document.getElementById('hb_nama').placeholder = isHS ? 'mis. Pak Budi (supplier)' : 'mis. Bu Sari (pelanggan)';
+  document.getElementById('modal_hutang_baru').style.display = 'flex';
+  setTimeout(()=>document.getElementById('hb_nama').focus(), 80);
+}
+document.getElementById('hb_cancel').addEventListener('click', ()=>{
+  document.getElementById('modal_hutang_baru').style.display = 'none';
+});
+document.getElementById('hb_save').addEventListener('click', async ()=>{
+  const btn = document.getElementById('hb_save');
+  const nama = document.getElementById('hb_nama').value.trim();
+  const jumlah = bacaUang(document.getElementById('hb_jumlah'));
+  const tanggal = document.getElementById('hb_tanggal').value || todayStr();
+  const catatan = document.getElementById('hb_catatan').value.trim();
+  if(!nama){ showToast('Isi nama dulu'); return; }
+  if(!jumlah || jumlah <= 0){ showToast('Isi jumlah dulu'); return; }
+  btn.disabled = true; btn.textContent = '…';
+  try{
+    await apiPost('addHutang', {tipe: _hbTipe, nama, jumlah, catatan, tanggal});
+    showToast('Tersimpan');
+    document.getElementById('modal_hutang_baru').style.display = 'none';
+    _hutangTipeFilter = null;
+    loadHutang(); loadDashboard();
+  }catch(e){ showToast('Gagal: ' + e.message); }
+  finally{ btn.disabled = false; btn.textContent = 'Simpan'; }
+});
+
+let _bayarState = { hutangId: null, tipe: 'HutangSaya', sisa: 0 };
+function openBayarModal(hutangId){
+  const h = _hutangCache.find(x => x.ID === hutangId);
+  if(!h) return;
+  const isPiutang = h.Tipe === 'PiutangSaya';
+  _bayarState.hutangId = hutangId;
+  _bayarState.tipe = h.Tipe;
+  _bayarState.sisa = h.Sisa;
+  document.getElementById('bayar_title').textContent = isPiutang ? 'Terima Pembayaran' : 'Bayar Hutang';
+  document.getElementById('bayar_icon').textContent = isPiutang ? '💰' : '💸';
+  document.getElementById('bayar_info').innerHTML = `<strong>${escHtml(h.Nama)}</strong><br>Total: ${rupiah(h.JumlahAwal)} · Dibayar: ${rupiah(h.JumlahDibayar)}<br>Sisa: <strong>${rupiah(h.Sisa)}</strong>`;
+  document.getElementById('bayar_tanggal').value = todayStr();
+  document.getElementById('bayar_jumlah').value = h.Sisa.toLocaleString('id-ID');
+  document.getElementById('bayar_catatan').value = '';
+  document.getElementById('bayar_hint').textContent = 'Maksimal: ' + rupiah(h.Sisa);
+  setMethodToggle(document.getElementById('bayar_metode'), 'Cash');
+  document.getElementById('modal_bayar').style.display = 'flex';
+}
+document.getElementById('bayar_cancel').addEventListener('click', ()=>{
+  document.getElementById('modal_bayar').style.display = 'none';
+});
+document.getElementById('bayar_save').addEventListener('click', async ()=>{
+  const btn = document.getElementById('bayar_save');
+  const jumlah = bacaUang(document.getElementById('bayar_jumlah'));
+  const tanggal = document.getElementById('bayar_tanggal').value || todayStr();
+  const metode = getMethodToggle(document.getElementById('bayar_metode'));
+  const catatan = document.getElementById('bayar_catatan').value.trim();
+  if(!jumlah || jumlah <= 0){ showToast('Isi jumlah dulu'); return; }
+  if(jumlah > _bayarState.sisa){ showToast('Jumlah melebihi sisa (' + rupiah(_bayarState.sisa) + ')'); return; }
+  btn.disabled = true; btn.textContent = '…';
+  try{
+    await apiPost('addPembayaranHutang', {
+      hutangId: _bayarState.hutangId,
+      jumlah, metode, catatan, tanggal
+    });
+    showToast('Tersimpan');
+    document.getElementById('modal_bayar').style.display = 'none';
+    loadHutang(); loadDashboard(); loadSaldo();
+  }catch(e){ showToast('Gagal: ' + e.message); }
+  finally{ btn.disabled = false; btn.textContent = 'Simpan'; }
+});
+
+/* ==========================================================
+   PENGATURAN
+   ========================================================== */
+let _pengaturanCache = {...DEFAULT_PENGATURAN};
+async function loadPengaturan(){
+  try{
+    const p = await apiGet('getPengaturan');
+    _pengaturanCache = {...DEFAULT_PENGATURAN, ...p};
+    document.getElementById('val_nama_lapak').textContent = p.NamaLapak || '—';
+    document.getElementById('val_nama_pemilik').textContent = p.NamaPemilik || '—';
+    document.getElementById('val_no_hp').textContent = p.NoHP || '—';
+    document.getElementById('val_ops').textContent = rupiah(p.OperasionalBelanja || 100000);
+    document.getElementById('val_bensin').textContent = rupiah(p.Bensin || 50000);
+    document.getElementById('val_target_laba').textContent = rupiah(parseNum(p.TargetLabaHarian) || 250000);
+    let lastSync = '—';
+    try{ lastSync = localStorage.getItem('sayur_last_sync') || '—'; }catch(e){}
+    document.getElementById('val_last_sync').textContent = lastSync !== '—' ? new Date(lastSync).toLocaleString('id-ID') : '—';
+    try{
+      const list = await apiGet('getLaporanList', {limit: 9999});
+      document.getElementById('val_data_size').textContent = (list.length || 0) + ' hari tercatat';
+    }catch(e){}
+  }catch(e){}
+}
+function openSettingModal(title, label, currentValue, onSave){
+  document.getElementById('setting_title').textContent = title;
+  document.getElementById('setting_label').textContent = label;
+  const inp = document.getElementById('setting_input');
+  inp.value = currentValue || '';
+  inp.type = 'text';
+  document.getElementById('modal_setting').style.display = 'flex';
+  setTimeout(()=>{ inp.focus(); inp.select(); }, 50);
+  document.getElementById('setting_save').onclick = async ()=>{
+    try{
+      await onSave(inp.value);
+      document.getElementById('modal_setting').style.display = 'none';
+    }catch(e){ showToast('Gagal: ' + e.message); }
+  };
+}
+document.getElementById('setting_cancel').addEventListener('click', ()=>{
+  document.getElementById('modal_setting').style.display = 'none';
+});
+document.getElementById('set_nama_lapak').addEventListener('click', ()=>{
+  openSettingModal('Nama Lapak', 'Nama', _pengaturanCache.NamaLapak || '', async (v)=>{
+    await apiPost('setPengaturan', {NamaLapak: v});
+    showToast('Disimpan'); loadPengaturan();
+  });
+});
+document.getElementById('set_nama_pemilik').addEventListener('click', ()=>{
+  openSettingModal('Nama Pemilik', 'Nama', _pengaturanCache.NamaPemilik || '', async (v)=>{
+    await apiPost('setPengaturan', {NamaPemilik: v});
+    showToast('Disimpan'); loadPengaturan();
+  });
+});
+document.getElementById('set_no_hp').addEventListener('click', ()=>{
+  openSettingModal('No. HP', 'Nomor', _pengaturanCache.NoHP || '', async (v)=>{
+    await apiPost('setPengaturan', {NoHP: v});
+    showToast('Disimpan'); loadPengaturan();
+  });
+});
+document.getElementById('set_ops').addEventListener('click', ()=>{
+  openSettingModal('Operasional Pasar', 'Jumlah (Rp)', _pengaturanCache.OperasionalBelanja || 100000, async (v)=>{
+    const n = parseNum(v); if(n <= 0) throw new Error('Harus > 0');
+    await apiPost('setPengaturan', {OperasionalBelanja: n});
+    showToast('Disimpan'); loadPengaturan();
+  });
+});
+document.getElementById('set_bensin').addEventListener('click', ()=>{
+  openSettingModal('Bensin', 'Jumlah (Rp)', _pengaturanCache.Bensin || 50000, async (v)=>{
+    const n = parseNum(v); if(n <= 0) throw new Error('Harus > 0');
+    await apiPost('setPengaturan', {Bensin: n});
+    showToast('Disimpan'); loadPengaturan();
+  });
+});
+document.getElementById('set_target_laba').addEventListener('click', ()=>{
+  openSettingModal('Target Laba Harian', 'Jumlah (Rp)', _pengaturanCache.TargetLabaHarian || 250000, async (v)=>{
+    const n = parseNum(v); if(n < 0) throw new Error('Tidak boleh negatif');
+    await apiPost('setPengaturan', {TargetLabaHarian: n});
+    _targetLaba = n;
+    showToast('Disimpan'); loadPengaturan();
+    fetchOmzetAndOps().then(()=> updateCekModal());
+  });
+});
+document.getElementById('set_refresh').addEventListener('click', async ()=>{
+  if(!confirm('Refresh semua Laporan?\n\nIni akan menghitung ulang Laba & Saldo dari data terkini.\nProses ~5-10 detik.')) return;
+  const statusEl = document.getElementById('val_refresh_status');
+  statusEl.textContent = 'Memproses…';
+  try{
+    await apiPost('rebuildSemuaLaporan', {});
+    statusEl.textContent = '✅ Selesai';
+    showToast('Laporan berhasil di-refresh');
+    setTimeout(()=>{ statusEl.textContent = '›'; }, 3000);
+    try{ loadDashboard(); }catch(e){}
+    try{ if(document.getElementById('laporan').classList.contains('active')) loadLaporan(); }catch(e){}
+  }catch(e){
+    statusEl.textContent = '❌ Gagal';
+    showToast('Gagal: ' + e.message);
+    setTimeout(()=>{ statusEl.textContent = '›'; }, 3000);
+  }
+});
+document.getElementById('set_download').addEventListener('click', async ()=>{
+  showToast('Menyiapkan backup…');
+  try{
+    const [laporan, mutasi, hutang] = await Promise.all([
+      apiGet('getLaporanList', {limit: 9999}).catch(()=>[]),
+      apiGet('getMutasiSaldo', {limit: 9999}).catch(()=>[]),
+      apiGet('getHutang').catch(()=>[])
+    ]);
+    const csv2 = 'Tanggal,OmzetCash,OmzetQris,Belanja,Biaya,Laba\n' + (laporan||[]).map(r => `${r.Tanggal},${r.OmzetCash||0},${r.OmzetQris||0},${r.BelanjaHariIni||0},${r.TotalBiaya||0},${r.LabaBersih||0}`).join('\n');
+    const csv3 = 'Tanggal,Tipe,Metode,Jumlah,Tujuan,Catatan\n' + (mutasi||[]).map(m => `${m.Tanggal},${m.Tipe},${m.Metode},${m.Jumlah},${m.Tujuan},${m.Catatan}`).join('\n');
+    const csv4 = 'Tanggal,Tipe,Nama,JumlahAwal,JumlahDibayar,Sisa,Status,Catatan\n' + (hutang||[]).map(h => `${h.Tanggal},${h.Tipe},${h.Nama},${h.JumlahAwal},${h.JumlahDibayar},${h.Sisa},${h.Status},"${String(h.Catatan||'').replace(/"/g,'""')}"`).join('\n');
+    const blob = new Blob([csv2 + '\n\n===MUTASI===\n' + csv3 + '\n\n===HUTANG===\n' + csv4], {type:'text/csv'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'sayur-backup-' + todayStr() + '.csv'; a.click();
+    URL.revokeObjectURL(url);
+    showToast('Backup diunduh');
+  }catch(e){ showToast('Gagal backup: ' + e.message); }
+});
+
+/* ==========================================================
+   INIT
+   ========================================================== */
+document.getElementById('topbarDate').textContent = dateShort();
+document.getElementById('harga_date').textContent = dateShort();
+document.getElementById('b_date').max = todayStr();
+document.getElementById('t_date').max = todayStr();
+document.getElementById('b_date').value = _activeDate;
+document.getElementById('t_date').value = _activeDate;
+updateDateWarnings();
+
+['b_harga','t_cash','t_qris','t_konsumsi','tp_kresek','tp_konsumsi','tp_iuran','tp_lain','mutasi_jumlah','ll_jml','bon_jml','hb_jumlah','bayar_jumlah','cat_harga'].forEach(id=>{
+  attachMoneyInput(document.getElementById(id));
+});
+
+/* Init: dashboard dulu, lalu tab belanja (catatan & aktual) + data lainnya */
+Promise.resolve(loadDashboard()).finally(()=>{
+  loadCatatanList();
+  loadBelanja();
+  loadNamaBarangOptions();
+  loadLainLain();
+  fetchOmzetAndOps().then(()=> updateCekModal());
+});
+
+setInterval(()=>{
+  const lbl = document.getElementById('topbarDate');
+  if(lbl) lbl.textContent = dateShort();
+}, 60000);
+
+if('serviceWorker' in navigator){
+  window.addEventListener('load', ()=>{
+    navigator.serviceWorker.register('./service-worker.js')
+      .catch(err => console.warn('SW gagal:', err));
+  });
+}
 </script>
 </body>
 </html>
