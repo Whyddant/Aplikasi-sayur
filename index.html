@@ -142,10 +142,11 @@ body.dark .hutang-toggle-wrap.on{background:#2A2415;}
 .expense-row{display:flex; flex-direction:column; gap:6px; margin-bottom:10px; padding:10px 12px; background:var(--card); border:1px solid var(--line); border-radius:var(--r-sm);}
 .expense-row .er-head{display:flex; justify-content:space-between; align-items:center;}
 .expense-row .er-name{font-size:var(--fs-sm); font-weight:600; color:var(--ink-700);}
-.expense-row .er-body{display:flex; gap:6px; align-items:center;}
-.expense-row .er-input{flex:1; padding:8px 10px; border:1px solid var(--line); border-radius:var(--r-sm); font-family:'Zilla Slab',serif; font-size:15px; font-weight:600; background:var(--paper); text-align:left; color:var(--ink-900);}
+.expense-row .er-body{display:flex; gap:6px; align-items:center; min-width:0;}
+.expense-row .er-input{flex:1 1 auto; min-width:0; padding:8px 10px; border:1px solid var(--line); border-radius:var(--r-sm); font-family:'Zilla Slab',serif; font-size:15px; font-weight:600; background:var(--paper); text-align:left; color:var(--ink-900);}
+.expense-row .er-body .method-toggle{flex:0 0 auto;}
 .expense-row .er-input:focus{outline:none; border-color:var(--green-700);}
-.method-toggle{display:inline-flex; align-items:center; gap:4px; padding:7px 11px; border-radius:var(--r-full); border:1px solid var(--line); background:var(--card); font:600 12px 'Work Sans',sans-serif; cursor:pointer; white-space:nowrap; transition:all .12s;}
+.method-toggle{display:inline-flex; align-items:center; justify-content:center; gap:4px; padding:7px 10px; border-radius:var(--r-full); border:1px solid var(--line); background:var(--card); font:600 12px 'Work Sans',sans-serif; cursor:pointer; white-space:nowrap; transition:all .12s; flex-shrink:0; max-width:100%;}
 .method-toggle[data-metode="Cash"]{background:var(--green-100); color:var(--green-700); border-color:#C8D8B5;}
 .method-toggle[data-metode="QRIS"]{background:var(--blue-100); color:var(--blue-600); border-color:#B9D2E8;}
 .method-toggle:active{transform:scale(.97);}
