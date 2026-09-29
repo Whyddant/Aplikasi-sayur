@@ -1272,7 +1272,7 @@ const QRIS_FEE_RATE = 0.007;
 
 const DEFAULT_PENGATURAN = {
   OperasionalBelanja: 100000,
-  Bensin: 50000,
+  Bensin: 100000,
   TargetLabaHarian: 250000,
   NamaLapak: '',
   NamaPemilik: '',
@@ -2121,6 +2121,7 @@ async function fetchOmzetAndOps(){
     ]);
     _omzetHariIni = omzet;
     _biayaOpsHariIni = ops;
+    _pengaturanCache = {...DEFAULT_PENGATURAN, ...pengaturan};
     _targetLaba = parseNum(pengaturan.TargetLabaHarian) || DEFAULT_PENGATURAN.TargetLabaHarian;
   }catch(e){
     _omzetHariIni = null;
@@ -2156,8 +2157,9 @@ function updateCekModal(){
     return;
   }
 
-  const opsPasar = parseNum(_biayaOpsHariIni?.operasionalBelanja);
-  const opsBensin = parseNum(_biayaOpsHariIni?.bensin);
+  // Pakai nilai dari Pengaturan (default 100rb & 100rb) supaya tidak butuh Tutup Hari dulu
+const opsPasar = parseNum(_pengaturanCache.OperasionalBelanja) || 100000;
+const opsBensin = parseNum(_pengaturanCache.Bensin) || 100000;
 
   // Modal bersih setelah biaya tetap
   const modalBersih = totalOmzet - opsPasar - opsBensin;
@@ -3333,7 +3335,7 @@ async function loadPengaturan(){
     document.getElementById('val_nama_pemilik').textContent = p.NamaPemilik || '—';
     document.getElementById('val_no_hp').textContent = p.NoHP || '—';
     document.getElementById('val_ops').textContent = rupiah(p.OperasionalBelanja || 100000);
-    document.getElementById('val_bensin').textContent = rupiah(p.Bensin || 50000);
+    document.getElementById('val_bensin').textContent = rupiah(p.Bensin || 100000);
     document.getElementById('val_target_laba').textContent = rupiah(parseNum(p.TargetLabaHarian) || 250000);
     let lastSync = '—';
     try{ lastSync = localStorage.getItem('sayur_last_sync') || '—'; }catch(e){}
@@ -3388,7 +3390,7 @@ document.getElementById('set_ops').addEventListener('click', ()=>{
   });
 });
 document.getElementById('set_bensin').addEventListener('click', ()=>{
-  openSettingModal('Bensin', 'Jumlah (Rp)', _pengaturanCache.Bensin || 50000, async (v)=>{
+  openSettingModal('Bensin', 'Jumlah (Rp)', _pengaturanCache.Bensin || 100000, async (v)=>{
     const n = parseNum(v); if(n <= 0) throw new Error('Harus > 0');
     await apiPost('setPengaturan', {Bensin: n});
     showToast('Disimpan'); loadPengaturan();
@@ -3461,6 +3463,7 @@ Promise.resolve(loadDashboard()).finally(()=>{
   loadBelanja();
   loadNamaBarangOptions();
   loadLainLain();
+  loadPengaturan();
   fetchOmzetAndOps().then(()=> updateCekModal());
 });
 
