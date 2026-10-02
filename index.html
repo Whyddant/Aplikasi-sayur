@@ -412,6 +412,30 @@ body.dark .pesanan-banner{background:linear-gradient(135deg,#2A2415,var(--card))
 }
 .pb-btn:active{background:var(--green-900)}
 
+/* ========== BANNER PIUTANG PESANAN (BARU) ========== */
+.banner-piutang{
+  background:linear-gradient(135deg,#FFEDE5,var(--card));
+  border:1px solid #E8BBA6;border-radius:var(--r-md);
+  padding:12px 14px;margin-bottom:12px;
+}
+body.dark .banner-piutang{
+  background:linear-gradient(135deg,#3A1F18,var(--card));
+}
+.banner-piutang .bp-head{
+  display:flex;align-items:center;gap:8px;margin-bottom:8px;
+}
+.banner-piutang .bp-title{
+  font-size:12.5px;font-weight:700;color:var(--rust-700);
+}
+.banner-piutang .bp-item{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:9px 11px;background:var(--card);
+  border-radius:var(--r-sm);margin-top:6px;gap:8px;
+  border-left:3px solid var(--rust-600);
+}
+.banner-piutang .bp-nama{font-size:13px;font-weight:600;color:var(--ink-900);}
+.banner-piutang .bp-detail{font-size:10.5px;color:var(--ink-600);margin-top:1px;}
+
 /* ========== BANNER BATAS AMAN ========== */
 .batas-banner{
   background:var(--green-100);border-radius:var(--r-sm);
@@ -431,6 +455,19 @@ body.dark .batas-banner.minus{background:#3A1F18}
 .batas-banner.hampir .amt{color:var(--amber-700)}
 .batas-banner.kikis .amt{color:var(--rust-600)}
 .batas-banner.minus .amt{color:var(--rust-700)}
+
+/* ========== BANNER HANDLE (BARU) ========== */
+.batas-banner.toggle{cursor:pointer;user-select:none;gap:8px;
+  position:relative;margin-bottom:36px;}
+.banner-handle{position:absolute;left:50%;top:100%;transform:translateX(-50%);
+  background:inherit;border-radius:0 0 12px 12px;
+  display:flex;align-items:center;gap:5px;
+  min-height:24px;padding:0 16px 1px;
+  font:600 10.5px 'Work Sans',sans-serif;color:var(--ink-700);white-space:nowrap;}
+.banner-handle .chev{width:14px;height:14px;stroke:var(--ink-700);fill:none;
+  stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round;
+  transition:transform .2s;flex:none;}
+.batas-banner.toggle.open .banner-handle .chev{transform:rotate(180deg);}
 
 /* ========== INFO PANEL ========== */
 .info-panel-bel{display:none;margin-bottom:12px}
@@ -627,6 +664,7 @@ body.dark .status-line.minus{background:#3A1F18}
 .line-1 .nm{flex:1;min-width:0;font-size:14.5px;font-weight:600;
   line-height:1.3;color:var(--ink-900);word-break:break-word;
   cursor:pointer}
+.line-1 .nm:active{color:var(--green-700)}
 .line-1 .del{background:none;border:none;color:var(--ink-400);
   font-size:22px;width:30px;height:26px;margin:-3px -6px 0 0;
   cursor:pointer;line-height:1;flex-shrink:0}
@@ -687,6 +725,43 @@ body.dark .nanti-chip.on{background:#2A2415}
   font:500 15px 'Work Sans',sans-serif;color:var(--ink-900);
   font-family:'Work Sans',sans-serif}
 .supplier-fld input:focus{outline:none}
+
+/* ========== PANEL RINCIAN ITEM (BARU) ========== */
+.daftar-panel{
+  padding:12px 14px;
+  background:var(--paper);
+  border-top:1px dashed var(--line);
+  border-bottom:1px solid var(--line-soft);
+  font-size:12px;
+  margin:8px -14px -9px;
+}
+.item-card:last-child .daftar-panel{border-bottom:none;}
+.daftar-panel .ttl{
+  font-weight:700;font-size:12.5px;margin-bottom:8px;
+  color:var(--ink-700);display:flex;justify-content:space-between;align-items:baseline;
+}
+.daftar-panel .ttl .qty-info{
+  font-weight:400;font-size:11px;color:var(--ink-600);
+  font-family:'Zilla Slab',serif;
+}
+.daftar-panel .line{
+  display:flex;justify-content:space-between;
+  padding:3px 0;font-size:12px;
+}
+.daftar-panel .line .lbl{color:var(--ink-600);}
+.daftar-panel .line .amt{
+  font-family:'Zilla Slab',serif;font-weight:600;
+}
+.daftar-panel .line.neg .amt{color:var(--rust-600);}
+.daftar-panel .line.total{
+  padding-top:8px;margin-top:6px;
+  border-top:1px dashed var(--line);
+}
+.daftar-panel .line.total .lbl{font-weight:600;color:var(--ink-900);}
+.daftar-panel .line.total .amt{
+  color:var(--green-700);font-size:14px;font-weight:700;
+}
+.daftar-panel .line.total.neg .amt{color:var(--rust-600);}
 
 .section-divider{font-size:10.5px;font-weight:700;
   text-transform:uppercase;letter-spacing:.6px;
@@ -1107,6 +1182,34 @@ body.dark .status-card.done{
 }
 .kirim-opsi-pes button .icn{font-size:20px}
 .kirim-opsi-pes button:active{background:var(--green-100)}
+
+/* OPSI ROW (BARU) — toggle di modal nota */
+.opsi-row{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:10px 12px;background:var(--paper);border-radius:var(--r-sm);
+  margin-bottom:8px;cursor:pointer;
+}
+.opsi-row .lbl{font-size:12px;color:var(--ink-700);
+  display:flex;flex-direction:column;gap:2px;}
+.opsi-row .lbl small{font-size:10.5px;color:var(--ink-600);font-weight:400;}
+.opsi-row .sw{width:38px;height:22px;background:var(--line);
+  border-radius:22px;position:relative;flex-shrink:0;transition:background .2s;}
+.opsi-row .sw::after{content:'';position:absolute;top:2px;left:2px;
+  width:18px;height:18px;background:#fff;border-radius:50%;
+  transition:transform .2s;box-shadow:0 1px 3px rgba(0,0,0,.2);}
+.opsi-row.on .sw{background:var(--green-700);}
+.opsi-row.on .sw::after{transform:translateX(16px);}
+
+/* PM INFO (BARU) — live hint input pembayaran */
+.pm-info{
+  display:none;font-size:11.5px;margin-top:6px;
+  padding:7px 10px;border-radius:6px;line-height:1.4;
+}
+.pm-info.show{display:block;}
+.pm-info.ok{background:var(--green-100);color:var(--green-700);}
+.pm-info.warn{background:var(--amber-100);color:var(--amber-700);}
+.pm-info.info{background:var(--blue-100);color:var(--blue-600);}
+.pm-info.danger{background:#FFE0D5;color:var(--rust-700);}
 
 /* AC dalam modal Pesanan */
 .ac-wrap-pes{position:relative}
@@ -1768,7 +1871,6 @@ body.dark .hutang-total-box.rust{
 /* ========== PILIHAN SALDO & SUMBER (modal) ========== */
 .pil-sald,
 .pil-sumber{
-  /* Style dasar — versi awal di-render inline dari JS */
   transition:all .12s;
   user-select:none;
   -webkit-user-select:none;
@@ -1783,7 +1885,6 @@ body.dark .hutang-total-box.rust{
   box-shadow:0 0 0 3px rgba(47,82,51,.15);
 }
 
-/* Override style inline saat aktif — biar lebih tegas */
 .pil-sald[data-metode="Cash"][style*="var(--green-100)"],
 .pil-sumber[data-metode="Cash"][style*="var(--green-100)"]{
   border-color:var(--green-700) !important;
@@ -1955,6 +2056,12 @@ body.dark .hutang-total-box.rust{
   };
 
   /* ----------------------------------------------------------
+     KONSTANTA GLOBAL (PORT)
+     ---------------------------------------------------------- */
+  const SUSUT_RATE = 0.30;
+  const TOLERANSI_SELISIH = 10000;
+
+  /* ----------------------------------------------------------
      UTIL
      ---------------------------------------------------------- */
   function rupiah(n){
@@ -2010,8 +2117,8 @@ body.dark .hutang-total-box.rust{
 const Belanja = {
   tanggal: todayYmd(),
   currentSubTab: 'rencana',
-  state: [],              // daftar item belanja
-  pengeluaran: null,      // {opsPasar, bensin, lain:[], bayarHutang, modalBelanja}
+  state: [],
+  pengeluaran: null,
   tambahDariSaldo: 0,
   tambahDariSaldoMetode: 'Cash',
   infoOpen: false,
@@ -2023,33 +2130,20 @@ const Belanja = {
   hutangPesananCache: [],
   expandedItems: new Set(),
 
-  /* ----------------------------------------------------------
-     STORAGE KEY
-     ---------------------------------------------------------- */
   _key(tgl){ return 'sayur_belanja_state_' + tgl; },
   _pkey(tgl){ return 'sayur_belanja_biaya_' + tgl; },
   _saldoKey(tgl){ return 'sayur_belanja_saldo_' + tgl; },
 
-  /* ----------------------------------------------------------
-     INIT / LOAD
-     ---------------------------------------------------------- */
   async load(){
-    /* FIX: isi pengeluaran dulu — renderRencana() butuh this.pengeluaran (awalnya null) */
     this.loadPengeluaran();
-
-    /* Render skeleton dulu */
     this.renderRencana();
     this.renderAktual();
     this.updateSubtabCounts();
-
-    /* Load data */
     await this.loadMaster();
     this.loadLocalState();
     this.loadPengeluaran();
     await this.loadHutangSaya();
     this.loadHutangPesanan();
-
-    /* Render ulang setelah data siap */
     this.renderRencana();
     this.renderAktual();
     this.updateSubtabCounts();
@@ -2063,22 +2157,17 @@ const Belanja = {
         SayurStorage.get('getNamaBarangMaster').catch(() => []),
         SayurStorage.get('getHargaMaster').catch(() => [])
       ]);
-      /* Build master dari harga */
       this.master = (harga || []).map(h => ({
         nama: h.NamaBarang,
         satuan: h.Satuan || 'kg',
         hargaBeli: Number(h.HargaBeli) || 0,
         hargaJual: Number(h.HargaJual) || 0
       }));
-
-      /* Kalau harga kosong, coba dari names */
       if(this.master.length === 0 && names && names.length){
         this.master = names.map(n => ({
           nama: n, satuan: 'kg', hargaBeli: 0, hargaJual: 0
         }));
       }
-
-      /* Merge dengan state yang sudah ada (kalau ada item tidak di master) */
       this.masterLoaded = true;
     }catch(e){
       console.warn('Gagal load master:', e);
@@ -2096,7 +2185,6 @@ const Belanja = {
         return;
       }
     }catch(e){}
-    /* Belum ada → buat dari master */
     this.state = (this.master || []).map((m, idx) => ({
       id: 'itm-' + idx + '-' + Date.now(),
       nama: m.nama,
@@ -2179,9 +2267,6 @@ const Belanja = {
     }
   },
 
-  /* ----------------------------------------------------------
-     HITUNG — HARGA JUAL
-     ---------------------------------------------------------- */
   hitungHargaJual(modal){
     if(!modal || modal <= 0) return 0;
     let rate;
@@ -2203,9 +2288,6 @@ const Belanja = {
     return hm > 0 ? hm : 0;
   },
 
-  /* ----------------------------------------------------------
-     HITUNG — TOTAL
-     ---------------------------------------------------------- */
   totalLain(){
     return (this.pengeluaran.lain || [])
       .reduce((s,x) => s + Number(x.jumlah || 0), 0);
@@ -2242,11 +2324,7 @@ const Belanja = {
     return this.state.filter(x => x.checked && this.parseQty(x.qty) > 0);
   },
 
-  /* ----------------------------------------------------------
-     KONTEKS & BATAS
-     ---------------------------------------------------------- */
   getKonteks(){
-    /* Baca dari Tutup Hari draft (kalau ada) */
     let omzetKotor = 0;
     let pengeluaranPagi = 0;
     try{
@@ -2303,9 +2381,57 @@ const Belanja = {
     return {kode: 'minus', label: 'Minus', detail: `rugi ${rupiah(-sisa)}`};
   },
 
-  /* ----------------------------------------------------------
-     RENDER — Rencana
-     ---------------------------------------------------------- */
+  /* ---------- BARU: format margin singkat ---------- */
+  formatMargin(n){
+    n = Number(n) || 0;
+    return n < 0 ? '−' + this.formatSingkat(-n) : '+' + this.formatSingkat(n);
+  },
+
+  /* ---------- BARU: panel rincian per item ---------- */
+  renderDaftarPanel(item){
+    const qty = this.parseQty(item.qty);
+    const subBeli = item.hargaBeli * qty;
+    const subJual = item.hargaJual * qty;
+    const marginKotor = subJual - subBeli;
+    const susut = Math.round(marginKotor * SUSUT_RATE);
+    const marginBersih = marginKotor - susut;
+    const min = this.hitungHargaMinimum(item.hargaBeli);
+
+    return `
+      <div class="daftar-panel">
+        <div class="ttl">
+          <span>Rincian: ${escHtml(item.nama)}</span>
+          <span class="qty-info">${escHtml(item.qty)} ${escHtml(item.satuan)}</span>
+        </div>
+        <div class="line">
+          <span class="lbl">Subtotal beli (${qty} × ${item.hargaBeli.toLocaleString('id-ID')})</span>
+          <span class="amt">${rupiah(subBeli)}</span>
+        </div>
+        <div class="line">
+          <span class="lbl">Subtotal jual (${qty} × ${item.hargaJual.toLocaleString('id-ID')})</span>
+          <span class="amt">${rupiah(subJual)}</span>
+        </div>
+        <div class="line" style="padding-top:8px;margin-top:6px;border-top:1px dashed var(--line);">
+          <span class="lbl">Margin kotor</span>
+          <span class="amt">${rupiah(marginKotor)}</span>
+        </div>
+        <div class="line neg">
+          <span class="lbl">Susut ${Math.round(SUSUT_RATE*100)}%</span>
+          <span class="amt">− ${rupiah(susut)}</span>
+        </div>
+        <div class="line total ${marginBersih<0?'neg':''}">
+          <span class="lbl">Margin bersih</span>
+          <span class="amt">${rupiah(marginBersih)}</span>
+        </div>
+        ${min > 0 ? `
+        <div class="line" style="padding-top:6px;margin-top:4px;border-top:1px dashed var(--line);">
+          <span class="lbl">Harga minimum (nawar)</span>
+          <span class="amt" style="color:var(--rust-600);">${rupiah(min)}</span>
+        </div>` : ''}
+      </div>`;
+  },
+
+  /* ---------- RENDER — Rencana ---------- */
   renderRencana(){
     const el = document.getElementById('tabBelRencana');
     if(!el) return;
@@ -2321,21 +2447,23 @@ const Belanja = {
 
     let html = '';
 
-    /* Subtitle */
     html += `<div style="font-size:12px;color:var(--ink-600);
       margin-bottom:12px;padding:0 2px;line-height:1.4;">
       Susun daftar belanja untuk hari ini. Belum tersimpan.
     </div>`;
 
-    /* Banner pesanan */
     html += banner;
 
-    /* Banner batas */
+    /* Banner batas — dengan handle (PORT) */
     html += `
-      <div class="batas-banner ${bStatus.kode}" id="batasBanner"
-           style="cursor:pointer;">
+      <div class="batas-banner toggle ${bStatus.kode} ${this.infoOpen?'open':''}"
+           id="batasBanner" role="button" aria-expanded="${this.infoOpen}">
         <span class="lbl">Batas aman: <strong>${rupiah(b.batasAman)}</strong></span>
         <span class="amt">${bStatus.label}</span>
+        <span class="banner-handle">
+          <span id="handleText">${this.infoOpen ? 'Tutup' : 'Edit & detail'}</span>
+          <svg class="chev" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+        </span>
       </div>`;
 
     /* Info panel */
@@ -2550,13 +2678,10 @@ const Belanja = {
 
   bannerPesananHtml(){
     const pesananPerlu = this.hutangPesananCache.filter(() => false);
-    /* Untuk sekarang, banner pesanan tampil dari halaman Pesanan — skip di sini */
     return '';
   },
 
-  /* ----------------------------------------------------------
-     RENDER — Aktual
-     ---------------------------------------------------------- */
+  /* ---------- RENDER — Aktual ---------- */
   renderAktual(){
     const el = document.getElementById('tabBelAktual');
     if(!el) return;
@@ -2576,7 +2701,6 @@ const Belanja = {
       Sesuaikan dengan yang benar-benar dibeli. Simpan setelah belanja.
     </div>`;
 
-    /* Search */
     html += `
       <div class="ac-wrap-bel">
         <input type="text" class="ac-input-bel" id="belSearchAktual"
@@ -2604,7 +2728,6 @@ const Belanja = {
 
     html += `<div class="daftar-list">${listHtml}</div>`;
 
-    /* Ringkasan */
     html += `
       <div class="ringkasan">
         <div class="row beli"><span class="lbl">Total belanja</span>
@@ -2639,7 +2762,6 @@ const Belanja = {
         </div>
       </div>`;
 
-    /* Tombol aksi */
     html += `
       <div class="bar-buttons">
         <button class="btn-share-beli" id="belShareBeli">
@@ -2660,19 +2782,19 @@ const Belanja = {
     el.innerHTML = html;
   },
 
+  /* ---------- UPDATED: item card dengan expand panel ---------- */
   renderItemCard(item, no){
     const qty = this.parseQty(item.qty);
     const margin = (item.hargaJual - item.hargaBeli) * qty;
     const min = this.hitungHargaMinimum(item.hargaBeli);
-    const marginTxt = margin >= 0 ?
-      '+' + this.formatSingkat(margin) :
-      '−' + this.formatSingkat(-margin);
+    const marginTxt = this.formatMargin(margin);
+    const isOpen = this.expandedItems.has(item.id);
 
     return `
       <div class="item-card" data-id="${item.id}">
         <div class="line-1">
           <span class="no">${no+1}.</span>
-          <span class="nm">${escHtml(item.nama)}${item.bayarNanti ? '<span class="hutang-badge">HUTANG</span>' : ''}${item.tersimpan ? '<span class="saved-badge">✓ TERSIMPAN</span>' : '<span class="draft-badge">DRAFT</span>'}</span>
+          <span class="nm" data-expand="${item.id}">${escHtml(item.nama)}${item.bayarNanti ? '<span class="hutang-badge">HUTANG</span>' : ''}${item.tersimpan ? '<span class="saved-badge">✓ TERSIMPAN</span>' : '<span class="draft-badge">DRAFT</span>'}</span>
           <button class="del" data-del="${item.id}" type="button">×</button>
         </div>
         <div class="grid-3-bel">
@@ -2717,6 +2839,7 @@ const Belanja = {
                    placeholder="Nama supplier" autocomplete="off">
           </div>` : ''}
         </div>
+        ${isOpen ? this.renderDaftarPanel(item) : ''}
       </div>`;
   },
 
@@ -2727,11 +2850,8 @@ const Belanja = {
     return String(n);
   },
 
-  /* ----------------------------------------------------------
-     HANDLER ATTACHMENT
-     ---------------------------------------------------------- */
+  /* ---------- HANDLERS ---------- */
   attachHandlers(){
-    /* Sub-tab nav */
     document.querySelectorAll('.subtabs-bel button[data-beltab]').forEach(btn => {
       btn.addEventListener('click', () => {
         this.currentSubTab = btn.dataset.beltab;
@@ -2744,15 +2864,18 @@ const Belanja = {
       });
     });
 
-    /* Batas banner toggle */
+    /* Banner toggle — dengan chevron + label (PORT) */
     const banner = document.getElementById('batasBanner');
     if(banner) banner.addEventListener('click', () => {
       this.infoOpen = !this.infoOpen;
+      banner.classList.toggle('open', this.infoOpen);
+      banner.setAttribute('aria-expanded', this.infoOpen);
+      const ht = document.getElementById('handleText');
+      if(ht) ht.textContent = this.infoOpen ? 'Tutup' : 'Edit & detail';
       const panel = document.getElementById('infoPanelBel');
       if(panel) panel.classList.toggle('open', this.infoOpen);
     });
 
-    /* Biaya — ops & bensin */
     this.bindMoney('belOps', v => {
       this.pengeluaran.opsPasar = v;
       this.savePengeluaran();
@@ -2762,7 +2885,6 @@ const Belanja = {
       this.savePengeluaran();
     });
 
-    /* Set default */
     document.querySelectorAll('.set-default').forEach(btn => {
       btn.addEventListener('click', () => {
         const tgt = btn.dataset.target;
@@ -2778,7 +2900,6 @@ const Belanja = {
       });
     });
 
-    /* Lain-lain toggle */
     const lt = document.getElementById('belLainToggle');
     if(lt) lt.addEventListener('click', () => {
       this.lainOpen = !this.lainOpen;
@@ -2789,7 +2910,6 @@ const Belanja = {
       if(this.lainOpen && k) k.focus();
     });
 
-    /* Add lain */
     const la = document.getElementById('belLainAdd');
     if(la) la.addEventListener('click', () => {
       const ket = document.getElementById('belLainKet').value.trim();
@@ -2802,7 +2922,6 @@ const Belanja = {
       this.attachHandlers();
     });
 
-    /* Bayar hutang toggle */
     const ht = document.getElementById('belHutangToggle');
     if(ht) ht.addEventListener('click', () => {
       this.hutangOpen = !this.hutangOpen;
@@ -2811,7 +2930,6 @@ const Belanja = {
       ht.textContent = this.hutangOpen ? 'Tutup' : '+ Bayar';
     });
 
-    /* Hutang select → hint */
     const hs = document.getElementById('belHutangSup');
     if(hs){
       hs.addEventListener('change', () => {
@@ -2828,7 +2946,6 @@ const Belanja = {
       });
     }
 
-    /* Add bayar hutang */
     const ha = document.getElementById('belHutangAdd');
     if(ha) ha.addEventListener('click', () => {
       const sel = document.getElementById('belHutangSup');
@@ -2847,7 +2964,6 @@ const Belanja = {
       this.attachHandlers();
     });
 
-    /* Money format di add rows */
     ['belLainJml', 'belHutangJml'].forEach(id => {
       const el = document.getElementById(id);
       if(!el) return;
@@ -2857,7 +2973,6 @@ const Belanja = {
       });
     });
 
-    /* Checklist toggle */
     const cl = document.getElementById('checklistBel');
     if(cl){
       cl.addEventListener('click', e => {
@@ -2894,10 +3009,19 @@ const Belanja = {
       });
     }
 
-    /* Search Rencana */
     this.bindSearch('belSearch', 'belSearchDrop', 'rencana');
-    /* Search Aktual */
     this.bindSearch('belSearchAktual', 'belSearchDropAktual', 'aktual');
+
+    /* Expand/collapse rincian item di Aktual (PORT) */
+    document.querySelectorAll('#tabBelAktual .item-card .nm[data-expand]').forEach(el => {
+      el.addEventListener('click', () => {
+        const id = el.dataset.expand;
+        if(this.expandedItems.has(id)) this.expandedItems.delete(id);
+        else this.expandedItems.add(id);
+        this.renderAktual();
+        this.attachHandlers();
+      });
+    });
 
     /* Aktual: item card inputs */
     document.querySelectorAll('#tabBelAktual .item-card input').forEach(inp => {
@@ -2927,7 +3051,6 @@ const Belanja = {
       }, 20));
     });
 
-    /* Nanti chip */
     document.querySelectorAll('#tabBelAktual [data-nanti]').forEach(btn => {
       btn.addEventListener('click', () => {
         const id = btn.dataset.nanti;
@@ -2941,7 +3064,6 @@ const Belanja = {
       });
     });
 
-    /* Delete item */
     document.querySelectorAll('#tabBelAktual .item-card .del').forEach(btn => {
       btn.addEventListener('click', () => {
         const id = btn.dataset.del;
@@ -2958,7 +3080,6 @@ const Belanja = {
       });
     });
 
-    /* Delete lain/bayarHutang */
     document.querySelectorAll('#tabBelRencana .del[data-type]').forEach(btn => {
       btn.addEventListener('click', () => {
         const idx = Number(btn.dataset.idx);
@@ -2974,35 +3095,29 @@ const Belanja = {
       });
     });
 
-    /* Siap Belanja */
     const sb = document.getElementById('belSiapBelanja');
     if(sb) sb.addEventListener('click', () => {
       const items = this.daftarItems();
       if(!items.length){ showToast('Ceklis dulu minimal 1 barang'); return; }
-      /* Pindah ke sub-tab Aktual */
       const btn = document.querySelector('.subtabs-bel button[data-beltab="aktual"]');
       if(btn) btn.click();
     });
 
-    /* Tambah dari saldo (Rencana) */
     const ts = document.getElementById('belTambahSaldo');
     if(ts) ts.addEventListener('click', () => this.openSaldoModal());
     const us = document.getElementById('belUbahSaldo');
     if(us) us.addEventListener('click', () => this.openSaldoModal());
 
-    /* Tambah dari saldo (Aktual) */
     const tsa = document.getElementById('belTambahSaldoAktual');
     if(tsa) tsa.addEventListener('click', () => this.openSaldoModal());
     const usa = document.getElementById('belUbahSaldoAktual');
     if(usa) usa.addEventListener('click', () => this.openSaldoModal());
 
-    /* Bagikan */
     const shrB = document.getElementById('belShareBeli');
     if(shrB) shrB.addEventListener('click', () => this.shareDaftar('beli'));
     const shrJ = document.getElementById('belShareJual');
     if(shrJ) shrJ.addEventListener('click', () => this.shareDaftar('jual'));
 
-    /* Simpan Belanja */
     const sb2 = document.getElementById('belSimpan');
     if(sb2) sb2.addEventListener('click', () => this.simpanBelanja());
   },
@@ -3062,12 +3177,6 @@ const Belanja = {
           this.renderRencana();
           this.renderAktual();
           this.attachHandlers();
-          if(mode === 'rencana'){
-            setTimeout(() => {
-              const row = document.querySelector('#checklistBel .check-row[data-idx]');
-              /* scroll ke row checked */
-            }, 100);
-          }
         });
       });
       const newBtn = drop.querySelector('.ac-new-btn-bel');
@@ -3113,7 +3222,6 @@ const Belanja = {
   },
 
   updateRencanaLive(){
-    /* Update subtotal & total tanpa render penuh */
     const k = this.getKonteks();
     const b = this.hitungBatas();
     const total = this.totalBelanjaTunai();
@@ -3124,9 +3232,11 @@ const Belanja = {
 
     const banner = document.getElementById('batasBanner');
     if(banner){
-      banner.className = 'batas-banner ' + bStatus.kode;
+      banner.className = 'batas-banner toggle ' + bStatus.kode + (this.infoOpen ? ' open' : '');
       banner.querySelector('.lbl').innerHTML = `Batas aman: <strong>${rupiah(b.batasAman)}</strong>`;
       banner.querySelector('.amt').textContent = bStatus.label;
+      const ht = document.getElementById('handleText');
+      if(ht) ht.textContent = this.infoOpen ? 'Tutup' : 'Edit & detail';
     }
 
     const sc = document.getElementById('belSumCount');
@@ -3145,7 +3255,6 @@ const Belanja = {
       st.innerHTML = `<strong>${status.label}.</strong> ${status.detail}`;
     }
 
-    /* Update check row subtotals */
     document.querySelectorAll('#checklistBel .check-row').forEach(row => {
       const idx = Number(row.dataset.idx);
       const item = this.state[idx];
@@ -3156,14 +3265,10 @@ const Belanja = {
       if(subEl) subEl.textContent = sub > 0 ? rupiah(sub) : '—';
     });
 
-    /* Update biaya total */
     const biayaTotal = document.querySelector('.biaya-head .total');
     if(biayaTotal) biayaTotal.textContent = rupiah(this.totalBiayaBelanja());
   },
 
-  /* ----------------------------------------------------------
-     TAMBAH DARI SALDO — Modal
-     ---------------------------------------------------------- */
   openSaldoModal(){
     const ov = document.createElement('div');
     ov.className = 'modal-ov center';
@@ -3276,9 +3381,6 @@ const Belanja = {
     });
   },
 
-  /* ----------------------------------------------------------
-     BAGIKAN DAFTAR
-     ---------------------------------------------------------- */
   shareDaftar(jenis){
     const items = this.daftarItems();
     if(!items.length){ showToast('Daftar masih kosong'); return; }
@@ -3314,9 +3416,6 @@ const Belanja = {
     }
   },
 
-  /* ----------------------------------------------------------
-     SIMPAN BELANJA
-     ---------------------------------------------------------- */
   async simpanBelanja(){
     const items = this.daftarItems();
     if(!items.length){ showToast('Daftar masih kosong'); return; }
@@ -3327,7 +3426,6 @@ const Belanja = {
       return;
     }
 
-    /* Konfirmasi */
     if(!confirm(`Simpan ${draft.length} item belanja?\n\nData akan dikirim ke server.`)) return;
 
     const btn = document.getElementById('belSimpan');
@@ -3336,7 +3434,6 @@ const Belanja = {
     let okCount = 0;
 
     try{
-      /* Kirim per item via queue */
       for(const item of draft){
         const payload = {
           id: 'b-' + item.id + '-' + Date.now(),
@@ -3348,7 +3445,6 @@ const Belanja = {
           metode: item.bayarNanti ? 'Cash' : 'Cash'
         };
 
-        /* Kalau bayar nanti → buat hutang */
         if(item.bayarNanti && item.supplier){
           await SayurStorage.post('addHutang', {
             id: 'ht-' + item.id + '-' + Date.now(),
@@ -3366,7 +3462,6 @@ const Belanja = {
         okCount++;
       }
 
-      /* Simpan biaya belanja (ops, bensin, lain) */
       await SayurStorage.post('setBiayaOperasional', {
         operasionalBelanja: this.pengeluaran.opsPasar,
         operasionalMetode: 'Cash',
@@ -3377,7 +3472,6 @@ const Belanja = {
         tanggal: this.tanggal
       });
 
-      /* Tambah dari saldo → mutasi */
       if(this.tambahDariSaldo > 0){
         await SayurStorage.post('tambahMutasi', {
           id: 'm-saldo-' + Date.now(),
@@ -3391,7 +3485,6 @@ const Belanja = {
         });
       }
 
-      /* Bayar hutang */
       for(const bh of this.bayarHutangState){
         await SayurStorage.post('addPembayaranHutang', {
           id: 'ph-' + bh.hutangId + '-' + Date.now(),
@@ -3406,7 +3499,6 @@ const Belanja = {
       this.tambahDariSaldo = 0;
       this.bayarHutangState = [];
 
-      /* Hitung & simpan modalBelanja untuk Tutup Hari */
       const totalModal = items.reduce((s,x) =>
         s + this.parseQty(x.qty) * x.hargaBeli, 0);
       this.pengeluaran.modalBelanja = totalModal;
@@ -3427,9 +3519,6 @@ const Belanja = {
     }
   },
 
-  /* ----------------------------------------------------------
-     UPDATE COUNTS
-     ---------------------------------------------------------- */
   updateSubtabCounts(){
     const checked = this.state.filter(x => x.checked && this.parseQty(x.qty) > 0).length;
     const cA = document.getElementById('cntAktual');
@@ -3444,17 +3533,17 @@ const Belanja = {
    ========================================================== */
 const Pesanan = {
   list: [],
-  currentId: null,       // null = list, id = detail
+  currentId: null,
   riwayatOpen: false,
   masterLoaded: false,
   masterBarang: [],
+  piutangList: [],
+  _notaOpsi: { tampilHP: true, tampilCatatan: true },
 
-  /* ----------------------------------------------------------
-     LOAD
-     ---------------------------------------------------------- */
   async load(){
     await this.loadMaster();
     await this.loadList();
+    await this.loadPiutang();
     this.render();
   },
 
@@ -3489,9 +3578,17 @@ const Pesanan = {
     }
   },
 
-  /* ----------------------------------------------------------
-     RENDER
-     ---------------------------------------------------------- */
+  async loadPiutang(){
+    try{
+      const list = await SayurStorage.get('getHutang',
+        {tipe:'PiutangSaya', sumber:'Pesanan'});
+      this.piutangList = (list || []).filter(h => h.Status !== 'Lunas');
+    }catch(e){
+      this.piutangList = [];
+    }
+  },
+
+  /* ---------- RENDER ---------- */
   render(){
     const el = document.getElementById('tabBelPesanan');
     if(!el) return;
@@ -3509,7 +3606,8 @@ const Pesanan = {
     const aktif = this.list.filter(p => p.Status !== 'selesai');
     const selesai = this.list.filter(p => p.Status === 'selesai');
 
-    let html = `
+    let html = this.bannerPiutangHtml();
+    html += `
       <div class="pesanan-actions">
         <button class="btn-pesanan-baru" id="btnPesananBaru">
           + Pesanan Baru
@@ -3537,6 +3635,28 @@ const Pesanan = {
     }
 
     return html;
+  },
+
+  /* ---------- BARU: banner piutang ---------- */
+  bannerPiutangHtml(){
+    const list = this.piutangList || [];
+    if(!list.length) return '';
+    const totalSisa = list.reduce((s,h) => s + (Number(h.Sisa) || 0), 0);
+    return `
+      <div class="banner-piutang">
+        <div class="bp-head">
+          <span style="font-size:14px;">💰</span>
+          <span class="bp-title">Piutang Pesanan: ${rupiah(totalSisa)}</span>
+        </div>
+        ${list.map(h => `
+          <div class="bp-item">
+            <div style="min-width:0;flex:1;">
+              <div class="bp-nama">${escHtml(h.Nama)}</div>
+              <div class="bp-detail">Sisa ${rupiah(h.Sisa)} · ${this.fmtTanggal(h.Tanggal)}</div>
+            </div>
+          </div>
+        `).join('')}
+      </div>`;
   },
 
   renderKartu(p){
@@ -3598,7 +3718,6 @@ const Pesanan = {
 
     let html = '';
 
-    /* Header */
     html += `
       <div class="detail-head-pesanan">
         <button class="btn-back-pesanan" id="btnPesananBack">
@@ -3611,7 +3730,6 @@ const Pesanan = {
         <span class="order-badge ${st.kode}">${st.label}</span>
       </div>`;
 
-    /* Info pemesan */
     html += `
       <div class="pemesan-card">
         <button class="btn-edit-info" id="btnEditInfoPesanan">✎</button>
@@ -3633,7 +3751,6 @@ const Pesanan = {
         </div>` : ''}
       </div>`;
 
-    /* Status pembayaran */
     html += `
       <div class="status-card ${p.Status === 'selesai' ? 'done' : ''}">
         <div class="row"><span class="lbl">Total pesanan</span><span class="amt">${rupiah(total)}</span></div>
@@ -3645,7 +3762,6 @@ const Pesanan = {
         </div>
       </div>`;
 
-    /* Item list */
     html += `<div class="item-list-pesanan">`;
     if(items.length){
       html += items.map(it => `
@@ -3671,7 +3787,6 @@ const Pesanan = {
 
     html += `<button class="btn-add-item" id="btnAddItemPesanan">Tambah Barang</button>`;
 
-    /* Riwayat pembayaran */
     const pembayaran = p.Pembayaran || [];
     html += `
       <div class="payment-history">
@@ -3684,7 +3799,6 @@ const Pesanan = {
           '<div class="payment-empty">Belum ada pembayaran</div>'}
       </div>`;
 
-    /* Aksi alur pesanan */
     if(st.kode === 'perlu_belanja' && items.length){
       html += `<button class="btn-selesai-pesanan primary" id="btnMulaiBelanja">
         🛒 Mulai Belanja
@@ -3696,7 +3810,6 @@ const Pesanan = {
       </button>`;
     }
 
-    /* Aksi pembayaran & nota */
     html += `
       <div class="detail-actions-pesanan">
         <button class="btn-pay-pesanan" id="btnBayarPesanan" ${lunas ? 'disabled' : ''}>
@@ -3705,15 +3818,11 @@ const Pesanan = {
         <button class="btn-nota-pesanan" id="btnNotaPesanan">Kirim Nota</button>
       </div>`;
 
-    /* Delete */
     html += `<button class="btn-delete-pesanan" id="btnHapusPesanan">Hapus Pesanan</button>`;
 
     return html;
   },
 
-  /* ----------------------------------------------------------
-     STATUS PESANAN
-     ---------------------------------------------------------- */
   statusPesanan(p){
     const lunas = (Number(p.Sisa) || 0) <= 0;
     if(p.SudahSerah && lunas) return {kode: 'selesai', label: 'Selesai'};
@@ -3747,22 +3856,17 @@ const Pesanan = {
     }
   },
 
-  /* ----------------------------------------------------------
-     HANDLERS
-     ---------------------------------------------------------- */
+  /* ---------- HANDLERS ---------- */
   attachHandlers(){
-    /* Pesanan Baru */
     const btnBaru = document.getElementById('btnPesananBaru');
     if(btnBaru) btnBaru.addEventListener('click', () => this.openModalBaru());
 
-    /* Riwayat toggle */
     const btnRiwayat = document.getElementById('btnRiwayat');
     if(btnRiwayat) btnRiwayat.addEventListener('click', () => {
       this.riwayatOpen = !this.riwayatOpen;
       this.render();
     });
 
-    /* Klik kartu */
     document.querySelectorAll('#tabBelPesanan .order-card').forEach(card => {
       card.addEventListener('click', () => {
         this.currentId = card.dataset.id;
@@ -3770,55 +3874,55 @@ const Pesanan = {
       });
     });
 
-    /* Back */
     const btnBack = document.getElementById('btnPesananBack');
     if(btnBack) btnBack.addEventListener('click', () => {
       this.currentId = null;
       this.render();
     });
 
-    /* Edit info */
     const btnEdit = document.getElementById('btnEditInfoPesanan');
     if(btnEdit) btnEdit.addEventListener('click', () => this.openModalEditInfo());
 
-    /* Edit harga item */
     document.querySelectorAll('#tabBelPesanan .price-edit').forEach(el => {
       el.addEventListener('click', () => this.openModalEditItem(el.dataset.itemId));
     });
 
-    /* Hapus item */
     document.querySelectorAll('#tabBelPesanan .item-del-pesanan').forEach(el => {
       el.addEventListener('click', () => this.hapusItem(el.dataset.itemId));
     });
 
-    /* Tambah item */
     const btnAddItem = document.getElementById('btnAddItemPesanan');
     if(btnAddItem) btnAddItem.addEventListener('click', () => this.openModalTambahItem());
 
-    /* Mulai Belanja */
     const btnMulai = document.getElementById('btnMulaiBelanja');
     if(btnMulai) btnMulai.addEventListener('click', () => this.openModalSumberSaldo());
 
-    /* Tandai Serah */
     const btnSerah = document.getElementById('btnTandaiSerah');
     if(btnSerah) btnSerah.addEventListener('click', () => this.tandaiSerah());
 
-    /* Bayar */
     const btnBayar = document.getElementById('btnBayarPesanan');
     if(btnBayar && !btnBayar.disabled) btnBayar.addEventListener('click', () => this.openModalBayar());
 
-    /* Nota */
     const btnNota = document.getElementById('btnNotaPesanan');
     if(btnNota) btnNota.addEventListener('click', () => this.openModalNota());
 
-    /* Hapus pesanan */
     const btnHapus = document.getElementById('btnHapusPesanan');
     if(btnHapus) btnHapus.addEventListener('click', () => this.hapusPesanan());
   },
 
-  /* ----------------------------------------------------------
-     MODAL — PESANAN BARU
-     ---------------------------------------------------------- */
+  /* ---------- BARU: konfirmasi generik ---------- */
+  konfirmasiAksi({judul, pesan, labelA, labelB, danger, onA, onB}){
+    return this._buatModal({
+      title: judul,
+      body: `<p style="margin:0;font-size:13px;line-height:1.55;
+              color:var(--ink-900);">${pesan}</p>`,
+      confirmLabel: labelA,
+      cancelLabel: labelB || 'Batal',
+      onConfirm: () => { if(onA) onA(); return true; },
+      onCancel: () => { if(onB) onB(); }
+    });
+  },
+
   openModalBaru(){
     const ov = this._buatModal({
       title: 'Pesanan Baru',
@@ -3869,9 +3973,6 @@ const Pesanan = {
     }, 100);
   },
 
-  /* ----------------------------------------------------------
-     MODAL — EDIT INFO
-     ---------------------------------------------------------- */
   openModalEditInfo(){
     const p = this.list.find(x => x.ID === this.currentId);
     if(!p) return;
@@ -3918,9 +4019,6 @@ const Pesanan = {
     });
   },
 
-  /* ----------------------------------------------------------
-     MODAL — TAMBAH ITEM
-     ---------------------------------------------------------- */
   openModalTambahItem(){
     const ov = this._buatModal({
       title: 'Tambah Barang',
@@ -3994,9 +4092,6 @@ const Pesanan = {
     });
   },
 
-  /* ----------------------------------------------------------
-     MODAL — EDIT ITEM
-     ---------------------------------------------------------- */
   openModalEditItem(itemId){
     const p = this.list.find(x => x.ID === this.currentId);
     if(!p) return;
@@ -4062,9 +4157,6 @@ const Pesanan = {
     }
   },
 
-  /* ----------------------------------------------------------
-     MODAL — SUMBER SALDO (Mulai Belanja)
-     ---------------------------------------------------------- */
   openModalSumberSaldo(){
     const p = this.list.find(x => x.ID === this.currentId);
     if(!p) return;
@@ -4102,15 +4194,12 @@ const Pesanan = {
       confirmLabel: 'Mulai Belanja',
       onConfirm: async () => {
         try{
-          /* Update sumber saldo */
           await SayurStorage.post('tandaiBelanjaPesanan', {
             pesananId: p.ID,
             sumberSaldo: pilih
           });
-          /* Pindah item ke Belanja.Rencana */
           this.pindahKeRencana(p);
           ov.remove();
-          /* Pindah ke sub-tab Rencana */
           Belanja.currentSubTab = 'rencana';
           document.querySelectorAll('.subtabs-bel button').forEach(b =>
             b.classList.toggle('active', b.dataset.beltab === 'rencana'));
@@ -4139,7 +4228,6 @@ const Pesanan = {
     });
   },
 
-  /* Pindah item pesanan ke Belanja.Rencana */
   pindahKeRencana(p){
     const items = p.Items || [];
     items.forEach(it => {
@@ -4176,9 +4264,6 @@ const Pesanan = {
     Belanja.attachHandlers();
   },
 
-  /* ----------------------------------------------------------
-     TANDAI SERAH
-     ---------------------------------------------------------- */
   async tandaiSerah(){
     const p = this.list.find(x => x.ID === this.currentId);
     if(!p) return;
@@ -4194,15 +4279,14 @@ const Pesanan = {
       await SayurStorage.post('tandaiSerahPesanan', {pesananId: p.ID});
       showToast('✓ Sudah diserahkan');
       await this.loadList();
+      await this.loadPiutang();
       this.render();
     }catch(e){
       showToast('Gagal: ' + e.message);
     }
   },
 
-  /* ----------------------------------------------------------
-     MODAL — BAYAR
-     ---------------------------------------------------------- */
+  /* ---------- UPDATED: openModalBayar dengan toleransi ---------- */
   openModalBayar(){
     const p = this.list.find(x => x.ID === this.currentId);
     if(!p) return;
@@ -4210,34 +4294,47 @@ const Pesanan = {
     const total = Number(p.Total) || 0;
     const dibayar = Number(p.Dibayar) || 0;
 
+    const simpanPembayaran = async (jumlah, catatan) => {
+      const metode = document.getElementById('pm_metode')?.value || 'Cash';
+      const tanggal = document.getElementById('pm_tgl')?.value || todayYmd();
+      await SayurStorage.post('addPembayaranPesanan', {
+        id: 'pp-' + Date.now(),
+        pesananId: p.ID,
+        jumlah, metode,
+        catatan: catatan || '',
+        tanggal
+      });
+      if(p.Status === 'belum_lunas'){
+        await SayurStorage.post('tambahMutasi', {
+          id: 'm-pes-' + Date.now(),
+          tipe: 'Setor', metode, jumlah,
+          tujuan: 'Pesanan',
+          catatan: `Pembayaran pesanan: ${p.Nama}`,
+          sumber: 'Pesanan',
+          referensi: p.ID,
+          tanggal
+        });
+      }
+    };
+
     const ov = this._buatModal({
       title: 'Catat Pembayaran',
       body: `
         <div class="bayar-info-box">
-          <div class="row">
-            <span class="lbl">Total pesanan</span>
-            <span class="amt">${rupiah(total)}</span>
-          </div>
-          <div class="row">
-            <span class="lbl">Sudah dibayar</span>
-            <span class="amt" style="color:var(--green-700);">${rupiah(dibayar)}</span>
-          </div>
-          <div class="row total">
-            <span class="lbl">Sisa</span>
-            <span class="amt" style="color:var(--rust-600);">${rupiah(sisa)}</span>
-          </div>
+          <div class="row"><span class="lbl">Total pesanan</span><span class="amt">${rupiah(total)}</span></div>
+          <div class="row"><span class="lbl">Sudah dibayar</span><span class="amt" style="color:var(--green-700);">${rupiah(dibayar)}</span></div>
+          <div class="row total"><span class="lbl">Sisa</span><span class="amt" style="color:var(--rust-600);">${rupiah(sisa)}</span></div>
         </div>
         <button type="button" class="btn-lunas-cepat" id="pm_lunas">
           ✓ LUNAS — ${rupiah(sisa)}
         </button>
         <div class="divider-atau">
-          <div class="line"></div>
-          <span class="txt">atau sebagian</span>
-          <div class="line"></div>
+          <div class="line"></div><span class="txt">atau sebagian</span><div class="line"></div>
         </div>
         <div class="field-pes">
           <label>Jumlah Dibayar</label>
           <input type="text" class="money" id="pm_jml" inputmode="numeric" placeholder="0">
+          <div class="pm-info" id="pm_info"></div>
         </div>
         <div class="field-pes">
           <label>Tanggal</label>
@@ -4257,69 +4354,148 @@ const Pesanan = {
       confirmLabel: 'Simpan',
       onConfirm: async () => {
         const jumlah = Number(String(document.getElementById('pm_jml').value).replace(/\D/g,'')) || 0;
-        const tanggal = document.getElementById('pm_tgl').value || todayYmd();
-        const metode = document.getElementById('pm_metode').value;
-        const catatan = document.getElementById('pm_ket').value.trim();
         if(jumlah <= 0){ showToast('Isi jumlah'); return false; }
-        if(jumlah > sisa){ showToast('Melebihi sisa'); return false; }
-        try{
-          await SayurStorage.post('addPembayaranPesanan', {
-            id: 'pp-' + Date.now(),
-            pesananId: p.ID,
-            jumlah, metode, catatan, tanggal
-          });
-          /* Kalau piutang pesanan sudah ada, update */
-          if(p.Status === 'belum_lunas'){
-            await SayurStorage.post('tambahMutasi', {
-              id: 'm-pes-' + Date.now(),
-              tipe: 'Setor',
-              metode,
-              jumlah,
-              tujuan: 'Pesanan',
-              catatan: `Pembayaran pesanan: ${p.Nama}`,
-              sumber: 'Pesanan',
-              referensi: p.ID,
-              tanggal
-            });
-          }
-          showToast('✓ Pembayaran dicatat');
-          ov.remove();
-          await this.loadList();
-          this.render();
-        }catch(e){
-          showToast('Gagal: ' + e.message);
-          return false;
+        const catatan = document.getElementById('pm_ket').value.trim();
+
+        /* Pas */
+        if(jumlah === sisa){
+          try{
+            await simpanPembayaran(jumlah, catatan || 'Lunas');
+            showToast('✓ Pembayaran dicatat');
+            ov.remove();
+            await this.loadList();
+            await this.loadPiutang();
+            this.render();
+          }catch(e){ showToast('Gagal: ' + e.message); return false; }
+          return true;
         }
+
+        /* Lebih */
+        if(jumlah > sisa){
+          const sel = jumlah - sisa;
+          if(sel > TOLERANSI_SELISIH){
+            showToast(`Kelebihan ${rupiah(sel)} terlalu besar`);
+            return false;
+          }
+          ov.remove();
+          setTimeout(() => {
+            this.konfirmasiAksi({
+              judul: 'Bayar Lebih',
+              pesan: `Bayar ${rupiah(jumlah)}, sisa ${rupiah(sisa)}. Lebih <strong>${rupiah(sel)}</strong>.`,
+              labelA: `Lunas (kembalian ${rupiah(sel)})`,
+              labelB: `Simpan ${rupiah(jumlah)}`,
+              onA: async () => {
+                try{
+                  await simpanPembayaran(sisa, 'Lunas');
+                  showToast(`Lunas — kembalian ${rupiah(sel)}`);
+                  await this.loadList();
+                  await this.loadPiutang();
+                  this.render();
+                }catch(e){ showToast('Gagal: ' + e.message); }
+              },
+              onB: async () => {
+                try{
+                  await simpanPembayaran(jumlah, catatan || 'Kelebihan');
+                  showToast(`Tersimpan ${rupiah(jumlah)}`);
+                  await this.loadList();
+                  await this.loadPiutang();
+                  this.render();
+                }catch(e){ showToast('Gagal: ' + e.message); }
+              }
+            });
+          }, 120);
+          return true;
+        }
+
+        /* Kurang */
+        const kurang = sisa - jumlah;
+        if(kurang > TOLERANSI_SELISIH){
+          try{
+            await simpanPembayaran(jumlah, catatan || 'DP');
+            showToast(`DP ${rupiah(jumlah)} dicatat`);
+            ov.remove();
+            await this.loadList();
+            await this.loadPiutang();
+            this.render();
+          }catch(e){ showToast('Gagal: ' + e.message); return false; }
+          return true;
+        }
+        ov.remove();
+        setTimeout(() => {
+          this.konfirmasiAksi({
+            judul: 'Bayar Kurang',
+            pesan: `Bayar ${rupiah(jumlah)}, sisa ${rupiah(sisa)}. Kurang <strong>${rupiah(kurang)}</strong>.`,
+            labelA: `Lunas (kurang ${rupiah(kurang)} diikhlaskan)`,
+            labelB: `Simpan DP (sisa ${rupiah(kurang)})`,
+            onA: async () => {
+              try{
+                await simpanPembayaran(sisa, 'Lunas (kurang diikhlaskan)');
+                showToast(`Lunas — kurang ${rupiah(kurang)} diikhlaskan`);
+                await this.loadList();
+                await this.loadPiutang();
+                this.render();
+              }catch(e){ showToast('Gagal: ' + e.message); }
+            },
+            onB: async () => {
+              try{
+                await simpanPembayaran(jumlah, catatan || 'DP');
+                showToast(`DP ${rupiah(jumlah)} dicatat`);
+                await this.loadList();
+                await this.loadPiutang();
+                this.render();
+              }catch(e){ showToast('Gagal: ' + e.message); }
+            }
+          });
+        }, 120);
+        return true;
       },
       afterRender: () => {
         this._bindMoney('pm_jml');
+
+        /* Live hint */
+        const inp = document.getElementById('pm_jml');
+        const info = document.getElementById('pm_info');
+        const updateInfo = () => {
+          const n = Number(String(inp.value).replace(/\D/g,'')) || 0;
+          info.className = 'pm-info';
+          if(n <= 0) return;
+          if(n === sisa){
+            info.textContent = '✓ Sesuai sisa';
+            info.classList.add('ok','show');
+          } else if(n > sisa){
+            const sel = n - sisa;
+            if(sel > TOLERANSI_SELISIH){
+              info.textContent = `⚠ Kelebihan ${rupiah(sel)} — maksimal ${rupiah(TOLERANSI_SELISIH)}`;
+              info.classList.add('danger','show');
+            } else {
+              info.textContent = `Lebih ${rupiah(sel)} — nanti ditanya kembalian?`;
+              info.classList.add('warn','show');
+            }
+          } else {
+            const sel = sisa - n;
+            if(sel > TOLERANSI_SELISIH){
+              info.textContent = `DP — sisa ${rupiah(sel)}`;
+              info.classList.add('info','show');
+            } else {
+              info.textContent = `Kurang ${rupiah(sel)} — nanti ditanya lunas / DP?`;
+              info.classList.add('warn','show');
+            }
+          }
+        };
+        if(inp){
+          inp.addEventListener('input', updateInfo);
+          setTimeout(() => { inp.focus(); inp.select(); }, 80);
+        }
+
+        /* Tombol Lunas cepat */
         const btnLunas = document.getElementById('pm_lunas');
         if(btnLunas) btnLunas.addEventListener('click', async () => {
           try{
-            await SayurStorage.post('addPembayaranPesanan', {
-              id: 'pp-' + Date.now(),
-              pesananId: p.ID,
-              jumlah: sisa,
-              metode: document.getElementById('pm_metode').value,
-              tanggal: todayYmd(),
-              catatan: 'Lunas'
-            });
-            if(p.Status === 'belum_lunas'){
-              await SayurStorage.post('tambahMutasi', {
-                id: 'm-pes-' + Date.now(),
-                tipe: 'Setor',
-                metode: document.getElementById('pm_metode').value,
-                jumlah: sisa,
-                tujuan: 'Pesanan',
-                catatan: `Pelunasan pesanan: ${p.Nama}`,
-                sumber: 'Pesanan',
-                referensi: p.ID,
-                tanggal: todayYmd()
-              });
-            }
+            await simpanPembayaran(sisa, 'Lunas');
             showToast(`✓ Lunas — ${rupiah(sisa)}`);
             ov.remove();
             await this.loadList();
+            await this.loadPiutang();
             this.render();
           }catch(e){
             showToast('Gagal: ' + e.message);
@@ -4329,13 +4505,13 @@ const Pesanan = {
     });
   },
 
-  /* ----------------------------------------------------------
-     MODAL — NOTA
-     ---------------------------------------------------------- */
+  /* ---------- UPDATED: openModalNota dengan opsi toggle ---------- */
   openModalNota(){
     const p = this.list.find(x => x.ID === this.currentId);
     if(!p) return;
-    const text = this.buildNotaText(p);
+    this._notaOpsi = { tampilHP: true, tampilCatatan: true };
+    const hasHP = !!p.NoHP;
+    const hasKet = !!p.Keterangan;
 
     const ov = this._buatModal({
       title: 'Nota Pesanan',
@@ -4343,27 +4519,58 @@ const Pesanan = {
         <div style="font-size:12px;color:var(--ink-600);margin-bottom:10px;">
           Preview nota untuk <strong>${escHtml(p.Nama)}</strong>
         </div>
-        <div class="nota-preview-pes">${escHtml(text)}</div>
+        ${hasHP || hasKet ? `
+          <div style="font-size:10.5px;text-transform:uppercase;letter-spacing:.6px;
+            font-weight:700;color:var(--ink-400);margin-bottom:6px;">Opsi tampilkan</div>
+          ${hasHP ? `<div class="opsi-row on" id="opsiHp">
+            <span class="lbl">No HP Pemesan <small>${escHtml(p.NoHP)}</small></span>
+            <span class="sw"></span></div>` : ''}
+          ${hasKet ? `<div class="opsi-row on" id="opsiKet">
+            <span class="lbl">Catatan Pemesan <small>${escHtml(p.Keterangan)}</small></span>
+            <span class="sw"></span></div>` : ''}
+          <div style="height:8px;"></div>
+        ` : ''}
+        <div class="nota-preview-pes" id="notaPreview">${escHtml(this.buildNotaText(p))}</div>
         <div style="font-size:11px;color:var(--ink-600);margin:14px 0 8px;text-align:center;">
           Pilih cara mengirim
         </div>
         <div class="kirim-opsi-pes">
-          <button type="button" id="pes_wa">
+          <button type="button" id="notaWa">
             <span class="icn">💬</span><span>WhatsApp</span>
           </button>
-          <button type="button" id="pes_pdf">
+          <button type="button" id="notaPdf">
             <span class="icn">📄</span><span>PDF</span>
           </button>
         </div>`,
       confirmLabel: null,
       cancelLabel: 'Tutup',
       afterRender: () => {
-        document.getElementById('pes_wa').addEventListener('click', () => {
-          this._shareText(text);
+        const preview = document.getElementById('notaPreview');
+        const refresh = () => { preview.textContent = this.buildNotaText(p); };
+
+        const opsiHp = document.getElementById('opsiHp');
+        if(opsiHp) opsiHp.addEventListener('click', () => {
+          this._notaOpsi.tampilHP = !this._notaOpsi.tampilHP;
+          opsiHp.classList.toggle('on', this._notaOpsi.tampilHP);
+          refresh();
+        });
+        const opsiKet = document.getElementById('opsiKet');
+        if(opsiKet) opsiKet.addEventListener('click', () => {
+          this._notaOpsi.tampilCatatan = !this._notaOpsi.tampilCatatan;
+          opsiKet.classList.toggle('on', this._notaOpsi.tampilCatatan);
+          refresh();
+        });
+
+        const btnWa = document.getElementById('notaWa');
+        if(btnWa) btnWa.addEventListener('click', () => {
+          this._shareText(this.buildNotaText(p));
           ov.remove();
         });
-        document.getElementById('pes_pdf').addEventListener('click', () => {
-          console.log('NOTA PDF:', text);
+        const btnPdf = document.getElementById('notaPdf');
+        if(btnPdf) btnPdf.addEventListener('click', () => {
+          console.log('===== NOTA PDF =====');
+          console.log(this.buildNotaText(p));
+          console.log('====================');
           showToast('PDF disiapkan (demo)');
           ov.remove();
         });
@@ -4371,12 +4578,14 @@ const Pesanan = {
     });
   },
 
+  /* ---------- UPDATED: buildNotaText dengan opsi ---------- */
   buildNotaText(p){
     const total = Number(p.Total) || 0;
     const dibayar = Number(p.Dibayar) || 0;
     const sisa = Number(p.Sisa) || 0;
     const lunas = sisa <= 0;
     const items = p.Items || [];
+    const opsi = this._notaOpsi || {tampilHP: true, tampilCatatan: true};
 
     const lines = [];
     lines.push(App.pengaturan.NamaLapak || 'H. Mawih Sayur');
@@ -4386,13 +4595,13 @@ const Pesanan = {
     lines.push('Nota Pesanan');
     lines.push('─────────────────────────────');
     lines.push('Nama    : ' + p.Nama);
-    if(p.NoHP) lines.push('HP      : ' + p.NoHP);
+    if(opsi.tampilHP && p.NoHP) lines.push('HP      : ' + p.NoHP);
     const [y,m,d] = (p.Tanggal||'').split('-').map(Number);
     const tglPanjang = p.Tanggal ?
       new Date(y, m-1, d).toLocaleDateString('id-ID',
         {weekday:'long', day:'numeric', month:'long', year:'numeric'}) : '';
     lines.push('Tanggal : ' + tglPanjang);
-    if(p.Keterangan) lines.push('Catatan : ' + p.Keterangan);
+    if(opsi.tampilCatatan && p.Keterangan) lines.push('Catatan : ' + p.Keterangan);
     lines.push('');
 
     const maxNama = Math.max(...items.map(it => (it.NamaBarang||'').length), 6);
@@ -4433,9 +4642,6 @@ const Pesanan = {
     }
   },
 
-  /* ----------------------------------------------------------
-     HAPUS PESANAN
-     ---------------------------------------------------------- */
   async hapusPesanan(){
     const p = this.list.find(x => x.ID === this.currentId);
     if(!p) return;
@@ -4455,9 +4661,7 @@ const Pesanan = {
     }
   },
 
-  /* ----------------------------------------------------------
-     HELPER — MODAL BUILDER
-     ---------------------------------------------------------- */
+  /* ---------- UPDATED: _buatModal dengan onCancel ---------- */
   _buatModal(opt){
     const ov = document.createElement('div');
     ov.className = 'modal-ov-pes center';
@@ -4479,7 +4683,10 @@ const Pesanan = {
       </div>`;
     document.body.appendChild(ov);
 
-    ov.querySelector('.btn-cancel').addEventListener('click', () => ov.remove());
+    ov.querySelector('.btn-cancel').addEventListener('click', () => {
+      if(opt.onCancel){ try{ opt.onCancel(); }catch(e){} }
+      ov.remove();
+    });
     ov.addEventListener('click', e => { if(e.target === ov) ov.remove(); });
 
     if(confirmLabel){
@@ -4569,18 +4776,12 @@ const Tutup = {
   tanggal: todayYmd(),
   state: null,
   pengeluaran: null,
-  mode: 'baru',       // 'baru' | 'draft' | 'final'
+  mode: 'baru',
 
-  /* ----------------------------------------------------------
-     KEY
-     ---------------------------------------------------------- */
   _draftKey(tgl){ return 'sayur_tutup_draft_' + tgl; },
   _finalKey(tgl){ return 'sayur_tutup_final_' + tgl; },
   _biayaKey(tgl){ return 'sayur_belanja_biaya_' + tgl; },
 
-  /* ----------------------------------------------------------
-     LOAD
-     ---------------------------------------------------------- */
   async load(){
     this.tanggal = todayYmd();
     this.loadLocal();
@@ -4588,7 +4789,6 @@ const Tutup = {
   },
 
   loadLocal(){
-    /* Baca draft dulu */
     let draft = null, final = null;
     try{
       const rd = localStorage.getItem(this._draftKey(this.tanggal));
@@ -4608,7 +4808,6 @@ const Tutup = {
       this.mode = 'baru';
     }
 
-    /* Baca pengeluaran dari tab Belanja */
     try{
       const rb = localStorage.getItem(this._biayaKey(this.tanggal));
       if(rb){
@@ -4662,10 +4861,8 @@ const Tutup = {
       nama: String(b.nama || ''),
       jumlah: Number(b.jumlah) || 0
     })) : [];
-    /* Handle format pagi lama & baru */
     const p = s.pagi || {};
     if(p.kresek !== undefined || p.konsumsi !== undefined){
-      /* Format lama */
       out.pagi.kantongKaret = Number(p.kresek) || 0;
       out.pagi.iuran = Number(p.iuran) || 0;
       out.pagi.lain = [];
@@ -4687,9 +4884,6 @@ const Tutup = {
     return out;
   },
 
-  /* ----------------------------------------------------------
-     TOTAL
-     ---------------------------------------------------------- */
   totalPagiLain(){
     return (this.state.pagi.lain || []).reduce((s,x) => s + Number(x.jumlah || 0), 0);
   },
@@ -4721,9 +4915,6 @@ const Tutup = {
     return this.totalPendapatanKotor() - this.totalPengeluaran();
   },
 
-  /* ----------------------------------------------------------
-     SAVE LOCAL
-     ---------------------------------------------------------- */
   saveDraft(){
     try{
       localStorage.setItem(this._draftKey(this.tanggal),
@@ -4746,16 +4937,12 @@ const Tutup = {
     }catch(e){ return false; }
   },
 
-  /* ----------------------------------------------------------
-     RENDER
-     ---------------------------------------------------------- */
   render(){
     const el = document.getElementById('tutupContent');
     if(!el) return;
     const isLocked = this.mode === 'final';
     let html = '';
 
-    /* Tanggal */
     html += `
       <div class="tutup-date-field">
         <label>Tanggal</label>
@@ -4763,7 +4950,6 @@ const Tutup = {
                ${isLocked ? 'disabled' : ''}>
       </div>`;
 
-    /* Status badge */
     if(this.mode === 'final'){
       html += `<div class="status-badge-tutup final">
         <span class="dot"></span> Tersimpan Database
@@ -4774,7 +4960,6 @@ const Tutup = {
       </div>`;
     }
 
-    /* ========== PENDAPATAN ========== */
     html += `
       <div class="tutup-card ${isLocked ? 'locked' : ''}">
         <div class="tutup-card-head">
@@ -4866,7 +5051,6 @@ const Tutup = {
         </div>
       </div>`;
 
-    /* ========== PENGELUARAN ========== */
     const hasModal = this.pengeluaran.modalBelanja > 0;
     html += `
       <div class="tutup-card ${isLocked ? 'locked' : ''}">
@@ -4937,7 +5121,6 @@ const Tutup = {
         </div>
       </div>`;
 
-    /* ========== RINGKASAN ========== */
     const laba = this.labaBersih();
     const labaKelas = laba >= 0 ? '' : 'neg';
     html += `
@@ -4955,7 +5138,6 @@ const Tutup = {
         </div>
       </div>`;
 
-    /* ========== TOMBOL SIMPAN ========== */
     html += `
       <button class="btn-save-tutup ${isLocked ? 'edit-mode' : ''}" id="tutupBtnSave">
         ${isLocked ? '✏️ Edit' : '💾 Simpan'}
@@ -5001,13 +5183,9 @@ const Tutup = {
     `).join('');
   },
 
-  /* ----------------------------------------------------------
-     HANDLERS
-     ---------------------------------------------------------- */
   attachHandlers(){
     const isLocked = this.mode === 'final';
 
-    /* Tanggal */
     const inpTanggal = document.getElementById('tutupTanggal');
     if(inpTanggal && !isLocked){
       inpTanggal.addEventListener('change', () => {
@@ -5018,7 +5196,6 @@ const Tutup = {
       });
     }
 
-    /* Bind money */
     this._bindMoney('tutupCash', v => { this.state.omzetCash = v; });
     this._bindMoney('tutupQris', v => { this.state.omzetQris = v; });
     this._bindMoney('tutupPagiKK', v => { this.state.pagi.kantongKaret = v; });
@@ -5034,7 +5211,6 @@ const Tutup = {
 
     if(isLocked) return;
 
-    /* Add Pagi Lain */
     const plAdd = document.getElementById('tutupPagiLainAdd');
     if(plAdd) plAdd.addEventListener('click', () => {
       const ket = document.getElementById('tutupPagiLainKet').value.trim();
@@ -5045,7 +5221,6 @@ const Tutup = {
       this.render();
     });
 
-    /* Add Bon */
     const bonAdd = document.getElementById('tutupBonAdd');
     if(bonAdd) bonAdd.addEventListener('click', () => {
       const nama = document.getElementById('tutupBonNama').value.trim();
@@ -5056,7 +5231,6 @@ const Tutup = {
       this.render();
     });
 
-    /* Add Lain (pengeluaran) */
     const lainAdd = document.getElementById('tutupLainAdd');
     if(lainAdd) lainAdd.addEventListener('click', () => {
       const ket = document.getElementById('tutupLainKet').value.trim();
@@ -5068,12 +5242,10 @@ const Tutup = {
       this.render();
     });
 
-    /* Enter chains */
     this._chainEnter('tutupPagiLainKet', 'tutupPagiLainJml', 'tutupPagiLainAdd');
     this._chainEnter('tutupBonNama', 'tutupBonJml', 'tutupBonAdd');
     this._chainEnter('tutupLainKet', 'tutupLainJml', 'tutupLainAdd');
 
-    /* Format money di add row */
     ['tutupPagiLainJml', 'tutupBonJml', 'tutupLainJml'].forEach(id => {
       const el = document.getElementById(id);
       if(!el) return;
@@ -5083,7 +5255,6 @@ const Tutup = {
       });
     });
 
-    /* Delete list items */
     document.querySelectorAll('#tutupContent .del').forEach(btn => {
       btn.addEventListener('click', () => {
         const type = btn.dataset.type;
@@ -5098,11 +5269,9 @@ const Tutup = {
       });
     });
 
-    /* Tombol Simpan */
     const btnSave = document.getElementById('tutupBtnSave');
     if(btnSave) btnSave.addEventListener('click', () => {
       if(this.mode === 'final'){
-        /* Ubah lagi → downgrade ke draft */
         this.mode = 'draft';
         this.saveDraft();
         showToast('Mode edit — bisa diubah');
@@ -5140,7 +5309,6 @@ const Tutup = {
     });
   },
 
-  /* Live update tanpa render penuh */
   updateLive(){
     const totalPendapatan = this.totalPendapatanKotor();
     const totalPengeluaran = this.totalPengeluaran();
@@ -5171,9 +5339,6 @@ const Tutup = {
     }
   },
 
-  /* ----------------------------------------------------------
-     BOTTOM SHEET SIMPAN
-     ---------------------------------------------------------- */
   openSheetSimpan(){
     const ov = document.createElement('div');
     ov.className = 'sheet-ov';
@@ -5235,14 +5400,12 @@ const Tutup = {
         '?\n\nSetelah ini hanya bisa diubah dengan mode "Edit".')) return;
 
     try{
-      /* 1. Simpan omzet */
       await SayurStorage.post('setOmzet', {
         tanggal: this.tanggal,
         cash: Number(this.state.omzetCash) || 0,
         qris: Number(this.state.omzetQris) || 0
       });
 
-      /* 2. Simpan biaya operasional */
       await SayurStorage.post('setBiayaOperasional', {
         tanggal: this.tanggal,
         operasionalBelanja: Number(this.pengeluaran.opsPasar) || 0,
@@ -5256,7 +5419,6 @@ const Tutup = {
         pagiLain: this.totalPagiLain()
       });
 
-      /* 3. Simpan lain-lain pengeluaran */
       for(const x of (this.pengeluaran.lain || [])){
         await SayurStorage.post('addLainLain', {
           id: x.id || 'll-' + Date.now() + Math.random(),
@@ -5267,7 +5429,6 @@ const Tutup = {
         });
       }
 
-      /* 4. Simpan bon lisan → jadi piutang */
       for(const b of (this.state.bon || [])){
         await SayurStorage.post('addHutang', {
           id: b.id || 'bon-' + Date.now() + Math.random(),
@@ -5280,7 +5441,6 @@ const Tutup = {
         });
       }
 
-      /* Simpan final lokal */
       this.saveFinal();
       this.savePengeluaran();
       this.mode = 'final';
@@ -5292,7 +5452,6 @@ const Tutup = {
       showToast('✓ Tersimpan ke database (antrian)');
       this.render();
 
-      /* Refresh dashboard kalau sedang di Beranda */
       if(App.currentTab === 'beranda') loadBeranda();
 
     }catch(e){
@@ -5318,8 +5477,8 @@ const Tutup = {
    MODUL: LAPORAN
    ========================================================== */
 const Laporan = {
-  currentTab: 'aruskas',      // 'aruskas' | 'saldo' | 'hutang'
-  currentPeriod: 'today',     // 'today' | '7d' | '30d' | 'month' | 'custom'
+  currentTab: 'aruskas',
+  currentPeriod: 'today',
   customDari: '',
   customSampai: '',
   filterMutasi: 'semua',
@@ -5329,14 +5488,9 @@ const Laporan = {
   hutangData: [],
   ringkasanHutang: null,
 
-  /* ----------------------------------------------------------
-     INIT
-     ---------------------------------------------------------- */
   async load(){
     this.renderAll();
-    /* Attach subtab nav */
     this.attachSubtabs();
-    /* Load data sesuai tab aktif */
     await this.loadCurrentTab();
   },
 
@@ -5367,9 +5521,6 @@ const Laporan = {
     if(this.currentTab === 'hutang') await this.loadHutang();
   },
 
-  /* ----------------------------------------------------------
-     ARUS KAS
-     ---------------------------------------------------------- */
   periodRange(p){
     const today = todayYmd();
     if(p === 'today') return {dari: today, sampai: today};
@@ -5428,7 +5579,6 @@ const Laporan = {
 
     let html = '';
 
-    /* Period tabs */
     html += `<div class="period-tabs">
       <button class="period-tab ${this.currentPeriod==='today'?'active':''}" data-period="today">Hari Ini</button>
       <button class="period-tab ${this.currentPeriod==='7d'?'active':''}" data-period="7d">7 Hari</button>
@@ -5437,7 +5587,6 @@ const Laporan = {
       <button class="period-tab ${this.currentPeriod==='custom'?'active':''}" data-period="custom">Custom</button>
     </div>`;
 
-    /* Custom range form */
     if(this.currentPeriod === 'custom'){
       html += `
         <div class="custom-range">
@@ -5453,7 +5602,6 @@ const Laporan = {
         </div>`;
     }
 
-    /* Data */
     const d = this.aruskasData;
     if(!d){
       html += `<div class="daftar-empty">Memuat atau tidak ada data…</div>`;
@@ -5467,7 +5615,6 @@ const Laporan = {
     const tot = d.total || {masuk:0,keluar:0,saldo:0,hutangSaya:0,piutangSaya:0,fee:0};
     const label = this.periodLabel(this.currentPeriod);
 
-    /* Cash */
     html += `
       <div class="flow-card cash">
         <div class="flow-head cash">
@@ -5482,7 +5629,6 @@ const Laporan = {
         <div class="flow-row total"><span>Saldo</span><span class="amt">${rupiah(cash.saldo)}</span></div>
       </div>`;
 
-    /* QRIS */
     html += `
       <div class="flow-card qris">
         <div class="flow-head qris">
@@ -5498,7 +5644,6 @@ const Laporan = {
         <div class="flow-row total"><span>Saldo</span><span class="amt">${rupiah(qris.saldo)}</span></div>
       </div>`;
 
-    /* Gabungan */
     html += `
       <div class="flow-card gabungan">
         <div class="flow-head gabungan">
@@ -5514,7 +5659,6 @@ const Laporan = {
         <div class="flow-row total"><span>Selisih</span><span class="amt">${rupiah(tot.saldo)}</span></div>
       </div>`;
 
-    /* Share */
     html += `
       <div class="share-row-lap">
         <button class="btn-share-lap" id="lapBagikan">
@@ -5585,9 +5729,6 @@ const Laporan = {
     }
   },
 
-  /* ----------------------------------------------------------
-     SALDO
-     ---------------------------------------------------------- */
   async loadSaldo(){
     try{
       const [saldo, mutasi] = await Promise.all([
@@ -5610,7 +5751,6 @@ const Laporan = {
 
     let html = '';
 
-    /* Total */
     html += `
       <div class="saldo-total-lap">
         <div class="k">Total Saldo</div>
@@ -5621,7 +5761,6 @@ const Laporan = {
         </div>
       </div>`;
 
-    /* 2 Cards */
     html += `
       <div class="saldo-grid-lap">
         <div class="saldo-card-lap cash">
@@ -5643,7 +5782,6 @@ const Laporan = {
         </div>
       </div>`;
 
-    /* Mutasi list */
     html += `<div class="section-title-lap">
       <span>Riwayat Mutasi</span>
       <span>${this.mutasiData.length}</span>
@@ -5703,7 +5841,6 @@ const Laporan = {
   },
 
   attachSaldoHandlers(){
-    /* Filter mutasi */
     document.querySelectorAll('.mutasi-filter').forEach(btn => {
       btn.addEventListener('click', () => {
         this.filterMutasi = btn.dataset.filter;
@@ -5711,7 +5848,6 @@ const Laporan = {
       });
     });
 
-    /* Tarik/Setor */
     document.querySelectorAll('#tabLapSaldo .saldo-card-lap .actions button').forEach(btn => {
       btn.addEventListener('click', () => {
         this.openMutasiModal(btn.dataset.aksi, btn.dataset.metode);
@@ -5779,9 +5915,6 @@ const Laporan = {
     });
   },
 
-  /* ----------------------------------------------------------
-     HUTANG
-     ---------------------------------------------------------- */
   async loadHutang(){
     try{
       const [list, ringkasan] = await Promise.all([
@@ -5817,7 +5950,6 @@ const Laporan = {
 
     let html = '';
 
-    /* PIUTANG SAYA */
     html += `
       <div class="hutang-section-lap">
         <div class="hutang-total-box">
@@ -5836,7 +5968,6 @@ const Laporan = {
     }
     html += `</div>`;
 
-    /* HUTANG SAYA */
     html += `
       <div class="hutang-section-lap">
         <div class="hutang-total-box rust">
@@ -5917,7 +6048,6 @@ const Laporan = {
     const isLunas = h.Status === 'Lunas';
     const tglFmt = this._fmtTanggalPendek(h.Tanggal);
 
-    /* Body */
     let body = `
       <div style="background:var(--paper);border-radius:var(--r-sm);
         padding:10px 12px;margin-bottom:14px;font-size:12.5px;">
@@ -5984,7 +6114,6 @@ const Laporan = {
           ov.remove();
           this.loadHutang();
           this.loadSaldo();
-          /* Refresh dashboard hutang juga */
           if(App.currentTab === 'beranda') loadBeranda();
         }catch(e){
           showToast('Gagal: ' + e.message);
@@ -6005,23 +6134,18 @@ const Laporan = {
 
     App.currentTab = name;
 
-    /* Simpan di localStorage */
     try{ localStorage.setItem('sayur_last_tab', name); }catch(e){}
 
-    /* Update navbar */
     document.querySelectorAll('.navbar button').forEach(b => {
       b.classList.toggle('active', b.dataset.tab === name);
     });
 
-    /* Update screens */
     document.querySelectorAll('.screen').forEach(s => {
       s.classList.toggle('active', s.id === 'view' + name.charAt(0).toUpperCase() + name.slice(1));
     });
 
-    /* Scroll ke atas */
     window.scrollTo({top: 0, behavior: 'instant'});
 
-    /* Load data per view */
     if(name === 'beranda') loadBeranda();
     if(name === 'belanja'){
       Belanja.load();
@@ -6032,12 +6156,11 @@ const Laporan = {
   }
 
   /* ----------------------------------------------------------
-     LOAD — Beranda (Dashboard)
+     LOAD — Beranda
      ---------------------------------------------------------- */
   async function loadBeranda(){
     const container = document.getElementById('berandaContent');
 
-    /* Cek cache dulu biar instant */
     const cached = SayurStorage.cache.load('dashboard');
     if(cached){
       App.dashboard = cached;
@@ -6048,7 +6171,6 @@ const Laporan = {
       </div>`;
     }
 
-    /* Refresh dari server di background */
     try{
       const fresh = await SayurStorage.get('getDashboard', {tanggal: todayYmd()});
       App.dashboard = fresh;
@@ -6092,7 +6214,6 @@ const Laporan = {
 
     let html = '';
 
-    /* ========== HERO ========== */
     if(!belumTutup){
       const pt = persenBatasMinimal(laba, batas);
       const neg = laba < 0;
@@ -6136,7 +6257,6 @@ const Laporan = {
         </section>`;
     }
 
-    /* ========== KARTU UANG ========== */
     const hasDebt = (hutang.hutangSaya > 0) || (hutang.piutangSaya > 0);
     html += `
       <section class="section">
@@ -6170,7 +6290,6 @@ const Laporan = {
         </div>
       </section>`;
 
-    /* ========== CHART 7 HARI ========== */
     html += renderChart(rows, batas);
 
     container.innerHTML = html;
@@ -6426,10 +6545,8 @@ const Laporan = {
     const bannerIc = document.getElementById('connBannerIc');
     const bannerTxt = document.getElementById('connBannerTxt');
 
-    /* Dot */
     dot.className = 'conn-dot ' + status.status;
 
-    /* Banner */
     if(status.status === 'offline'){
       banner.classList.add('show', 'offline');
       bannerIc.textContent = '📵';
@@ -6453,7 +6570,6 @@ const Laporan = {
       const {ok, skip, error} = e.detail;
       if(ok > 0 || skip > 0){
         showToast('✓ Tersinkron: ' + (ok + skip) + ' item');
-        /* Refresh data dashboard setelah sync */
         if(App.currentTab === 'beranda') loadBeranda();
       }
       if(error > 0){
@@ -6465,7 +6581,6 @@ const Laporan = {
       showToast('Sync error: ' + e.detail.error);
     });
 
-    /* Tombol Force Sync di banner */
     document.getElementById('btnForceSync').addEventListener('click', async () => {
       if(!navigator.onLine){ showToast('Tidak ada koneksi'); return; }
       showToast('Menyinkron…');
@@ -6484,24 +6599,16 @@ const Laporan = {
      INIT
      ---------------------------------------------------------- */
   async function init(){
-    /* Init storage.js */
     SayurStorage.init();
 
-    /* Init dark mode */
     initDarkMode();
-
-    /* Init kebab menu */
     initKebab();
-
-    /* Init ikon nota */
     initNotaBtn();
 
-    /* Navbar */
     document.querySelectorAll('.navbar button').forEach(btn => {
       btn.addEventListener('click', () => goTab(btn.dataset.tab));
     });
 
-    /* Topbar date */
     const updateDate = () => {
       document.getElementById('topbarDate').textContent =
         new Date().toLocaleDateString('id-ID',
@@ -6510,20 +6617,16 @@ const Laporan = {
     updateDate();
     setInterval(updateDate, 60000);
 
-    /* Load pengaturan */
     try{
       const set = await SayurStorage.pengaturan.get();
       App.pengaturan = {...App.pengaturan, ...set};
-      /* Update nama lapak di topbar */
       if(set.NamaLapak){
         document.getElementById('topbarTitle').textContent = set.NamaLapak;
       }
     }catch(e){}
 
-    /* Init storage events */
     initStorageEvents();
 
-    /* Init view Belanja (supaya event listener ter-attach duluan) */
     const belSubTab = document.querySelectorAll('.subtabs-bel button[data-beltab]');
     belSubTab.forEach(btn => {
       btn.addEventListener('click', () => {
@@ -6537,16 +6640,9 @@ const Laporan = {
       });
     });
 
-    /* ========================================================
-       Tentukan tab awal — prioritas:
-       1. ?tab=xxx dari URL (dari PWA shortcut)
-       2. localStorage (tab terakhir yang dibuka)
-       3. fallback: 'beranda'
-       ======================================================== */
     const VALID_TABS = ['beranda','belanja','tutup','laporan'];
     let startTab = null;
 
-    /* 1. Cek parameter ?tab= dari URL */
     try{
       const urlParams = new URLSearchParams(window.location.search);
       const t = urlParams.get('tab');
@@ -6555,7 +6651,6 @@ const Laporan = {
       }
     }catch(e){}
 
-    /* 2. Kalau tidak ada parameter, pakai last tab */
     if(!startTab){
       try{
         const saved = localStorage.getItem('sayur_last_tab');
@@ -6565,10 +6660,8 @@ const Laporan = {
       }catch(e){}
     }
 
-    /* 3. Fallback */
     if(!startTab) startTab = 'beranda';
 
-    /* Bersihkan URL dari ?tab= supaya refresh tidak selalu buka tab yang sama */
     if(window.history && window.history.replaceState && startTab !== 'beranda'){
       const isFromParam = (function(){
         try{
@@ -6582,10 +6675,8 @@ const Laporan = {
       }
     }
 
-    /* Buka tab */
     goTab(startTab);
 
-    /* Service worker */
     if('serviceWorker' in navigator){
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('./service-worker.js')
@@ -6594,7 +6685,6 @@ const Laporan = {
     }
   }
 
-  /* Mulai */
   if(document.readyState === 'loading'){
     document.addEventListener('DOMContentLoaded', init);
   } else {
