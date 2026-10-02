@@ -1,7 +1,7 @@
 {
-  "name": "Sayur App",
+  "name": "Sayur App — H. Mawih Sayur",
   "short_name": "Sayur App",
-  "description": "Pencatatan belanja, harga jual, omzet, dan tutup hari untuk usaha sayur",
+  "description": "Pencatatan usaha sayur — belanja, omzet, tutup hari, laporan.",
   "start_url": "./index.html",
   "scope": "./",
   "id": "./index.html",
@@ -10,6 +10,8 @@
   "background_color": "#F6F5EF",
   "theme_color": "#2F5233",
   "lang": "id",
+  "dir": "ltr",
+  "categories": ["business", "finance", "productivity"],
   "icons": [
     {
       "src": "icons/icon-192.png",
@@ -28,6 +30,29 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Tutup Hari",
+      "short_name": "Tutup",
+      "description": "Input omzet & biaya hari ini",
+      "url": "./index.html?tab=tutup",
+      "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Belanja",
+      "short_name": "Belanja",
+      "description": "Susun rencana belanja",
+      "url": "./index.html?tab=belanja",
+      "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Nota",
+      "short_name": "Nota",
+      "description": "Buat nota cepat untuk pembeli",
+      "url": "./nota.html",
+      "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }]
     }
   ]
 }

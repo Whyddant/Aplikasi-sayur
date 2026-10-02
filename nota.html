@@ -1,0 +1,1131 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Nota — Sayur App</title>
+<link href="https://fonts.googleapis.com/css2?family=Zilla+Slab:wght@600;700&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --green-900:#1B2E1C; --green-700:#2F5233; --green-500:#4A7A4E; --green-100:#E4EBDD;
+  --rust-600:#BF4E30; --rust-700:#973B24;
+  --paper:#F6F5EF; --card:#FFFEFB;
+  --ink-900:#1F2019; --ink-700:#3F4038; --ink-600:#5B5C50; --ink-400:#8A8B7E;
+  --line:#E5E2D6; --line-soft:#EFEDE2;
+  --amber-600:#B8860B; --amber-100:#FFF4D6; --amber-700:#8A5D00;
+  --blue-600:#2563A0; --blue-100:#DCEAF6;
+  --r-sm:8px; --r-md:12px; --r-lg:16px; --r-full:999px;
+  --shadow-md:0 2px 8px rgba(31,32,25,.06);
+  --shadow-lg:0 8px 30px rgba(31,32,25,.18);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{margin:0;background:var(--paper);color:var(--ink-900);
+  font-family:'Work Sans',sans-serif;font-size:15px;line-height:1.45;
+  min-height:100vh}
+.app{width:100%;max-width:100%;min-height:100vh;display:flex;
+  flex-direction:column;background:var(--paper)}
+
+/* TOPBAR */
+.topbar{padding:calc(12px + env(safe-area-inset-top,0px)) 14px 11px;
+  background:var(--green-700);color:#fff;display:flex;align-items:center;
+  gap:10px;position:sticky;top:0;z-index:50}
+.btn-back{width:34px;height:34px;border-radius:50%;
+  background:rgba(255,255,255,.12);border:none;color:#fff;
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;flex:none}
+.btn-back:active{background:rgba(255,255,255,.22)}
+.btn-back svg{width:18px;height:18px;stroke:currentColor;fill:none;
+  stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.topbar h1{font-size:16px;color:#fff;margin:0;
+  font-family:'Zilla Slab',serif;font-weight:700;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:8px}
+.topbar-date{font-size:10.5px;color:#D9E3CE;white-space:nowrap}
+
+/* SUB-TAB */
+.subtabs{display:grid;grid-template-columns:1fr 1fr;
+  background:var(--card);border-bottom:1px solid var(--line);
+  position:sticky;top:calc(52px + env(safe-area-inset-top,0px));z-index:5}
+.subtabs button{padding:13px 8px 12px;background:none;border:none;
+  font:600 13px 'Work Sans',sans-serif;color:var(--ink-600);
+  cursor:pointer;position:relative}
+.subtabs button.active{color:var(--green-700)}
+.subtabs button.active::after{content:'';position:absolute;
+  bottom:-1px;left:20%;right:20%;height:2.5px;
+  background:var(--green-700);border-radius:2px 2px 0 0}
+.subtabs .count{display:inline-block;margin-left:6px;padding:1px 7px;
+  background:var(--line-soft);color:var(--ink-600);font-size:10px;
+  border-radius:var(--r-full);font-weight:700}
+.subtabs button.active .count{background:var(--green-100);
+  color:var(--green-700)}
+
+/* CONTENT */
+.content{flex:1;padding:12px;
+  padding-bottom:calc(20px + env(safe-area-inset-bottom,0px));
+  max-width:520px;width:100%;margin:0 auto}
+.tab-hidden{display:none}
+
+/* CARD */
+.card{background:var(--card);border:1px solid var(--line);
+  border-radius:var(--r-md);padding:12px;margin-bottom:10px}
+.card-title{font-family:'Zilla Slab',serif;font-size:14px;
+  font-weight:700;margin-bottom:10px}
+
+/* FIELD */
+.field{margin-bottom:12px}
+.field:last-child{margin-bottom:0}
+.field label{display:block;font-size:11.5px;color:var(--ink-600);
+  font-weight:500;margin-bottom:5px}
+.field input{width:100%;padding:10px 12px;
+  border:1px solid var(--line);border-radius:var(--r-sm);
+  font:500 15px 'Work Sans',sans-serif;background:var(--paper);
+  color:var(--ink-900);font-family:'Work Sans',sans-serif}
+.field input:focus{outline:none;border-color:var(--green-700);
+  background:var(--card)}
+
+/* AUTOCOMPLETE */
+.ac-wrap{position:relative;margin-bottom:12px}
+.ac-input{width:100%;padding:12px 14px;
+  border:1px solid var(--line);border-radius:var(--r-sm);
+  background:var(--card);
+  font:500 15px 'Work Sans',sans-serif;color:var(--ink-900);
+  font-family:'Work Sans',sans-serif}
+.ac-input:focus{outline:none;border-color:var(--green-700)}
+.ac-drop{position:absolute;top:100%;left:0;right:0;margin-top:2px;
+  background:var(--card);border:1px solid var(--line);
+  border-radius:var(--r-sm);
+  box-shadow:0 8px 30px rgba(31,32,25,.18);
+  max-height:220px;overflow-y:auto;z-index:20;display:none}
+.ac-drop.show{display:block}
+.ac-item{padding:11px 13px;cursor:pointer;
+  display:flex;justify-content:space-between;align-items:center;
+  gap:8px;border-bottom:1px solid var(--line-soft);font-size:13.5px}
+.ac-item:last-child{border-bottom:none}
+.ac-item:active{background:var(--green-100)}
+.ac-item .ac-nm{flex:1;min-width:0;font-weight:500}
+.ac-item .ac-nm .ac-sat{color:var(--ink-600);font-weight:400;font-size:11px}
+.ac-item .ac-price{font-family:'Zilla Slab',serif;font-weight:600;
+  font-size:13px;color:var(--blue-600);flex-shrink:0}
+.ac-empty{padding:12px 13px;font-size:12.5px;
+  color:var(--ink-400);text-align:center}
+.ac-new-btn{padding:12px 13px;cursor:pointer;font-size:13px;
+  font-weight:600;color:var(--green-700);background:var(--paper);
+  border-top:1px dashed var(--line)}
+
+/* ITEM LIST */
+.item-list{background:var(--paper);border-radius:var(--r-sm);
+  overflow:hidden;margin-bottom:10px}
+.item-row{padding:10px 12px;border-bottom:1px solid var(--line-soft)}
+.item-row:last-child{border-bottom:none}
+.item-row .ir1{display:flex;align-items:flex-start;gap:10px;
+  margin-bottom:6px}
+.item-row .ir-nm{flex:1;min-width:0;font-size:14px;font-weight:600;
+  line-height:1.3;word-break:break-word}
+.item-row .ir-del{background:none;border:none;color:var(--ink-400);
+  font-size:20px;width:26px;height:22px;cursor:pointer;line-height:1;
+  flex-shrink:0;padding:0}
+.item-row .ir-del:active{color:var(--rust-600)}
+.item-row .ir2{display:grid;grid-template-columns:1fr 1fr 1.2fr;
+  gap:6px;align-items:center}
+.item-row .fld{display:flex;align-items:center;height:34px;padding:0 8px;
+  background:var(--card);border:1px solid var(--line);
+  border-radius:7px}
+.item-row .fld:focus-within{border-color:var(--green-700)}
+.item-row .fld input{width:100%;min-width:0;border:none;
+  background:transparent;padding:0;text-align:right;
+  font:600 14px 'Zilla Slab',serif;color:var(--ink-900);
+  font-family:'Zilla Slab',serif}
+.item-row .fld input:focus{outline:none}
+.item-row .fld .u{font-size:11px;color:var(--ink-600);
+  flex-shrink:0;margin-right:2px}
+.item-row .ir-sub{font-family:'Zilla Slab',serif;font-weight:700;
+  font-size:14px;text-align:right;padding-top:2px}
+
+.empty-items{text-align:center;padding:22px 16px;
+  color:var(--ink-400);font-size:12.5px;
+  border:1px dashed var(--line);border-radius:var(--r-sm);
+  background:var(--paper);margin-bottom:10px}
+
+/* TOTAL BLOCK */
+.total-block{background:var(--card);border:1px solid var(--line);
+  border-radius:var(--r-md);padding:14px 15px;margin-bottom:12px}
+.total-row{display:flex;justify-content:space-between;
+  align-items:baseline;padding:5px 0;font-size:13.5px}
+.total-row .lbl{color:var(--ink-600)}
+.total-row .amt{font-family:'Zilla Slab',serif;font-weight:700;font-size:16px}
+.total-row.big{padding-top:10px;margin-top:6px;
+  border-top:1px dashed var(--line)}
+.total-row.big .lbl{font-weight:600;color:var(--ink-900);font-size:14px}
+.total-row.big .amt{font-size:20px;color:var(--green-700)}
+.total-row.kurang .amt{color:var(--rust-600)}
+.total-row.lunas .amt{color:var(--green-700)}
+
+.bayar-input-wrap{display:flex;align-items:center;gap:6px;
+  border:1.5px solid var(--green-700);border-radius:var(--r-sm);
+  padding:10px 12px;background:var(--card)}
+.bayar-input-wrap .rp{font-family:'Zilla Slab',serif;font-weight:700;
+  font-size:15px;color:var(--ink-600);flex-shrink:0}
+.bayar-input-wrap input{flex:1;min-width:0;border:none;
+  background:transparent;padding:0;
+  font:700 18px 'Zilla Slab',serif;color:var(--green-700);
+  text-align:right;font-family:'Zilla Slab',serif}
+.bayar-input-wrap input:focus{outline:none}
+.bayar-quick{display:flex;gap:6px;margin-top:8px}
+.bayar-quick button{flex:1;padding:8px;border-radius:var(--r-sm);
+  background:var(--paper);border:1px solid var(--line);
+  color:var(--ink-700);font:600 12px 'Work Sans',sans-serif;
+  cursor:pointer}
+.bayar-quick button:active{background:var(--line-soft)}
+.bayar-quick button.lunas{background:var(--green-100);
+  border-color:#C8D8B5;color:var(--green-700)}
+
+/* BUTTONS */
+.btn{width:100%;padding:13px;border:none;
+  border-radius:var(--r-sm);font:600 14.5px 'Work Sans',sans-serif;
+  cursor:pointer}
+.btn-primary{background:var(--green-700);color:#fff}
+.btn-primary:active{background:var(--green-900)}
+.btn-primary:disabled{opacity:.5;cursor:not-allowed}
+.btn-ghost{background:var(--card);color:var(--ink-700);
+  border:1px solid var(--line)}
+.btn-ghost:active{background:var(--paper)}
+
+/* RIWAYAT */
+.filter-chips{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap}
+.filter-chips button{padding:7px 14px;border-radius:var(--r-full);
+  border:1px solid var(--line);background:var(--card);
+  color:var(--ink-600);font:600 12px 'Work Sans',sans-serif;
+  cursor:pointer}
+.filter-chips button.active{background:var(--green-700);
+  color:#fff;border-color:var(--green-700)}
+
+.nota-card{background:var(--card);border:1px solid var(--line);
+  border-radius:var(--r-md);padding:13px 14px;margin-bottom:10px;
+  cursor:pointer}
+.nota-card:active{background:var(--paper)}
+.nota-card .head{display:flex;justify-content:space-between;
+  align-items:flex-start;margin-bottom:8px;gap:8px}
+.nota-card .nm{font-size:14.5px;font-weight:700;color:var(--ink-900);
+  line-height:1.3;word-break:break-word}
+.nota-card .nm.empty{color:var(--ink-400);font-style:italic;font-weight:500}
+.nota-card .tgl{font-size:11px;color:var(--ink-600);margin-top:2px}
+.nota-card .badge{font-size:10px;font-weight:700;padding:3px 9px;
+  border-radius:var(--r-full);text-transform:uppercase;
+  letter-spacing:.4px;flex-shrink:0}
+.nota-card .badge.lunas{background:var(--green-100);color:var(--green-700)}
+.nota-card .badge.kurang{background:#FFE3DA;color:var(--rust-700)}
+.nota-card .row{display:flex;justify-content:space-between;
+  font-size:12.5px;color:var(--ink-600);padding:3px 0}
+.nota-card .row strong{font-family:'Zilla Slab',serif;
+  color:var(--ink-900);font-weight:700;font-size:13.5px}
+.nota-card .row.kurang strong{color:var(--rust-600)}
+.nota-card .footer{margin-top:8px;padding-top:8px;
+  border-top:1px dashed var(--line-soft);
+  display:flex;justify-content:space-between;align-items:baseline}
+.nota-card .footer .total{font-family:'Zilla Slab',serif;
+  font-weight:700;font-size:15px;color:var(--ink-900)}
+.nota-card .footer .sisa{font-family:'Zilla Slab',serif;
+  font-weight:700;font-size:13px}
+.nota-card .footer .sisa.kurang{color:var(--rust-600)}
+.nota-card .footer .sisa.lunas{color:var(--green-700)}
+
+.empty-state{text-align:center;padding:48px 20px;
+  color:var(--ink-400);font-size:13px}
+.empty-state .em-icon{font-size:40px;opacity:.3;
+  margin-bottom:10px;display:block}
+
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(31,32,25,.55);
+  display:flex;align-items:center;justify-content:center;
+  padding:20px;z-index:100}
+.modal-box{background:var(--card);border-radius:var(--r-lg);
+  max-width:440px;width:100%;max-height:88vh;
+  display:flex;flex-direction:column;
+  box-shadow:0 12px 40px rgba(0,0,0,.25);
+  animation:modalIn .18s ease-out}
+@keyframes modalIn{from{opacity:0;transform:scale(.96)}
+  to{opacity:1;transform:scale(1)}}
+.modal-head{padding:16px 18px 10px;display:flex;align-items:center;
+  gap:10px;border-bottom:1px solid var(--line-soft)}
+.modal-head h3{margin:0;font-family:'Zilla Slab',serif;font-size:15px;
+  font-weight:700;flex:1;text-align:left}
+.modal-body{padding:14px 18px;overflow-y:auto;flex:1}
+.modal-actions{padding:10px 16px 14px;display:flex;gap:8px;
+  border-top:1px solid var(--line-soft)}
+.modal-actions button{flex:1;padding:11px;border-radius:var(--r-sm);
+  border:none;font:600 13.5px 'Work Sans',sans-serif;cursor:pointer}
+.btn-cancel{background:var(--line-soft);color:var(--ink-700)}
+.btn-confirm{background:var(--green-700);color:#fff}
+
+.nota-preview{background:var(--paper);border:1px solid var(--line);
+  border-radius:var(--r-sm);padding:14px 16px;
+  font-family:'Courier New',monospace;font-size:11px;
+  line-height:1.6;color:var(--ink-900);
+  white-space:pre-wrap;max-height:300px;overflow-y:auto}
+.kirim-opsi{display:flex;gap:8px;margin-bottom:10px}
+.kirim-opsi button{flex:1;padding:12px 8px;border:1.5px solid var(--line);
+  border-radius:var(--r-sm);background:var(--card);
+  font:600 12.5px 'Work Sans',sans-serif;color:var(--ink-700);
+  cursor:pointer;display:flex;flex-direction:column;
+  align-items:center;gap:4px}
+.kirim-opsi button .icn{font-size:20px}
+.kirim-opsi button:active{background:var(--green-100)}
+
+/* TOAST */
+.toast{position:fixed;left:50%;transform:translateX(-50%) translateY(20px);
+  bottom:30px;background:var(--ink-900);color:#fff;
+  padding:10px 18px;border-radius:var(--r-full);
+  font-size:12.5px;font-weight:500;opacity:0;
+  transition:opacity .2s, transform .2s;pointer-events:none;z-index:200;
+  max-width:calc(100% - 32px);text-align:center}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="topbar">
+    <button class="btn-back" id="btnBack" aria-label="Kembali">
+      <svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
+    </button>
+    <h1>Nota</h1>
+    <div class="topbar-right">
+      <span class="topbar-date" id="topbarDate"></span>
+    </div>
+  </div>
+
+  <div class="subtabs">
+    <button class="active" data-tab="buat">Buat Baru</button>
+    <button data-tab="riwayat">
+      Riwayat
+      <span class="count" id="countRiwayat">0</span>
+    </button>
+  </div>
+
+  <div class="content">
+    <div id="tabBuat"></div>
+    <div id="tabRiwayat" class="tab-hidden"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="./storage.js"></script>
+<script>
+(function(){
+  'use strict';
+
+  /* ==========================================================
+     STATE
+     ========================================================== */
+  let currentTab = 'buat';
+  let draftItems = [];
+  let draftNama = '';
+  let draftHP = '';
+  let draftDibayar = 0;
+  let riwayatNota = [];
+  let filterRiwayat = 'all';
+  let masterBarang = [];
+  let masterLoaded = false;
+
+  /* ==========================================================
+     HELPERS
+     ========================================================== */
+  function pad2(n){ return String(n).padStart(2,'0'); }
+  function hariIni(){
+    const d = new Date();
+    return d.getFullYear()+'-'+pad2(d.getMonth()+1)+'-'+pad2(d.getDate());
+  }
+  function fmtTanggal(ymd){
+    if(!ymd) return '';
+    const [y,m,d] = ymd.split('-').map(Number);
+    return new Date(y,m-1,d).toLocaleDateString('id-ID',
+      {day:'numeric', month:'short', year:'numeric'});
+  }
+  function fmtTanggalPanjang(ymd){
+    if(!ymd) return '';
+    const [y,m,d] = ymd.split('-').map(Number);
+    return new Date(y,m-1,d).toLocaleDateString('id-ID',
+      {weekday:'long', day:'numeric', month:'long', year:'numeric'});
+  }
+  function rupiah(n){ return 'Rp ' + Number(n||0).toLocaleString('id-ID'); }
+  function parseNum(v){
+    if(typeof v === 'number') return isFinite(v) ? v : 0;
+    if(v == null || v === '') return 0;
+    const s = String(v).replace(/[^\d]/g,'');
+    return s ? Number(s) : 0;
+  }
+  function escHtml(s){
+    return String(s==null?'':s).replace(/[&<>"']/g, c =>
+      ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+  function showToast(msg){
+    const t = document.getElementById('toast');
+    t.textContent = msg; t.classList.add('show');
+    clearTimeout(t._t); t._t = setTimeout(()=>t.classList.remove('show'), 1900);
+  }
+  function totalNota(items){
+    return items.reduce((s,it) => s + parseNum(it.qty) * parseNum(it.hargaJual), 0);
+  }
+  function statusNota(n){
+    const total = Number(n.Total) || totalNota(n.Items || []);
+    const dibayar = Number(n.Dibayar) || 0;
+    const sisa = Math.max(0, total - dibayar);
+    return {total, dibayar, sisa, lunas: sisa <= 0};
+  }
+
+  /* ==========================================================
+     LOAD MASTER
+     ========================================================== */
+  async function loadMaster(){
+    if(masterLoaded) return;
+    try{
+      const harga = await SayurStorage.get('getHargaMaster').catch(()=>[]);
+      masterBarang = (harga || []).map(h => ({
+        nama: h.NamaBarang,
+        satuan: h.Satuan || 'kg',
+        hargaBeli: Number(h.HargaBeli) || 0,
+        hargaJual: Number(h.HargaJual) || 0
+      }));
+      if(masterBarang.length === 0){
+        const names = await SayurStorage.get('getNamaBarangMaster').catch(()=>[]);
+        masterBarang = (names || []).map(n => ({
+          nama: n, satuan: 'kg', hargaBeli: 0, hargaJual: 0
+        }));
+      }
+    }catch(e){
+      masterBarang = [];
+    }
+    masterLoaded = true;
+  }
+
+  /* ==========================================================
+     LOAD RIWAYAT
+     ========================================================== */
+  async function loadRiwayat(){
+    try{
+      const list = await SayurStorage.get('getNotaList', {limit: 100});
+      riwayatNota = list || [];
+    }catch(e){
+      riwayatNota = [];
+    }
+    document.getElementById('countRiwayat').textContent = riwayatNota.length;
+  }
+
+  /* ==========================================================
+     RENDER — TAB BUAT
+     ========================================================== */
+  function renderBuat(){
+    const el = document.getElementById('tabBuat');
+    const total = totalNota(draftItems);
+    const sisa = Math.max(0, total - draftDibayar);
+    const lunas = sisa <= 0 && total > 0;
+
+    let itemsHtml = '';
+    if(!draftItems.length){
+      itemsHtml = `<div class="empty-items">Belum ada barang.<br>Ketik nama barang di atas.</div>`;
+    } else {
+      itemsHtml = `<div class="item-list">${
+        draftItems.map((it, i) => `
+          <div class="item-row" data-idx="${i}">
+            <div class="ir1">
+              <div class="ir-nm">${escHtml(it.namaBarang)}</div>
+              <button class="ir-del" data-del="${i}" type="button">×</button>
+            </div>
+            <div class="ir2">
+              <div class="fld">
+                <input type="text" inputmode="decimal" class="qty-inp"
+                       data-idx="${i}" value="${escHtml(it.qty)}" placeholder="0">
+                <span class="u">${escHtml(it.satuan)}</span>
+              </div>
+              <div class="fld">
+                <span class="u">Rp</span>
+                <input type="text" inputmode="numeric" class="harga-inp"
+                       data-idx="${i}"
+                       value="${Number(it.hargaJual||0).toLocaleString('id-ID')}">
+              </div>
+              <div class="ir-sub">${rupiah(parseNum(it.qty)*parseNum(it.hargaJual))}</div>
+            </div>
+          </div>
+        `).join('')
+      }</div>`;
+    }
+
+    el.innerHTML = `
+      <div class="card">
+        <div class="field">
+          <label>Nama Pembeli (opsional)</label>
+          <input type="text" id="inpNama" value="${escHtml(draftNama)}"
+                 placeholder="mis. Bu Sari" autocomplete="off">
+        </div>
+        <div class="field">
+          <label>No HP (opsional)</label>
+          <input type="tel" id="inpHP" value="${escHtml(draftHP)}"
+                 placeholder="08xx xxxx xxxx" inputmode="tel">
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Barang</div>
+        <div class="ac-wrap">
+          <input type="text" class="ac-input" id="acInput"
+                 placeholder="Cari atau ketik nama barang…"
+                 autocomplete="off" autocorrect="off" spellcheck="false">
+          <div class="ac-drop" id="acDrop"></div>
+        </div>
+        ${itemsHtml}
+      </div>
+
+      ${draftItems.length ? `
+      <div class="total-block">
+        <div class="total-row">
+          <span class="lbl">Total</span>
+          <span class="amt">${rupiah(total)}</span>
+        </div>
+        <div class="total-row big">
+          <span class="lbl">Dibayar</span>
+          <span class="amt">${rupiah(draftDibayar)}</span>
+        </div>
+        <div class="field" style="margin-top:10px;margin-bottom:0;">
+          <div class="bayar-input-wrap">
+            <span class="rp">Rp</span>
+            <input type="text" inputmode="numeric" id="inpDibayar"
+                   value="${draftDibayar ? draftDibayar.toLocaleString('id-ID') : ''}"
+                   placeholder="0">
+          </div>
+          <div class="bayar-quick">
+            <button type="button" class="lunas" data-quick="full">Lunas</button>
+            <button type="button" data-quick="half">Setengah</button>
+            <button type="button" data-quick="kosong">Kosongkan</button>
+          </div>
+        </div>
+        <div class="total-row ${lunas ? 'lunas' : 'kurang'}" style="margin-top:12px;">
+          <span class="lbl">${lunas ? 'Status' : 'Kurang'}</span>
+          <span class="amt">${lunas ? '✓ Lunas' : rupiah(sisa)}</span>
+        </div>
+      </div>
+      ` : ''}
+
+      ${draftItems.length ? `
+      <button class="btn btn-primary" id="btnSimpan" style="margin-bottom:10px;">
+        Simpan
+      </button>
+      <button class="btn btn-ghost" id="btnReset">Kosongkan Form</button>
+      ` : ''}
+    `;
+
+    attachBuatHandlers();
+  }
+
+  function attachBuatHandlers(){
+    const inpNama = document.getElementById('inpNama');
+    if(inpNama) inpNama.addEventListener('input', e => draftNama = e.target.value);
+    const inpHP = document.getElementById('inpHP');
+    if(inpHP) inpHP.addEventListener('input', e => draftHP = e.target.value);
+
+    const acInput = document.getElementById('acInput');
+    if(acInput){
+      acInput.addEventListener('input', () => renderAc(acInput.value));
+      acInput.addEventListener('focus', () => {
+        if(acInput.value.trim()) renderAc(acInput.value);
+      });
+      acInput.addEventListener('blur', () => {
+        setTimeout(() => {
+          const dd = document.getElementById('acDrop');
+          if(dd && !dd.contains(document.activeElement)) dd.classList.remove('show');
+        }, 180);
+      });
+    }
+
+    document.querySelectorAll('.ir-del').forEach(btn => {
+      btn.addEventListener('click', () => {
+        draftItems.splice(Number(btn.dataset.del), 1);
+        renderBuat();
+      });
+    });
+
+    document.querySelectorAll('.qty-inp').forEach(inp => {
+      inp.addEventListener('input', () => {
+        const i = Number(inp.dataset.idx);
+        draftItems[i].qty = inp.value.replace(/[^\d.]/g, '');
+        updateItemSub(i);
+      });
+    });
+
+    document.querySelectorAll('.harga-inp').forEach(inp => {
+      inp.addEventListener('input', () => {
+        const i = Number(inp.dataset.idx);
+        const n = parseNum(inp.value);
+        draftItems[i].hargaJual = n;
+        inp.value = n ? n.toLocaleString('id-ID') : '';
+        updateItemSub(i);
+      });
+      inp.addEventListener('focus', () => setTimeout(()=>inp.select(), 20));
+    });
+
+    const inpDibayar = document.getElementById('inpDibayar');
+    if(inpDibayar){
+      inpDibayar.addEventListener('input', () => {
+        const n = parseNum(inpDibayar.value);
+        draftDibayar = n;
+        inpDibayar.value = n ? n.toLocaleString('id-ID') : '';
+        updateTotalBlock();
+      });
+    }
+
+    document.querySelectorAll('.bayar-quick button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const q = btn.dataset.quick;
+        const total = totalNota(draftItems);
+        if(q === 'full') draftDibayar = total;
+        if(q === 'half') draftDibayar = Math.round(total / 2);
+        if(q === 'kosong') draftDibayar = 0;
+        renderBuat();
+      });
+    });
+
+    const btnSimpan = document.getElementById('btnSimpan');
+    if(btnSimpan) btnSimpan.addEventListener('click', () => {
+      const nota = simpanNota();
+      if(nota) openShareModal(nota);
+    });
+
+    const btnReset = document.getElementById('btnReset');
+    if(btnReset) btnReset.addEventListener('click', () => {
+      if(!confirm('Kosongkan form nota?')) return;
+      draftItems = []; draftNama = ''; draftHP = ''; draftDibayar = 0;
+      renderBuat();
+    });
+  }
+
+  function updateItemSub(i){
+    const row = document.querySelector(`.item-row[data-idx="${i}"]`);
+    if(!row) return;
+    const it = draftItems[i];
+    row.querySelector('.ir-sub').textContent =
+      rupiah(parseNum(it.qty) * parseNum(it.hargaJual));
+    updateTotalBlock();
+  }
+
+  function updateTotalBlock(){
+    const total = totalNota(draftItems);
+    const sisa = Math.max(0, total - draftDibayar);
+    const lunas = sisa <= 0 && total > 0;
+    const block = document.querySelector('.total-block');
+    if(!block) { renderBuat(); return; }
+    const rows = block.querySelectorAll('.total-row');
+    if(rows[0]) rows[0].querySelector('.amt').textContent = rupiah(total);
+    if(rows[1]) rows[1].querySelector('.amt').textContent = rupiah(draftDibayar);
+    const lastRow = block.querySelector('.total-row:last-child');
+    if(lastRow){
+      lastRow.className = 'total-row ' + (lunas ? 'lunas' : 'kurang');
+      lastRow.querySelector('.lbl').textContent = lunas ? 'Status' : 'Kurang';
+      lastRow.querySelector('.amt').textContent = lunas ? '✓ Lunas' : rupiah(sisa);
+    }
+  }
+
+  /* ==========================================================
+     AUTOCOMPLETE
+     ========================================================== */
+  function renderAc(q){
+    const dd = document.getElementById('acDrop');
+    if(!dd) return;
+    const query = String(q||'').trim().toLowerCase();
+    if(!query){ dd.classList.remove('show'); dd.innerHTML = ''; return; }
+
+    const matches = masterBarang.filter(m =>
+      m.nama.toLowerCase().includes(query)).slice(0, 8);
+
+    let html = '';
+    if(matches.length){
+      html = matches.map(m => {
+        const hj = m.hargaJual || hitungHargaJual(m.hargaBeli);
+        return `<div class="ac-item" data-nama="${escHtml(m.nama)}"
+                     data-satuan="${escHtml(m.satuan)}"
+                     data-hj="${hj}">
+          <div class="ac-nm">${escHtml(m.nama)}
+            <span class="ac-sat">· ${escHtml(m.satuan)}</span></div>
+          <div class="ac-price">${rupiah(hj)}</div>
+        </div>`;
+      }).join('');
+    }
+
+    const exists = masterBarang.some(m => m.nama.toLowerCase() === query);
+    if(!exists){
+      html += `<div class="ac-new-btn" data-new="${escHtml(q.trim())}">
+        + Tambah "${escHtml(q.trim())}" ke master
+      </div>`;
+    }
+
+    if(!html) html = '<div class="ac-empty">Tidak ada cocok</div>';
+    dd.innerHTML = html;
+    dd.classList.add('show');
+
+    dd.querySelectorAll('.ac-item').forEach(el => {
+      el.addEventListener('pointerdown', e => {
+        e.preventDefault();
+        addItem(el.dataset.nama, el.dataset.satuan, Number(el.dataset.hj) || 0);
+        const inp = document.getElementById('acInput');
+        if(inp) inp.value = '';
+        dd.classList.remove('show');
+      });
+    });
+
+    const newBtn = dd.querySelector('.ac-new-btn');
+    if(newBtn) newBtn.addEventListener('pointerdown', e => {
+      e.preventDefault();
+      const nama = newBtn.dataset.new;
+      const inp = document.getElementById('acInput');
+      if(inp) inp.value = '';
+      dd.classList.remove('show');
+      openBarangBaru(nama);
+    });
+  }
+
+  function hitungHargaJual(modal){
+    if(!modal || modal <= 0) return 0;
+    let rate;
+    if(modal <= 5000) rate = 1.00;
+    else if(modal <= 10000) rate = 1.00 + (0.50 - 1.00) * ((modal - 5000) / 5000);
+    else if(modal <= 30000) rate = 0.50 + (0.30 - 0.50) * ((modal - 10000) / 20000);
+    else if(modal <= 100000) rate = 0.30 + (0.15 - 0.30) * ((modal - 30000) / 70000);
+    else rate = 0.15;
+    const raw = modal * (1 + rate);
+    if(modal <= 30000) return Math.round(raw / 1000) * 1000;
+    return Math.ceil(raw / 5000) * 5000;
+  }
+
+  function addItem(nama, satuan, hargaJual){
+    draftItems.push({
+      namaBarang: nama,
+      satuan: satuan || 'pcs',
+      qty: '1',
+      hargaJual: parseNum(hargaJual)
+    });
+    renderBuat();
+    showToast(nama + ' ditambahkan');
+  }
+
+  function openBarangBaru(prefill){
+    const nama = prompt('Nama barang:', prefill || '');
+    if(!nama) return;
+    const satuan = prompt('Satuan (kg/ikat/pcs):', 'kg') || 'kg';
+    const harga = parseNum(prompt('Harga jual (Rp):', '0'));
+    if(!harga){ showToast('Harga tidak valid'); return; }
+    masterBarang.push({ nama, satuan, hargaBeli: 0, hargaJual: harga });
+    addItem(nama, satuan, harga);
+  }
+
+  /* ==========================================================
+     SIMPAN NOTA
+     ========================================================== */
+  async function simpanNota(){
+    if(!draftItems.length) return null;
+
+    const notaId = 'n-' + Date.now();
+    const payload = {
+      id: notaId,
+      tanggal: hariIni(),
+      nama: draftNama,
+      noHP: draftHP,
+      dibayar: draftDibayar,
+      items: draftItems.map(it => ({
+        namaBarang: it.namaBarang,
+        qty: it.qty,
+        satuan: it.satuan,
+        hargaJual: parseNum(it.hargaJual)
+      }))
+    };
+
+    try{
+      await SayurStorage.post('addNota', payload);
+    }catch(e){
+      console.warn('Gagal kirim nota:', e);
+    }
+
+    const total = totalNota(draftItems);
+    const sisa = Math.max(0, total - draftDibayar);
+
+    const nota = {
+      ID: notaId,
+      Tanggal: hariIni(),
+      Nama: draftNama,
+      NoHP: draftHP,
+      Total: total,
+      Dibayar: draftDibayar,
+      Sisa: sisa,
+      Status: sisa <= 0 ? 'Lunas' : 'Kurang',
+      Items: draftItems.map(it => ({
+        NamaBarang: it.namaBarang,
+        Qty: it.qty,
+        Satuan: it.satuan,
+        HargaJual: parseNum(it.hargaJual),
+        Subtotal: parseNum(it.qty) * parseNum(it.hargaJual)
+      }))
+    };
+
+    /* Reset form */
+    draftItems = []; draftNama = ''; draftHP = ''; draftDibayar = 0;
+    renderBuat();
+
+    return nota;
+  }
+
+  /* ==========================================================
+     MODAL SHARE
+     ========================================================== */
+  function openShareModal(nota){
+    const nm = nota.Nama ? escHtml(nota.Nama) : 'Tanpa nama';
+    const ov = buatModal({
+      title: '✓ Nota Tersimpan',
+      body: `
+        <div style="text-align:center;padding:6px 0 14px;">
+          <div style="font-size:13px;color:var(--ink-600);">
+            Nota untuk <strong style="color:var(--ink-900);">${nm}</strong>
+            sudah disimpan.
+          </div>
+          <div style="font-size:12px;color:var(--ink-600);margin-top:4px;">
+            Bagikan sekarang?
+          </div>
+        </div>
+        <div class="kirim-opsi">
+          <button type="button" id="pes_wa">
+            <span class="icn">💬</span><span>WhatsApp</span>
+          </button>
+          <button type="button" id="pes_pdf">
+            <span class="icn">📄</span><span>PDF</span>
+          </button>
+        </div>`,
+      cancelLabel: 'Tutup',
+      afterRender: () => {
+        document.getElementById('pes_wa').addEventListener('click', () => {
+          shareText(buildNotaTextFromData(nota));
+          loadRiwayat();
+        });
+        document.getElementById('pes_pdf').addEventListener('click', () => {
+          console.log('NOTA PDF:', buildNotaTextFromData(nota));
+          showToast('PDF disiapkan (demo)');
+          loadRiwayat();
+        });
+        loadRiwayat();
+      }
+    });
+  }
+
+  /* ==========================================================
+     BUILD TEXT NOTA
+     ========================================================== */
+  function buildNotaTextFromData(n){
+    const total = Number(n.Total) || totalNota(n.Items || []);
+    const dibayar = Number(n.Dibayar) || 0;
+    const sisa = Math.max(0, total - dibayar);
+    const lunas = sisa <= 0;
+    const items = n.Items || [];
+
+    const lines = [];
+    lines.push('Nota');
+    lines.push('─────────────────────────────');
+    if(n.Nama) lines.push('Nama    : ' + n.Nama);
+    if(n.NoHP) lines.push('HP      : ' + n.NoHP);
+    lines.push('Tanggal : ' + fmtTanggalPanjang(n.Tanggal));
+    lines.push('');
+
+    const maxNama = Math.max(...items.map(it => (it.NamaBarang||'').length), 6);
+    items.forEach(it => {
+      const nm = String(it.NamaBarang).padEnd(maxNama, ' ');
+      const qty = `${it.Qty} ${it.Satuan}`.padEnd(10, ' ');
+      const hrg = `×${Number(it.HargaJual).toLocaleString('id-ID')}`.padStart(9, ' ');
+      const sub = `=${Number(it.Subtotal || (it.Qty * it.HargaJual)).toLocaleString('id-ID')}`.padStart(10, ' ');
+      lines.push(`${nm}  ${qty} ${hrg}  ${sub}`);
+    });
+
+    lines.push('─────────────────────────────');
+    lines.push('Total   : Rp ' + total.toLocaleString('id-ID'));
+    lines.push('Dibayar : Rp ' + dibayar.toLocaleString('id-ID'));
+    if(!lunas) lines.push('Sisa    : Rp ' + sisa.toLocaleString('id-ID'));
+    else lines.push('Status  : LUNAS');
+    lines.push('');
+    lines.push('Terima kasih');
+    return lines.join('\n');
+  }
+
+  function shareText(text){
+    if(navigator.share){
+      navigator.share({text})
+        .then(() => showToast('✓ Dikirim'))
+        .catch(err => {
+          if(err.name !== 'AbortError'){
+            navigator.clipboard.writeText(text)
+              .then(() => showToast('Disalin'))
+              .catch(() => showToast('Gagal'));
+          }
+        });
+    } else {
+      navigator.clipboard.writeText(text)
+        .then(() => showToast('Disalin'))
+        .catch(() => showToast('Gagal'));
+    }
+  }
+
+  /* ==========================================================
+     RENDER — TAB RIWAYAT
+     ========================================================== */
+  function renderRiwayat(){
+    const el = document.getElementById('tabRiwayat');
+    document.getElementById('countRiwayat').textContent = riwayatNota.length;
+
+    let filtered = riwayatNota;
+    if(filterRiwayat === 'kurang') filtered = filtered.filter(n => n.Status !== 'Lunas');
+    if(filterRiwayat === 'lunas') filtered = filtered.filter(n => n.Status === 'Lunas');
+
+    let listHtml = '';
+    if(!filtered.length){
+      listHtml = `<div class="empty-state">
+        <span class="em-icon">🧾</span>
+        Belum ada nota
+      </div>`;
+    } else {
+      listHtml = filtered.map(n => {
+        const st = statusNota(n);
+        const nmDisplay = n.Nama ? escHtml(n.Nama) : '<span class="nm empty">Tanpa nama</span>';
+        const nmClass = n.Nama ? 'nm' : '';
+        const items = n.Items || [];
+        return `
+          <div class="nota-card" data-id="${escHtml(n.ID)}">
+            <div class="head">
+              <div style="min-width:0;flex:1;">
+                <div class="${nmClass}">${nmDisplay}</div>
+                <div class="tgl">${fmtTanggal(n.Tanggal)} · ${items.length} item</div>
+              </div>
+              <span class="badge ${st.lunas ? 'lunas' : 'kurang'}">
+                ${st.lunas ? '✓ Lunas' : 'Kurang'}
+              </span>
+            </div>
+            <div class="row">
+              <span>Total</span>
+              <strong>${rupiah(st.total)}</strong>
+            </div>
+            ${!st.lunas ? `
+            <div class="row kurang">
+              <span>Sisa</span>
+              <strong>${rupiah(st.sisa)}</strong>
+            </div>` : ''}
+            <div class="footer">
+              <span class="total">${items.map(it=>it.NamaBarang).slice(0,2).join(', ')}${items.length > 2 ? '…' : ''}</span>
+              <span class="sisa ${st.lunas ? 'lunas' : 'kurang'}">
+                ${st.lunas ? 'Lunas' : 'Sisa ' + rupiah(st.sisa)}
+              </span>
+            </div>
+          </div>`;
+      }).join('');
+    }
+
+    el.innerHTML = `
+      <div class="filter-chips">
+        <button data-filter="all" class="${filterRiwayat==='all'?'active':''}">Semua</button>
+        <button data-filter="kurang" class="${filterRiwayat==='kurang'?'active':''}">Kurang</button>
+        <button data-filter="lunas" class="${filterRiwayat==='lunas'?'active':''}">Lunas</button>
+      </div>
+      ${listHtml}
+    `;
+
+    el.querySelectorAll('.filter-chips button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        filterRiwayat = btn.dataset.filter;
+        renderRiwayat();
+      });
+    });
+    el.querySelectorAll('.nota-card').forEach(card => {
+      card.addEventListener('click', () => openDetailNota(card.dataset.id));
+    });
+  }
+
+  async function openDetailNota(id){
+    let nota = riwayatNota.find(x => x.ID === id);
+    if(!nota){
+      try{
+        nota = await SayurStorage.get('getNota', {id});
+      }catch(e){}
+    }
+    if(!nota) return;
+    const st = statusNota(nota);
+    const items = nota.Items || [];
+
+    const itemsHtml = items.map(it => `
+      <div style="display:flex;justify-content:space-between;padding:7px 0;
+           border-bottom:1px solid var(--line-soft);font-size:13px;">
+        <div style="min-width:0;flex:1;">
+          <div style="font-weight:600;">${escHtml(it.NamaBarang)}</div>
+          <div style="font-size:11px;color:var(--ink-600);margin-top:2px;">
+            ${escHtml(it.Qty)} ${escHtml(it.Satuan)} × ${rupiah(it.HargaJual)}
+          </div>
+        </div>
+        <div style="font-family:'Zilla Slab',serif;font-weight:700;">
+          ${rupiah(it.Subtotal || (it.Qty * it.HargaJual))}
+        </div>
+      </div>
+    `).join('');
+
+    const ov = buatModal({
+      title: 'Detail Nota',
+      body: `
+        <div style="background:var(--paper);border-radius:var(--r-sm);
+             padding:12px 14px;margin-bottom:12px;font-size:12.5px;">
+          <div style="display:flex;justify-content:space-between;padding:2px 0;">
+            <span style="color:var(--ink-600);">Nama</span>
+            <span style="font-weight:600;">${nota.Nama ? escHtml(nota.Nama) : '—'}</span>
+          </div>
+          ${nota.NoHP ? `
+          <div style="display:flex;justify-content:space-between;padding:2px 0;">
+            <span style="color:var(--ink-600);">No HP</span>
+            <span style="font-weight:600;">${escHtml(nota.NoHP)}</span>
+          </div>` : ''}
+          <div style="display:flex;justify-content:space-between;padding:2px 0;">
+            <span style="color:var(--ink-600);">Tanggal</span>
+            <span style="font-weight:600;">${fmtTanggal(nota.Tanggal)}</span>
+          </div>
+        </div>
+
+        <div style="font-size:11px;font-weight:700;color:var(--ink-600);
+             text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;">
+          Barang
+        </div>
+        <div style="margin-bottom:14px;">${itemsHtml}</div>
+
+        <div style="background:var(--paper);border-radius:var(--r-sm);
+             padding:12px 14px;font-size:13px;">
+          <div style="display:flex;justify-content:space-between;padding:3px 0;">
+            <span style="color:var(--ink-600);">Total</span>
+            <span style="font-family:'Zilla Slab',serif;font-weight:700;">
+              ${rupiah(st.total)}
+            </span>
+          </div>
+          <div style="display:flex;justify-content:space-between;padding:3px 0;">
+            <span style="color:var(--ink-600);">Dibayar</span>
+            <span style="font-family:'Zilla Slab',serif;font-weight:700;">
+              ${rupiah(st.dibayar)}
+            </span>
+          </div>
+          <div style="display:flex;justify-content:space-between;padding:6px 0 2px;
+               border-top:1px dashed var(--line);margin-top:6px;">
+            <span style="font-weight:700;">${st.lunas ? 'Status' : 'Sisa'}</span>
+            <span style="font-family:'Zilla Slab',serif;font-weight:700;
+                 font-size:15px;
+                 color:${st.lunas ? 'var(--green-700)' : 'var(--rust-600)'};">
+              ${st.lunas ? '✓ Lunas' : rupiah(st.sisa)}
+            </span>
+          </div>
+        </div>`,
+      confirmLabel: st.lunas ? null : 'Tandai Lunas',
+      cancelLabel: 'Tutup',
+      onConfirm: st.lunas ? null : async () => {
+        try{
+          await SayurStorage.post('tandaiLunasNota', {id});
+          showToast('✓ Nota ditandai lunas');
+          await loadRiwayat();
+          renderRiwayat();
+        }catch(e){
+          showToast('Gagal: ' + e.message);
+          return false;
+        }
+      }
+    });
+  }
+
+  /* ==========================================================
+     MODAL BUILDER
+     ========================================================== */
+  function buatModal(opt){
+    const ov = document.createElement('div');
+    ov.className = 'modal-overlay';
+    const cancelLabel = opt.cancelLabel || 'Batal';
+    const confirmLabel = opt.confirmLabel;
+
+    ov.innerHTML = `
+      <div class="modal-box">
+        <div class="modal-head"><h3>${escHtml(opt.title)}</h3></div>
+        <div class="modal-body">${opt.body || ''}</div>
+        <div class="modal-actions">
+          <button class="btn-cancel" type="button">${cancelLabel}</button>
+          ${confirmLabel ? `<button class="btn-confirm" type="button">${confirmLabel}</button>` : ''}
+        </div>
+      </div>`;
+    document.body.appendChild(ov);
+
+    ov.querySelector('.btn-cancel').addEventListener('click', () => ov.remove());
+    ov.addEventListener('click', e => { if(e.target === ov) ov.remove(); });
+
+    if(confirmLabel){
+      ov.querySelector('.btn-confirm').addEventListener('click', async () => {
+        const btn = ov.querySelector('.btn-confirm');
+        btn.disabled = true; btn.textContent = '…';
+        try{
+          const r = await opt.onConfirm();
+          if(r === false){
+            btn.disabled = false; btn.textContent = confirmLabel;
+          } else {
+            ov.remove();
+          }
+        }catch(e){
+          btn.disabled = false; btn.textContent = confirmLabel;
+        }
+      });
+    }
+
+    if(opt.afterRender) setTimeout(opt.afterRender, 60);
+    return ov;
+  }
+
+  /* ==========================================================
+     TABS
+     ========================================================== */
+  function updateTabs(){
+    document.querySelectorAll('.subtabs button').forEach(b => {
+      b.classList.toggle('active', b.dataset.tab === currentTab);
+    });
+    document.getElementById('tabBuat').classList.toggle('tab-hidden', currentTab !== 'buat');
+    document.getElementById('tabRiwayat').classList.toggle('tab-hidden', currentTab !== 'riwayat');
+  }
+
+  document.querySelectorAll('.subtabs button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      currentTab = btn.dataset.tab;
+      updateTabs();
+      if(currentTab === 'riwayat'){ loadRiwayat().then(renderRiwayat); }
+      else renderBuat();
+    });
+  });
+
+  /* ==========================================================
+     BACK
+     ========================================================== */
+  document.getElementById('btnBack').addEventListener('click', () => {
+    if(draftItems.length > 0){
+      if(!confirm('Ada nota yang belum disimpan. Keluar?')) return;
+    }
+    if(window.history.length > 1) window.history.back();
+    else window.location.href = './index.html';
+  });
+
+  /* ==========================================================
+     INIT
+     ========================================================== */
+  (async function init(){
+    document.getElementById('topbarDate').textContent =
+      new Date().toLocaleDateString('id-ID',
+        {weekday:'short', day:'numeric', month:'short'});
+
+    /* Init storage */
+    try{ if(window.SayurStorage && SayurStorage.init) SayurStorage.init(); }catch(e){}
+
+    await loadMaster();
+    await loadRiwayat();
+
+    renderBuat();
+    updateTabs();
+  })();
+
+})();
+</script>
+</body>
+</html>

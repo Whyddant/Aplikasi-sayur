@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Pengaturan — Sayur App</title>
+<link href="https://fonts.googleapis.com/css2?family=Zilla+Slab:wght@600;700&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --green-900:#1B2E1C; --green-700:#2F5233; --green-500:#4A7A4E; --green-100:#E4EBDD;
+  --rust-600:#BF4E30; --rust-700:#973B24;
+  --paper:#F6F5EF; --card:#FFFEFB;
+  --ink-900:#1F2019; --ink-700:#3F4038; --ink-600:#5B5C50; --ink-400:#8A8B7E;
+  --line:#E5E2D6; --line-soft:#EFEDE2;
+  --amber-600:#B8860B; --amber-100:#FFF4D6; --amber-700:#8A5D00;
+  --blue-600:#2563A0; --blue-100:#DCEAF6;
+  --r-sm:8px; --r-md:12px; --r-lg:16px; --r-full:999px;
+  --shadow-lg:0 8px 30px rgba(31,32,25,.18);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0;overflow-x:hidden}
+body{background:var(--paper);color:var(--ink-900);
+  font-family:'Work Sans',sans-serif;font-size:15px;line-height:1.45;
+  min-height:100vh}
+.app{width:100%;min-height:100vh;display:flex;flex-direction:column;background:var(--paper)}
+
+.topbar{padding:calc(12px + env(safe-area-inset-top,0px)) 14px 11px;
+  background:var(--green-700);color:#fff;display:flex;align-items:center;
+  gap:10px;position:sticky;top:0;z-index:50}
+.btn-back{width:34px;height:34px;border-radius:50%;
+  background:rgba(255,255,255,.12);border:none;color:#fff;
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;flex:none}
+.btn-back:active{background:rgba(255,255,255,.22)}
+.btn-back svg{width:18px;height:18px;stroke:currentColor;fill:none;
+  stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.topbar h1{font-size:16px;color:#fff;margin:0;
+  font-family:'Zilla Slab',serif;font-weight:700;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:8px}
+.topbar-date{font-size:10.5px;color:#D9E3CE;white-space:nowrap}
+
+.screen{flex:1;padding:14px 12px 40px;
+  padding-bottom:calc(40px + env(safe-area-inset-bottom,0px));
+  max-width:520px;width:100%;margin:0 auto}
+
+.section-title{font-size:10.5px;text-transform:uppercase;
+  letter-spacing:.8px;font-weight:700;color:var(--ink-400);
+  margin:16px 4px 8px;display:flex;align-items:center;gap:6px}
+.section-title:first-child{margin-top:0}
+
+.settings-group{background:var(--card);border:1px solid var(--line);
+  border-radius:var(--r-md);overflow:hidden}
+.settings-item{display:flex;align-items:center;justify-content:space-between;
+  gap:12px;padding:13px 14px;border-bottom:1px solid var(--line-soft);
+  font-size:14px;cursor:pointer;transition:background .12s;min-width:0}
+.settings-item:last-child{border-bottom:none}
+.settings-item:active{background:var(--paper)}
+.settings-item.static{cursor:default}
+.settings-item.static:active{background:transparent}
+.settings-item .lbl{color:var(--ink-700);flex-shrink:0;font-weight:500;
+  display:flex;align-items:center;gap:7px}
+.settings-item .lbl .emo{font-size:15px}
+.settings-item .val{color:var(--ink-900);font-weight:600;text-align:right;
+  margin-left:auto;overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap;max-width:55%}
+.settings-item .val.muted{color:var(--ink-400);font-weight:400;font-style:italic}
+.settings-item .val.arrow{color:var(--ink-400);font-weight:400;
+  font-size:16px;margin-left:6px;flex-shrink:0}
+.settings-item.danger .lbl{color:var(--rust-600)}
+.settings-item.primary .lbl{color:var(--green-700);font-weight:600}
+
+.status-pill{display:inline-flex;align-items:center;gap:5px;
+  padding:3px 9px;border-radius:var(--r-full);
+  font:600 10.5px 'Work Sans',sans-serif}
+.status-pill.green{background:var(--green-100);color:var(--green-700)}
+.status-pill.amber{background:var(--amber-100);color:var(--amber-700)}
+.status-pill.rust{background:#FFE3DA;color:var(--rust-700)}
+.status-pill .dot{width:6px;height:6px;border-radius:50%;
+  background:currentColor}
+
+.info-card{background:var(--card);border:1px solid var(--line);
+  border-radius:var(--r-md);padding:14px;margin-bottom:10px}
+.info-card .row{display:flex;justify-content:space-between;
+  align-items:baseline;padding:5px 0;font-size:12.5px;gap:10px}
+.info-card .row .lbl{color:var(--ink-600);flex-shrink:0}
+.info-card .row .val{color:var(--ink-900);font-weight:600;text-align:right}
+.info-card .row .val.mono{font-family:'Zilla Slab',serif}
+
+.info-tiny{font-size:11px;color:var(--ink-600);margin:6px 4px 0;
+  line-height:1.5;padding:0 2px}
+
+.btn-danger{width:100%;padding:12px;border:1px solid #E8BBA6;
+  border-radius:var(--r-sm);background:var(--card);color:var(--rust-600);
+  font:600 13.5px 'Work Sans',sans-serif;cursor:pointer;margin-top:10px}
+.btn-danger:active{background:#FFEDE5}
+
+.modal-ov{position:fixed;inset:0;background:rgba(31,32,25,.55);
+  display:flex;align-items:center;justify-content:center;
+  padding:20px;z-index:100}
+.modal-box{background:var(--card);border-radius:var(--r-lg);
+  max-width:440px;width:100%;max-height:88vh;
+  display:flex;flex-direction:column;
+  box-shadow:0 12px 40px rgba(0,0,0,.25);
+  animation:modalIn .18s ease-out}
+@keyframes modalIn{from{opacity:0;transform:scale(.96)}
+  to{opacity:1;transform:scale(1)}}
+.modal-head{padding:16px 18px 10px;display:flex;align-items:center;
+  gap:10px;border-bottom:1px solid var(--line-soft)}
+.modal-head h3{margin:0;font-family:'Zilla Slab',serif;font-size:15px;
+  font-weight:700;flex:1;text-align:left}
+.modal-body{padding:14px 18px;overflow-y:auto;flex:1}
+.modal-actions{padding:10px 16px 14px;display:flex;gap:8px;
+  border-top:1px solid var(--line-soft)}
+.modal-actions button{flex:1;padding:11px;border-radius:var(--r-sm);
+  border:none;font:600 13.5px 'Work Sans',sans-serif;cursor:pointer}
+.btn-cancel{background:var(--line-soft);color:var(--ink-700)}
+.btn-confirm{background:var(--green-700);color:#fff}
+
+.field{margin-bottom:12px}
+.field:last-child{margin-bottom:0}
+.field label{display:block;font-size:11.5px;color:var(--ink-600);
+  font-weight:500;margin-bottom:5px}
+.field input{width:100%;padding:11px 13px;
+  border:1px solid var(--line);border-radius:var(--r-sm);
+  font:500 15px 'Work Sans',sans-serif;background:var(--paper);
+  color:var(--ink-900);font-family:'Work Sans',sans-serif}
+.field input:focus{outline:none;border-color:var(--green-700);
+  background:var(--card)}
+.field input.money{font-family:'Zilla Slab',serif;font-weight:700;
+  text-align:right;font-size:16px}
+
+.toast{position:fixed;left:50%;transform:translateX(-50%) translateY(10px);
+  bottom:30px;background:var(--ink-900);color:#fff;padding:9px 16px;
+  border-radius:var(--r-full);font-size:12.5px;opacity:0;
+  transition:opacity .2s, transform .2s;pointer-events:none;z-index:200;
+  max-width:calc(100% - 32px);text-align:center}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="topbar">
+    <button class="btn-back" id="btnBack" aria-label="Kembali">
+      <svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
+    </button>
+    <h1>Pengaturan</h1>
+    <div class="topbar-right">
+      <span class="topbar-date" id="topbarDate"></span>
+    </div>
+  </div>
+
+  <div class="screen" id="screen"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="./storage.js"></script>
+<script>
+(function(){
+  'use strict';
+
+  const DEFAULT_PENGATURAN = {
+    NamaLapak: 'H. Mawih Sayur',
+    NamaPemilik: '',
+    NoHP: '',
+    OperasionalBelanja: 100000,
+    Bensin: 50000,
+    BatasMinimalLaba: 250000
+  };
+  const STORAGE_KEY = 'sayur_pengaturan';
+
+  let pengaturan = { ...DEFAULT_PENGATURAN };
+  let statusKoneksi = 'online';
+  let jumlahPending = 0;
+
+  /* HELPERS */
+  function pad2(n){ return String(n).padStart(2,'0'); }
+  function hariIni(){
+    const d = new Date();
+    return d.getFullYear()+'-'+pad2(d.getMonth()+1)+'-'+pad2(d.getDate());
+  }
+  function rupiah(n){ return 'Rp ' + Number(n||0).toLocaleString('id-ID'); }
+  function parseNum(v){
+    if(typeof v === 'number') return isFinite(v) ? v : 0;
+    if(v == null || v === '') return 0;
+    const s = String(v).replace(/[^\d]/g,'');
+    return s ? Number(s) : 0;
+  }
+  function escHtml(s){
+    return String(s==null?'':s).replace(/[&<>"']/g, c =>
+      ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+  function showToast(msg){
+    const t = document.getElementById('toast');
+    t.textContent = msg; t.classList.add('show');
+    clearTimeout(t._t); t._t = setTimeout(()=>t.classList.remove('show'), 1900);
+  }
+
+  /* LOAD / SAVE */
+  async function loadPengaturan(){
+    /* Prioritas: dari SayurStorage (kalau ada) */
+    try{
+      if(window.SayurStorage && SayurStorage.pengaturan){
+        const remote = await SayurStorage.pengaturan.get();
+        pengaturan = { ...DEFAULT_PENGATURAN, ...remote };
+        return;
+      }
+    }catch(e){}
+    /* Fallback: localStorage langsung */
+    try{
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if(raw){
+        const p = JSON.parse(raw);
+        pengaturan = { ...DEFAULT_PENGATURAN, ...p };
+      }
+    }catch(e){}
+  }
+
+  async function savePengaturan(key, val){
+    pengaturan[key] = val;
+    try{
+      if(window.SayurStorage && SayurStorage.pengaturan){
+        await SayurStorage.pengaturan.save({[key]: val});
+      } else {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(pengaturan));
+      }
+      return true;
+    }catch(e){
+      showToast('Gagal menyimpan');
+      return false;
+    }
+  }
+
+  function cekQueuePending(){
+    try{
+      const raw = localStorage.getItem('sayur_queue');
+      if(raw){
+        const q = JSON.parse(raw);
+        jumlahPending = Array.isArray(q) ? q.length : 0;
+        return;
+      }
+    }catch(e){}
+    jumlahPending = 0;
+  }
+
+  function cekStatusKoneksi(){
+    if(!navigator.onLine) statusKoneksi = 'offline';
+    else if(jumlahPending > 0) statusKoneksi = 'pending';
+    else statusKoneksi = 'online';
+  }
+
+  function getLastSync(){
+    try{
+      const t = localStorage.getItem('sayur_last_sync');
+      if(t) return new Date(t).toLocaleString('id-ID',
+        {day:'numeric', month:'short', hour:'2-digit', minute:'2-digit'});
+    }catch(e){}
+    return '—';
+  }
+
+  function getUkuranData(){
+    try{
+      let total = 0;
+      for(let k in localStorage){
+        if(k.startsWith('sayur_') && localStorage.hasOwnProperty(k)){
+          total += (localStorage[k] || '').length + k.length;
+        }
+      }
+      const kb = total / 1024;
+      if(kb < 1) return total + ' B';
+      if(kb < 1024) return kb.toFixed(1) + ' KB';
+      return (kb/1024).toFixed(2) + ' MB';
+    }catch(e){ return '—'; }
+  }
+
+  /* RENDER */
+  function render(){
+    const screen = document.getElementById('screen');
+    document.getElementById('topbarDate').textContent =
+      new Date().toLocaleDateString('id-ID',
+        {weekday:'short', day:'numeric', month:'short'});
+
+    cekQueuePending();
+    cekStatusKoneksi();
+
+    const statusPill = {
+      online:  { cls:'green', label:'Online' },
+      pending: { cls:'amber', label: jumlahPending + ' menunggu' },
+      offline: { cls:'rust',  label:'Offline' }
+    }[statusKoneksi];
+
+    let html = '';
+
+    /* PROFIL */
+    html += `
+      <div class="section-title">👤 Profil Usaha</div>
+      <div class="settings-group">
+        <div class="settings-item" data-action="edit" data-key="NamaLapak">
+          <span class="lbl">Nama Lapak</span>
+          <span class="val ${pengaturan.NamaLapak ? '' : 'muted'}">
+            ${pengaturan.NamaLapak || 'Belum diisi'}
+          </span>
+        </div>
+        <div class="settings-item" data-action="edit" data-key="NamaPemilik">
+          <span class="lbl">Nama Pemilik</span>
+          <span class="val ${pengaturan.NamaPemilik ? '' : 'muted'}">
+            ${pengaturan.NamaPemilik || 'Belum diisi'}
+          </span>
+        </div>
+        <div class="settings-item" data-action="edit" data-key="NoHP">
+          <span class="lbl">No. HP</span>
+          <span class="val ${pengaturan.NoHP ? '' : 'muted'}">
+            ${pengaturan.NoHP || 'Belum diisi'}
+          </span>
+        </div>
+      </div>`;
+
+    /* BIAYA DEFAULT */
+    html += `
+      <div class="section-title">💰 Biaya Default</div>
+      <div class="settings-group">
+        <div class="settings-item" data-action="edit-money" data-key="OperasionalBelanja">
+          <span class="lbl">Operasional Belanja</span>
+          <span class="val">${rupiah(pengaturan.OperasionalBelanja)}</span>
+        </div>
+        <div class="settings-item" data-action="edit-money" data-key="Bensin">
+          <span class="lbl">Bensin</span>
+          <span class="val">${rupiah(pengaturan.Bensin)}</span>
+        </div>
+        <div class="settings-item" data-action="edit-money" data-key="BatasMinimalLaba">
+          <span class="lbl">Batas Minimal Laba</span>
+          <span class="val">${rupiah(pengaturan.BatasMinimalLaba)}</span>
+        </div>
+      </div>
+      <div class="info-tiny">
+        Nilai ini dipakai sebagai default saat membuka tab
+        <strong>Belanja</strong> &amp; <strong>Tutup Hari</strong>.
+      </div>`;
+
+    /* DATA */
+    html += `
+      <div class="section-title">📦 Data</div>
+      <div class="settings-group">
+        <div class="settings-item primary" data-action="sinkron">
+          <span class="lbl"><span class="emo">🔄</span> Sinkron Sekarang</span>
+          <span class="val">
+            <span class="status-pill ${statusPill.cls}">
+              <span class="dot"></span>${statusPill.label}
+            </span>
+          </span>
+        </div>
+        <div class="settings-item static">
+          <span class="lbl"><span class="emo">📋</span> Antrean Pending</span>
+          <span class="val">${jumlahPending} item</span>
+        </div>
+        <div class="settings-item" data-action="backup">
+          <span class="lbl"><span class="emo">⬇️</span> Download Backup CSV</span>
+          <span class="val arrow">›</span>
+        </div>
+        <div class="settings-item static">
+          <span class="lbl"><span class="emo">💾</span> Ukuran Data Lokal</span>
+          <span class="val">${getUkuranData()}</span>
+        </div>
+      </div>`;
+
+    /* INFO */
+    html += `
+      <div class="section-title">ℹ️ Info Sistem</div>
+      <div class="info-card">
+        <div class="row">
+          <span class="lbl">Versi Aplikasi</span>
+          <span class="val mono">5.0 (dev)</span>
+        </div>
+        <div class="row">
+          <span class="lbl">Terakhir Sinkron</span>
+          <span class="val">${getLastSync()}</span>
+        </div>
+        <div class="row">
+          <span class="lbl">Status Koneksi</span>
+          <span class="val">
+            <span class="status-pill ${statusPill.cls}">
+              <span class="dot"></span>${statusPill.label}
+            </span>
+          </span>
+        </div>
+      </div>`;
+
+    /* DANGER */
+    html += `
+      <div class="section-title" style="color:var(--rust-600);">⚠️ Zona Berbahaya</div>
+      <button class="btn-danger" id="btnReset">
+        🗑️ Reset Semua Pengaturan ke Default
+      </button>
+      <div class="info-tiny">
+        Hanya pengaturan. Data belanja, omzet, dan hutang tidak akan terhapus.
+      </div>`;
+
+    screen.innerHTML = html;
+    attachHandlers();
+  }
+
+  function attachHandlers(){
+    document.getElementById('btnBack').addEventListener('click', () => {
+      if(window.history.length > 1) window.history.back();
+      else window.location.href = './index.html';
+    });
+
+    document.querySelectorAll('[data-action="edit"]').forEach(el => {
+      el.addEventListener('click', () => {
+        const key = el.dataset.key;
+        const label = {NamaLapak:'Nama Lapak', NamaPemilik:'Nama Pemilik',
+          NoHP:'No. HP'}[key] || key;
+        openModalEdit(label, key, pengaturan[key] || '', false);
+      });
+    });
+
+    document.querySelectorAll('[data-action="edit-money"]').forEach(el => {
+      el.addEventListener('click', () => {
+        const key = el.dataset.key;
+        const label = {OperasionalBelanja:'Operasional Belanja',
+          Bensin:'Bensin', BatasMinimalLaba:'Batas Minimal Laba'}[key] || key;
+        openModalEdit(label, key, pengaturan[key], true);
+      });
+    });
+
+    const btnSinkron = document.querySelector('[data-action="sinkron"]');
+    if(btnSinkron) btnSinkron.addEventListener('click', async () => {
+      if(!navigator.onLine){ showToast('Tidak ada koneksi'); return; }
+      if(jumlahPending === 0){ showToast('Semua sudah tersinkron'); return; }
+      showToast('Menyinkron ' + jumlahPending + ' item…');
+      try{
+        if(window.SayurStorage && SayurStorage.processQueue){
+          await SayurStorage.processQueue();
+        }
+        showToast('✓ Tersinkron');
+        render();
+      }catch(e){
+        showToast('Gagal: ' + e.message);
+      }
+    });
+
+    const btnBackup = document.querySelector('[data-action="backup"]');
+    if(btnBackup) btnBackup.addEventListener('click', () => {
+      showToast('Menyiapkan backup…');
+      setTimeout(() => {
+        const csv = 'Pengaturan\n' +
+          'Nama Lapak,' + (pengaturan.NamaLapak || '') + '\n' +
+          'Nama Pemilik,' + (pengaturan.NamaPemilik || '') + '\n' +
+          'No HP,' + (pengaturan.NoHP || '') + '\n' +
+          'Operasional Belanja,' + pengaturan.OperasionalBelanja + '\n' +
+          'Bensin,' + pengaturan.Bensin + '\n' +
+          'Batas Minimal Laba,' + pengaturan.BatasMinimalLaba + '\n';
+        const blob = new Blob([csv], {type:'text/csv'});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'sayur-pengaturan-' + hariIni() + '.csv';
+        a.click();
+        URL.revokeObjectURL(url);
+        showToast('Backup diunduh');
+      }, 500);
+    });
+
+    const btnReset = document.getElementById('btnReset');
+    if(btnReset) btnReset.addEventListener('click', async () => {
+      if(!confirm('Reset pengaturan ke default?\n\nData tidak akan terhapus.')) return;
+      pengaturan = { ...DEFAULT_PENGATURAN };
+      try{
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(pengaturan));
+      }catch(e){}
+      /* Kirim ke server */
+      try{
+        if(window.SayurStorage && SayurStorage.pengaturan){
+          await SayurStorage.pengaturan.save(pengaturan);
+        }
+      }catch(e){}
+      showToast('Pengaturan direset');
+      render();
+    });
+  }
+
+  /* MODAL EDIT */
+  function openModalEdit(label, key, currentValue, isMoney){
+    const ov = document.createElement('div');
+    ov.className = 'modal-ov';
+
+    let inputHtml;
+    if(isMoney){
+      inputHtml = `
+        <div class="field">
+          <label>${escHtml(label)}</label>
+          <input type="text" inputmode="numeric" class="money" id="inpEdit"
+                 value="${Number(currentValue||0).toLocaleString('id-ID')}">
+        </div>`;
+    } else {
+      inputHtml = `
+        <div class="field">
+          <label>${escHtml(label)}</label>
+          <input type="text" id="inpEdit"
+                 value="${escHtml(currentValue)}"
+                 placeholder="Isi ${escHtml(label.toLowerCase())}">
+        </div>`;
+    }
+
+    ov.innerHTML = `
+      <div class="modal-box">
+        <div class="modal-head"><h3>Ubah ${escHtml(label)}</h3></div>
+        <div class="modal-body">${inputHtml}</div>
+        <div class="modal-actions">
+          <button class="btn-cancel" type="button">Batal</button>
+          <button class="btn-confirm" type="button">Simpan</button>
+        </div>
+      </div>`;
+    document.body.appendChild(ov);
+
+    const inp = document.getElementById('inpEdit');
+    if(isMoney){
+      inp.addEventListener('input', () => {
+        const n = parseNum(inp.value);
+        inp.value = n ? n.toLocaleString('id-ID') : '';
+      });
+    }
+    setTimeout(() => { inp.focus(); inp.select(); }, 80);
+
+    ov.querySelector('.btn-cancel').addEventListener('click', () => ov.remove());
+    ov.addEventListener('click', e => { if(e.target === ov) ov.remove(); });
+
+    ov.querySelector('.btn-confirm').addEventListener('click', async () => {
+      let nilai;
+      if(isMoney){
+        nilai = parseNum(inp.value);
+        if(nilai < 0){ showToast('Tidak boleh negatif'); return; }
+      } else {
+        nilai = inp.value.trim();
+      }
+      await savePengaturan(key, nilai);
+      showToast('Tersimpan');
+      ov.remove();
+      render();
+    });
+  }
+
+  /* INIT */
+  (async function init(){
+    try{ if(window.SayurStorage && SayurStorage.init) SayurStorage.init(); }catch(e){}
+    await loadPengaturan();
+    render();
+
+    window.addEventListener('online', () => render());
+    window.addEventListener('offline', () => render());
+  })();
+
+})();
+</script>
+</body>
+</html>

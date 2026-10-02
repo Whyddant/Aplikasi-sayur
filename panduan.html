@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Panduan — Sayur App</title>
+<link href="https://fonts.googleapis.com/css2?family=Zilla+Slab:wght@600;700&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --green-900:#1B2E1C; --green-700:#2F5233; --green-500:#4A7A4E; --green-100:#E4EBDD;
+  --rust-600:#BF4E30; --rust-700:#973B24;
+  --paper:#F6F5EF; --card:#FFFEFB;
+  --ink-900:#1F2019; --ink-700:#3F4038; --ink-600:#5B5C50; --ink-400:#8A8B7E;
+  --line:#E5E2D6; --line-soft:#EFEDE2;
+  --amber-600:#B8860B; --amber-100:#FFF4D6; --amber-700:#8A5D00;
+  --blue-600:#2563A0; --blue-100:#DCEAF6;
+  --r-sm:8px; --r-md:12px; --r-lg:16px; --r-full:999px;
+  --shadow-md:0 2px 8px rgba(31,32,25,.06);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0;overflow-x:hidden}
+body{background:var(--paper);color:var(--ink-900);
+  font-family:'Work Sans',sans-serif;font-size:15px;line-height:1.5;min-height:100vh}
+.app{width:100%;min-height:100vh;display:flex;flex-direction:column;background:var(--paper)}
+
+/* TOPBAR */
+.topbar{padding:calc(12px + env(safe-area-inset-top,0px)) 14px 11px;
+  background:var(--green-700);color:#fff;display:flex;align-items:center;
+  gap:10px;position:sticky;top:0;z-index:50}
+.btn-back{width:34px;height:34px;border-radius:50%;
+  background:rgba(255,255,255,.12);border:none;color:#fff;
+  display:flex;align-items:center;justify-content:center;cursor:pointer;flex:none}
+.btn-back:active{background:rgba(255,255,255,.22)}
+.btn-back svg{width:18px;height:18px;stroke:currentColor;fill:none;
+  stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.topbar h1{font-size:16px;color:#fff;margin:0;font-family:'Zilla Slab',serif;
+  font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:8px}
+.topbar-date{font-size:10.5px;color:#D9E3CE;white-space:nowrap}
+
+/* SCREEN */
+.screen{flex:1;padding:14px 12px 40px;
+  padding-bottom:calc(40px + env(safe-area-inset-bottom,0px));
+  max-width:560px;width:100%;margin:0 auto}
+
+/* HERO */
+.hero{background:linear-gradient(150deg,var(--green-700),var(--green-900));
+  color:#fff;border-radius:var(--r-lg);padding:18px;
+  margin-bottom:16px;position:relative;overflow:hidden}
+.hero::after{content:'';position:absolute;right:-50px;top:-50px;
+  width:140px;height:140px;border-radius:50%;
+  background:rgba(255,255,255,.05);pointer-events:none}
+.hero .k{font-size:10.5px;letter-spacing:1.4px;text-transform:uppercase;
+  opacity:.7;font-weight:600}
+.hero .v{font-family:'Zilla Slab',serif;font-size:22px;font-weight:700;
+  margin-top:6px;letter-spacing:-.4px;line-height:1.25}
+.hero .s{font-size:12px;opacity:.75;margin-top:8px;line-height:1.5}
+
+/* SECTION */
+.section{margin-bottom:20px}
+.section h2{font-family:'Zilla Slab',serif;font-size:16px;font-weight:700;
+  color:var(--ink-900);margin:0 0 10px;display:flex;align-items:center;gap:8px}
+.section h2 .icn{font-size:18px}
+
+/* STEP FLOW */
+.flow-card{background:var(--card);border:1px solid var(--line);
+  border-radius:var(--r-md);padding:14px}
+.flow-step{display:flex;gap:12px;padding:10px 0;
+  border-bottom:1px dashed var(--line-soft)}
+.flow-step:last-child{border-bottom:none;padding-bottom:0}
+.flow-step:first-child{padding-top:0}
+.flow-num{width:28px;height:28px;border-radius:50%;
+  background:var(--green-100);color:var(--green-700);
+  display:flex;align-items:center;justify-content:center;
+  font:700 13px 'Zilla Slab',serif;flex-shrink:0}
+.flow-body{flex:1;min-width:0}
+.flow-body .ttl{font-size:13.5px;font-weight:700;color:var(--ink-900);
+  margin-bottom:3px}
+.flow-body .desc{font-size:12.5px;color:var(--ink-600);line-height:1.5}
+.flow-body .desc strong{color:var(--ink-900);font-weight:600}
+
+/* PARAGRAPH */
+p{margin:0 0 10px;font-size:13.5px;color:var(--ink-700);line-height:1.6}
+p:last-child{margin-bottom:0}
+p strong{color:var(--ink-900);font-weight:600}
+
+/* LIST */
+ul{padding-left:20px;margin:8px 0;font-size:13.5px;color:var(--ink-700)}
+ul li{margin-bottom:6px;line-height:1.55}
+ul li strong{color:var(--ink-900);font-weight:600}
+
+/* HIGHLIGHT BOX */
+.highlight{background:linear-gradient(135deg,var(--green-100),var(--card));
+  border:1px solid #C8D8B5;border-radius:var(--r-md);
+  padding:12px 14px;margin-bottom:12px}
+.highlight p{margin:0;color:var(--green-900);font-size:13px}
+.highlight.warn{background:linear-gradient(135deg,var(--amber-100),var(--card));
+  border-color:#E8C87A}
+.highlight.warn p{color:var(--amber-700)}
+.highlight.info{background:linear-gradient(135deg,var(--blue-100),var(--card));
+  border-color:#B9D2E8}
+.highlight.info p{color:var(--blue-600)}
+
+/* CARD */
+.card{background:var(--card);border:1px solid var(--line);
+  border-radius:var(--r-md);padding:14px;margin-bottom:12px}
+.card .ttl{font-size:14px;font-weight:700;color:var(--ink-900);
+  margin-bottom:8px;display:flex;align-items:center;gap:8px}
+.card .ttl .icn{font-size:16px}
+
+/* 2 COL */
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0}
+.col-card{background:var(--paper);border:1px solid var(--line);
+  border-radius:var(--r-sm);padding:10px 12px}
+.col-card .k{font-size:10.5px;text-transform:uppercase;
+  letter-spacing:.5px;font-weight:700;color:var(--ink-600);margin-bottom:4px}
+.col-card .v{font-size:12.5px;color:var(--ink-700);line-height:1.45}
+.col-card .v strong{color:var(--ink-900);font-weight:600}
+
+/* TABLE */
+.mini-table{width:100%;border-collapse:collapse;margin:8px 0;
+  font-size:12.5px;background:var(--card);border-radius:var(--r-sm);
+  overflow:hidden;border:1px solid var(--line)}
+.mini-table th{background:var(--paper);padding:8px 10px;text-align:left;
+  font-weight:700;color:var(--ink-700);font-size:11.5px;
+  text-transform:uppercase;letter-spacing:.4px;border-bottom:1px solid var(--line)}
+.mini-table td{padding:8px 10px;border-bottom:1px solid var(--line-soft);
+  color:var(--ink-700);vertical-align:top}
+.mini-table tr:last-child td{border-bottom:none}
+.mini-table td strong{color:var(--ink-900);font-weight:600}
+.mini-table td code{background:var(--line-soft);padding:1px 6px;
+  border-radius:4px;font-family:monospace;font-size:11.5px;color:var(--ink-700)}
+
+/* BADGE */
+.badge{display:inline-block;padding:2px 8px;border-radius:var(--r-full);
+  font:700 10px 'Work Sans',sans-serif;letter-spacing:.3px;
+  text-transform:uppercase;vertical-align:middle}
+.badge.green{background:var(--green-100);color:var(--green-700)}
+.badge.amber{background:var(--amber-100);color:var(--amber-700)}
+.badge.rust{background:#FFE3DA;color:var(--rust-700)}
+.badge.blue{background:var(--blue-100);color:var(--blue-600)}
+.badge.grey{background:var(--line-soft);color:var(--ink-600)}
+
+/* DIVIDER */
+.divider{height:1px;background:var(--line-soft);margin:20px 0}
+
+/* TOAST */
+.toast{position:fixed;left:50%;transform:translateX(-50%) translateY(10px);
+  bottom:30px;background:var(--ink-900);color:#fff;padding:9px 16px;
+  border-radius:var(--r-full);font-size:12.5px;opacity:0;
+  transition:opacity .2s, transform .2s;pointer-events:none;z-index:200;
+  max-width:calc(100% - 32px);text-align:center}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="topbar">
+    <button class="btn-back" id="btnBack" aria-label="Kembali">
+      <svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
+    </button>
+    <h1>Panduan</h1>
+    <div class="topbar-right">
+      <span class="topbar-date" id="topbarDate"></span>
+    </div>
+  </div>
+
+  <div class="screen" id="screen"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ==========================================================
+   HELPERS
+   ========================================================== */
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(t._t); t._t = setTimeout(()=>t.classList.remove('show'), 1900);
+}
+
+/* ==========================================================
+   RENDER
+   ========================================================== */
+function render(){
+  document.getElementById('topbarDate').textContent =
+    new Date().toLocaleDateString('id-ID',
+      {weekday:'short', day:'numeric', month:'short'});
+
+  const html = `
+
+    <div class="hero">
+      <div class="k">Panduan Singkat</div>
+      <div class="v">Cara pakai Sayur App<br>dari pagi sampai malam</div>
+      <div class="s">Aplikasi ini mengikuti alur kerja harian Anda — bukan sebaliknya.</div>
+    </div>
+
+    <!-- ============ ALUR HARIAN ============ -->
+    <div class="section">
+      <h2><span class="icn">🕐</span>Alur Usaha Harian</h2>
+      <div class="flow-card">
+
+        <div class="flow-step">
+          <div class="flow-num">1</div>
+          <div class="flow-body">
+            <div class="ttl">Pagi — Jualan</div>
+            <div class="desc">
+              Buka lapak, jual sayur. Aplikasi tidak perlu dibuka,
+              kecuali ada pembeli yang minta <strong>nota</strong>.
+              Kalau ada, tap ikon <strong>🧾 di topbar</strong>.
+            </div>
+          </div>
+        </div>
+
+        <div class="flow-step">
+          <div class="flow-num">2</div>
+          <div class="flow-body">
+            <div class="ttl">Siang — Pulang, Tutup Hari</div>
+            <div class="desc">
+              Buka tab <strong>Tutup</strong>. Isi uang bawa pulang,
+              omzet QRIS, dan pengeluaran pagi. Tap
+              <strong>Simpan Sementara</strong> — biar bisa dibaca
+              tab Belanja.
+            </div>
+          </div>
+        </div>
+
+        <div class="flow-step">
+          <div class="flow-num">3</div>
+          <div class="flow-body">
+            <div class="ttl">Siang — Susun Rencana Belanja</div>
+            <div class="desc">
+              Buka tab <strong>Belanja → Rencana</strong>. Ceklis
+              barang yang mau dibeli dari master. Kalau uang belanja
+              kurang, tap <strong>+ Tambah dari saldo</strong>.
+            </div>
+          </div>
+        </div>
+
+        <div class="flow-step">
+          <div class="flow-num">4</div>
+          <div class="flow-body">
+            <div class="ttl">Sore — Belanja di Pasar</div>
+            <div class="desc">
+              Buka tab <strong>Belanja → Aktual</strong>. Sesuaikan
+              qty &amp; harga dengan realita. Barang batal → hapus.
+              Barang di luar rencana → tambah. Bisa
+              <strong>Bagikan Beli</strong> / <strong>Bagikan Jual</strong>
+              ke WA atau PDF.
+            </div>
+          </div>
+        </div>
+
+        <div class="flow-step">
+          <div class="flow-num">5</div>
+          <div class="flow-body">
+            <div class="ttl">Malam — Simpan &amp; Koreksi</div>
+            <div class="desc">
+              Kembali ke tab <strong>Tutup</strong>. Isi biaya sore,
+              lalu tap <strong>Simpan Database</strong> supaya data
+              final ke server.
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- ============ TAB BELANJA ============ -->
+    <div class="section">
+      <h2><span class="icn">🛒</span>Tab Belanja — 3 Sub-Tab</h2>
+
+      <div class="card">
+        <div class="ttl"><span class="icn">📝</span>Rencana</div>
+        <p>
+          Tempat <strong>menyusun daftar belanja</strong> sebelum ke pasar.
+          Semua yang dipilih belum tersimpan ke database.
+        </p>
+        <p>
+          Di sini juga ada <strong>batas belanja aman</strong> yang dihitung
+          dari omzet &amp; biaya hari ini (dari tab Tutup). Kalau belanja
+          melebihi batas, sistem kasih peringatan.
+        </p>
+      </div>
+
+      <div class="card">
+        <div class="ttl"><span class="icn">🛒</span>Aktual</div>
+        <p>
+          Tempat <strong>menyesuaikan dengan realita</strong> di pasar.
+          Harga berubah, barang batal, tambah barang baru — semuanya di sini.
+        </p>
+        <p>
+          Item dibedakan: <span class="badge amber">Draft</span> yang belum
+          disimpan, <span class="badge green">✓ Tersimpan</span> yang sudah
+          masuk database.
+        </p>
+      </div>
+
+      <div class="card">
+        <div class="ttl"><span class="icn">📦</span>Pesanan</div>
+        <p>
+          Tempat mengelola <strong>pesanan pelanggan</strong> yang berdiri
+          sendiri — di luar jualan harian.
+        </p>
+        <p>
+          Alurnya: <strong>Pesan → Bayar → Belanja → Serah → Lunas</strong>.
+          Uang pesanan lewat <strong>saldo</strong> (bukan uang belanja harian).
+        </p>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- ============ STATUS PESANAN ============ -->
+    <div class="section">
+      <h2><span class="icn">📦</span>Alur Pesanan</h2>
+
+      <div class="highlight info">
+        <p><strong>Pesanan berdiri sendiri</strong> — tidak masuk omzet
+        harian. Uangnya masuk ke saldo, bukan uang belanja hari itu.</p>
+      </div>
+
+      <table class="mini-table">
+        <thead>
+          <tr><th>Tahap</th><th>Yang Dilakukan</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>1. Pesan</strong></td>
+            <td>Catat pesanan pelanggan + barang + harga (estimasi).</td>
+          </tr>
+          <tr>
+            <td><strong>2. Bayar</strong></td>
+            <td>Terima DP / tunai → masuk saldo. Status:
+              <span class="badge amber">Perlu Dibelanjakan</span></td>
+          </tr>
+          <tr>
+            <td><strong>3. Belanja</strong></td>
+            <td>Tap "Mulai Belanja" → pilih sumber saldo → item
+              masuk ke Rencana belanja harian.</td>
+          </tr>
+          <tr>
+            <td><strong>4. Serah</strong></td>
+            <td>Barang diserahkan ke pelanggan. Status:
+              <span class="badge blue">Siap Diserahkan</span></td>
+          </tr>
+          <tr>
+            <td><strong>5. Lunas</strong></td>
+            <td>Pelanggan bayar sisa → status:
+              <span class="badge green">Selesai</span></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <p style="font-size:12px;color:var(--ink-600);margin-top:8px;">
+        Kalau pelanggan belum lunas → otomatis masuk
+        <strong>Piutang Saya</strong> dan bisa dicicil.
+      </p>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- ============ TUTUP HARI ============ -->
+    <div class="section">
+      <h2><span class="icn">🌇</span>Tutup Hari</h2>
+
+      <p>Tab ini untuk <strong>menutup hari</strong> — mencatat omzet,
+      biaya, dan bon pelanggan.</p>
+
+      <div class="two-col">
+        <div class="col-card">
+          <div class="k">💾 Sementara</div>
+          <div class="v">Tersimpan di HP saja. Bisa diubah kapan saja.
+            <strong>Dibaca tab Belanja</strong> untuk hitung batas aman.</div>
+        </div>
+        <div class="col-card">
+          <div class="k">✅ Database</div>
+          <div class="v">Dikirim ke server. Setelah final, form dikunci.
+            <strong>Bisa diubah</strong> lewat tombol
+            <strong>✏️ Edit</strong>.</div>
+        </div>
+      </div>
+
+      <div class="highlight warn">
+        <p>Kalau data di database salah → tap <strong>✏️ Edit</strong>,
+        perbaiki, lalu <strong>Simpan Database</strong> ulang. Data lama
+        akan <strong>ditimpa</strong>, bukan ditambah.</p>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- ============ HARGA & MARGIN ============ -->
+    <div class="section">
+      <h2><span class="icn">💰</span>Harga &amp; Margin</h2>
+
+      <p>Harga jual dihitung <strong>otomatis</strong> dari harga beli —
+      makin murah modal, makin besar marginnya.</p>
+
+      <div class="card">
+        <div class="ttl"><span class="icn">📊</span>Istilah Penting</div>
+        <ul>
+          <li><strong>Harga Jual</strong> — rekomendasi dari sistem,
+            bisa diubah manual.</li>
+          <li><strong>Harga Minimum</strong> — batas bawah saat ditawar
+            (cuma muncul untuk barang murah).</li>
+          <li><strong>Margin Kotor</strong> — laba sebelum dikurangi susut.</li>
+          <li><strong>Susut 30%</strong> — perkiraan sayur busuk/rusak.</li>
+          <li><strong>Margin Bersih</strong> — laba setelah susut.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- ============ NOTA ============ -->
+    <div class="section">
+      <h2><span class="icn">🧾</span>Nota Pembeli</h2>
+
+      <div class="highlight info">
+        <p>Nota itu <strong>murni catatan</strong> — tidak memengaruhi
+        omzet, saldo, atau laporan. Fungsinya hanya sebagai bukti
+        pembelian untuk pelanggan.</p>
+      </div>
+
+      <div class="flow-card">
+        <div class="flow-step">
+          <div class="flow-num">1</div>
+          <div class="flow-body">
+            <div class="ttl">Tap ikon 🧾 di topbar</div>
+            <div class="desc">Isi nama pelanggan (opsional), tambah barang.</div>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-num">2</div>
+          <div class="flow-body">
+            <div class="ttl">Isi "Dibayar"</div>
+            <div class="desc">Kalau kurang bayar, status nota jadi
+              "Kurang". Nanti bisa ditandai <strong>Lunas</strong>.</div>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-num">3</div>
+          <div class="flow-body">
+            <div class="ttl">Bagikan</div>
+            <div class="desc">Tap <strong>Simpan</strong> → pilih
+              <strong>WhatsApp</strong> atau <strong>PDF</strong>.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- ============ HUTANG & PIUTANG ============ -->
+    <div class="section">
+      <h2><span class="icn">💸</span>Hutang &amp; Piutang</h2>
+
+      <p>Ada <strong>3 sumber</strong> hutang/piutang di aplikasi ini:</p>
+
+      <table class="mini-table">
+        <thead>
+          <tr><th>Sumber</th><th>Dari mana</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Bon Lisan</strong></td>
+            <td>Pelanggan yang utang tanpa nota.
+              <strong>Dicatat di Tutup Hari</strong>.</td>
+          </tr>
+          <tr>
+            <td><strong>Pesanan</strong></td>
+            <td>Pesanan pelanggan yang belum lunas.
+              <strong>Otomatis</strong> dari tab Belanja → Pesanan.</td>
+          </tr>
+          <tr>
+            <td><strong>Supplier</strong></td>
+            <td>Hutang Anda ke supplier saat belanja dengan
+              "Bayar Nanti". <strong>Dari tab Belanja → Aktual</strong>.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <p style="font-size:12px;color:var(--ink-600);margin-top:8px;">
+        Semuanya bisa dilihat di <strong>Laporan → Hutang</strong>,
+        dikelompokkan per sumber.
+      </p>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- ============ OFFLINE ============ -->
+    <div class="section">
+      <h2><span class="icn">📶</span>Mode Offline</h2>
+
+      <p>Aplikasi ini bisa dipakai <strong>tanpa sinyal</strong> —
+      penting kalau di pasar sinyalnya lemah.</p>
+
+      <div class="card">
+        <div class="ttl"><span class="icn">🚦</span>Indikator Koneksi</div>
+        <ul>
+          <li><span class="badge green">🟢 Online</span> — semua data
+            sudah tersinkron ke server.</li>
+          <li><span class="badge amber">🟡 N menunggu</span> — ada
+            data yang belum terkirim, akan dicoba otomatis.</li>
+          <li><span class="badge rust">🔴 Offline</span> — tidak ada
+            sinyal. Semua input tetap tersimpan di HP.</li>
+        </ul>
+      </div>
+
+      <div class="highlight">
+        <p><strong>Aman</strong> — tidak akan kehilangan data. Begitu
+        sinyal kembali, aplikasi otomatis mengirim ke server.</p>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- ============ ISTILAH ============ -->
+    <div class="section">
+      <h2><span class="icn">📚</span>Istilah di Aplikasi</h2>
+
+      <table class="mini-table">
+        <thead>
+          <tr><th>Istilah</th><th>Artinya</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>Penjualan</strong></td>
+            <td>Omzet total (Tunai + QRIS)</td></tr>
+          <tr><td><strong>Belanja</strong></td>
+            <td>Pembelian barang dagangan</td></tr>
+          <tr><td><strong>Biaya</strong></td>
+            <td>Operasional + bensin + lain-lain</td></tr>
+          <tr><td><strong>Pengeluaran</strong></td>
+            <td>Belanja + Biaya</td></tr>
+          <tr><td><strong>Saldo</strong></td>
+            <td>Uang tersedia (Tunai &amp; QRIS)</td></tr>
+          <tr><td><strong>Capaian</strong></td>
+            <td>Persentase laba hari ini vs batas minimal</td></tr>
+          <tr><td><strong>Batas Minimal</strong></td>
+            <td>Target laba harian (default Rp 250.000)</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- ============ TIPS ============ -->
+    <div class="section">
+      <h2><span class="icn">💡</span>Tips Pakai</h2>
+
+      <div class="card">
+        <ul>
+          <li><strong>Isi Tutup Hari dulu</strong> sebelum menyusun
+            rencana belanja — supaya batas aman akurat.</li>
+          <li><strong>Kalau salah input</strong>, langsung koreksi
+            sebelum "Simpan Database".</li>
+          <li><strong>Data yang sudah final</strong> tetap bisa diubah
+            lewat tombol "Edit" — tidak ada yang terkunci mati.</li>
+          <li><strong>Bagikan Beli</strong> & <strong>Bagikan Jual</strong>
+            bisa dikirim ke karyawan lewat WA.</li>
+          <li><strong>Indikator koneksi</strong> di topbar membantu Anda
+            tahu kapan data sudah aman di server.</li>
+        </ul>
+      </div>
+    </div>
+
+  `;
+
+  document.getElementById('screen').innerHTML = html;
+}
+
+/* ==========================================================
+   HANDLER
+   ========================================================== */
+document.getElementById('btnBack').addEventListener('click', () => {
+  // Di app asli: history.back()
+  showToast('→ Kembali');
+});
+
+/* ==========================================================
+   INIT
+   ========================================================== */
+render();
+</script>
+</body>
+</html>

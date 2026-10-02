@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Tentang — Sayur App</title>
+<link href="https://fonts.googleapis.com/css2?family=Zilla+Slab:wght@600;700&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --green-900:#1B2E1C; --green-700:#2F5233; --green-500:#4A7A4E; --green-100:#E4EBDD;
+  --rust-600:#BF4E30; --rust-700:#973B24;
+  --paper:#F6F5EF; --card:#FFFEFB;
+  --ink-900:#1F2019; --ink-700:#3F4038; --ink-600:#5B5C50; --ink-400:#8A8B7E;
+  --line:#E5E2D6; --line-soft:#EFEDE2;
+  --amber-600:#B8860B; --amber-100:#FFF4D6; --amber-700:#8A5D00;
+  --blue-600:#2563A0; --blue-100:#DCEAF6;
+  --r-sm:8px; --r-md:12px; --r-lg:16px; --r-full:999px;
+  --shadow-md:0 2px 8px rgba(31,32,25,.06);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0;overflow-x:hidden}
+body{background:var(--paper);color:var(--ink-900);
+  font-family:'Work Sans',sans-serif;font-size:15px;line-height:1.5;min-height:100vh}
+.app{width:100%;min-height:100vh;display:flex;flex-direction:column;background:var(--paper)}
+
+/* TOPBAR */
+.topbar{padding:calc(12px + env(safe-area-inset-top,0px)) 14px 11px;
+  background:var(--green-700);color:#fff;display:flex;align-items:center;
+  gap:10px;position:sticky;top:0;z-index:50}
+.btn-back{width:34px;height:34px;border-radius:50%;
+  background:rgba(255,255,255,.12);border:none;color:#fff;
+  display:flex;align-items:center;justify-content:center;cursor:pointer;flex:none}
+.btn-back:active{background:rgba(255,255,255,.22)}
+.btn-back svg{width:18px;height:18px;stroke:currentColor;fill:none;
+  stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.topbar h1{font-size:16px;color:#fff;margin:0;font-family:'Zilla Slab',serif;
+  font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:8px}
+.topbar-date{font-size:10.5px;color:#D9E3CE;white-space:nowrap}
+
+/* SCREEN */
+.screen{flex:1;padding:14px 12px 40px;
+  padding-bottom:calc(40px + env(safe-area-inset-bottom,0px));
+  max-width:560px;width:100%;margin:0 auto}
+
+/* BRAND CARD */
+.brand-card{background:linear-gradient(150deg,var(--green-700),var(--green-900));
+  color:#fff;border-radius:var(--r-lg);padding:24px 20px;margin-bottom:16px;
+  text-align:center;position:relative;overflow:hidden}
+.brand-card::after{content:'';position:absolute;right:-50px;top:-50px;
+  width:160px;height:160px;border-radius:50%;
+  background:rgba(255,255,255,.05);pointer-events:none}
+.brand-logo{width:72px;height:72px;border-radius:18px;
+  background:rgba(255,255,255,.12);margin:0 auto 14px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:38px;position:relative;z-index:1}
+.brand-name{font-family:'Zilla Slab',serif;font-size:24px;font-weight:700;
+  letter-spacing:-.5px;position:relative;z-index:1}
+.brand-tag{font-size:12.5px;opacity:.75;margin-top:6px;
+  position:relative;z-index:1;line-height:1.5}
+.brand-ver{display:inline-flex;align-items:center;gap:6px;
+  margin-top:14px;padding:5px 12px;border-radius:var(--r-full);
+  background:rgba(255,255,255,.12);
+  font:600 11px 'Work Sans',sans-serif;letter-spacing:.3px;
+  position:relative;z-index:1}
+
+/* SECTION */
+.section{margin-bottom:18px}
+.section h2{font-family:'Zilla Slab',serif;font-size:15px;font-weight:700;
+  color:var(--ink-900);margin:0 0 10px;display:flex;align-items:center;gap:8px}
+.section h2 .icn{font-size:17px}
+
+/* CARD */
+.card{background:var(--card);border:1px solid var(--line);
+  border-radius:var(--r-md);padding:14px}
+
+/* INFO ROW */
+.info-row{display:flex;justify-content:space-between;align-items:baseline;
+  padding:9px 0;font-size:13px;gap:10px}
+.info-row:not(:last-child){border-bottom:1px solid var(--line-soft)}
+.info-row .lbl{color:var(--ink-600);flex-shrink:0}
+.info-row .val{color:var(--ink-900);font-weight:600;text-align:right}
+.info-row .val.mono{font-family:'Zilla Slab',serif}
+
+/* FEATURE GRID */
+.feature-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.feature-item{background:var(--paper);border:1px solid var(--line);
+  border-radius:var(--r-sm);padding:11px 12px;
+  display:flex;align-items:flex-start;gap:9px}
+.feature-item .ic{font-size:18px;flex-shrink:0;line-height:1;
+  margin-top:1px}
+.feature-item .body{min-width:0}
+.feature-item .nm{font-size:12.5px;font-weight:700;color:var(--ink-900);
+  line-height:1.3;margin-bottom:2px}
+.feature-item .ds{font-size:11px;color:var(--ink-600);line-height:1.4}
+
+/* HIGHLIGHT */
+.highlight{background:linear-gradient(135deg,var(--green-100),var(--card));
+  border:1px solid #C8D8B5;border-radius:var(--r-md);
+  padding:12px 14px;margin-bottom:12px}
+.highlight p{margin:0;color:var(--green-900);font-size:12.5px;
+  line-height:1.55}
+.highlight.info{background:linear-gradient(135deg,var(--blue-100),var(--card));
+  border-color:#B9D2E8}
+.highlight.info p{color:var(--blue-600)}
+
+/* PARA */
+p{margin:0 0 10px;font-size:13px;color:var(--ink-700);line-height:1.6}
+p:last-child{margin-bottom:0}
+p strong{color:var(--ink-900);font-weight:600}
+
+/* BUTTON */
+.btn{width:100%;padding:12px;border-radius:var(--r-sm);border:none;
+  font:600 13.5px 'Work Sans',sans-serif;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  margin-bottom:8px;transition:all .12s}
+.btn:last-child{margin-bottom:0}
+.btn-primary{background:var(--green-700);color:#fff}
+.btn-primary:active{background:var(--green-900)}
+.btn-outline{background:var(--card);color:var(--green-700);
+  border:1.5px solid var(--green-700)}
+.btn-outline:active{background:var(--green-100)}
+.btn svg{width:15px;height:15px;stroke:currentColor;fill:none;
+  stroke-width:2;flex-shrink:0}
+
+/* CREDIT */
+.credit{text-align:center;padding:24px 12px 12px}
+.credit .line{font-size:12.5px;color:var(--ink-600);line-height:1.6}
+.credit .heart{color:var(--rust-600);font-size:15px}
+.credit .sig{font-family:'Zilla Slab',serif;font-size:14px;
+  font-weight:700;color:var(--ink-900);margin-top:10px}
+
+/* DIVIDER */
+.divider{height:1px;background:var(--line-soft);margin:16px 0}
+
+/* TOAST */
+.toast{position:fixed;left:50%;transform:translateX(-50%) translateY(10px);
+  bottom:30px;background:var(--ink-900);color:#fff;padding:9px 16px;
+  border-radius:var(--r-full);font-size:12.5px;opacity:0;
+  transition:opacity .2s, transform .2s;pointer-events:none;z-index:200;
+  max-width:calc(100% - 32px);text-align:center}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="topbar">
+    <button class="btn-back" id="btnBack" aria-label="Kembali">
+      <svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
+    </button>
+    <h1>Tentang</h1>
+    <div class="topbar-right">
+      <span class="topbar-date" id="topbarDate"></span>
+    </div>
+  </div>
+
+  <div class="screen" id="screen"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ==========================================================
+   KONFIGURASI
+   ========================================================== */
+const APP_INFO = {
+  nama: 'Sayur App',
+  versi: '5.0',
+  tagline: 'Pencatatan usaha sayur — sederhana, sesuai alur kerja harian.',
+  tglRilis: 'Oktober 2026'
+};
+
+/* ==========================================================
+   HELPERS
+   ========================================================== */
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(t._t); t._t = setTimeout(()=>t.classList.remove('show'), 1900);
+}
+
+/* ==========================================================
+   RENDER
+   ========================================================== */
+function render(){
+  document.getElementById('topbarDate').textContent =
+    new Date().toLocaleDateString('id-ID',
+      {weekday:'short', day:'numeric', month:'short'});
+
+  const html = `
+
+    <!-- ============ BRAND ============ -->
+    <div class="brand-card">
+      <div class="brand-logo">🥬</div>
+      <div class="brand-name">${APP_INFO.nama}</div>
+      <div class="brand-tag">${APP_INFO.tagline}</div>
+      <div class="brand-ver">Versi ${APP_INFO.versi} · ${APP_INFO.tglRilis}</div>
+    </div>
+
+    <!-- ============ TENTANG ============ -->
+    <div class="section">
+      <h2><span class="icn">📖</span>Cerita Singkat</h2>
+      <div class="card">
+        <p>
+          <strong>Sayur App</strong> dibuat untuk membantu pedagang sayur
+          mencatat usaha harian dengan mudah — dari belanja di pasar sampai
+          tutup hari.
+        </p>
+        <p>
+          Semua fitur dirancang mengikuti <strong>alur kerja nyata</strong>:
+          pagi jualan, siang tutup, sore belanja, malam koreksi. Bukan
+          sebaliknya.
+        </p>
+        <p>
+          Aplikasi ini bisa dipakai <strong>tanpa sinyal</strong> — karena
+          di pasar sinyal sering lemah. Data tetap aman di HP, dan
+          tersinkron otomatis begitu ada sinyal.
+        </p>
+      </div>
+    </div>
+
+    <!-- ============ FITUR UTAMA ============ -->
+    <div class="section">
+      <h2><span class="icn">✨</span>Fitur Utama</h2>
+      <div class="feature-grid">
+        <div class="feature-item">
+          <div class="ic">🛒</div>
+          <div class="body">
+            <div class="nm">Belanja 3 Tahap</div>
+            <div class="ds">Rencana · Aktual · Pesanan</div>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="ic">🌇</div>
+          <div class="body">
+            <div class="nm">Tutup Hari</div>
+            <div class="ds">Sementara &amp; Database</div>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="ic">💰</div>
+          <div class="body">
+            <div class="nm">Harga Otomatis</div>
+            <div class="ds">Margin &amp; susut 30%</div>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="ic">📦</div>
+          <div class="body">
+            <div class="nm">Pesanan</div>
+            <div class="ds">Pesan → Belanja → Lunas</div>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="ic">🧾</div>
+          <div class="body">
+            <div class="nm">Nota Pembeli</div>
+            <div class="ds">WA &amp; PDF</div>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="ic">💸</div>
+          <div class="body">
+            <div class="nm">Hutang &amp; Piutang</div>
+            <div class="ds">Bon · Pesanan · Supplier</div>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="ic">📊</div>
+          <div class="body">
+            <div class="nm">Laporan</div>
+            <div class="ds">Arus Kas · Saldo · Hutang</div>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="ic">📶</div>
+          <div class="body">
+            <div class="nm">Mode Offline</div>
+            <div class="ds">Tetap jalan tanpa sinyal</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ INFO SISTEM ============ -->
+    <div class="section">
+      <h2><span class="icn">⚙️</span>Info Sistem</h2>
+      <div class="card">
+        <div class="info-row">
+          <span class="lbl">Versi Aplikasi</span>
+          <span class="val mono">${APP_INFO.versi}</span>
+        </div>
+        <div class="info-row">
+          <span class="lbl">Tanggal Rilis</span>
+          <span class="val">${APP_INFO.tglRilis}</span>
+        </div>
+        <div class="info-row">
+          <span class="lbl">Platform</span>
+          <span class="val">Web (PWA)</span>
+        </div>
+        <div class="info-row">
+          <span class="lbl">Backend</span>
+          <span class="val">Google Apps Script</span>
+        </div>
+        <div class="info-row">
+          <span class="lbl">Penyimpanan Data</span>
+          <span class="val">Google Sheets</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ PRIVASI ============ -->
+    <div class="section">
+      <h2><span class="icn">🔒</span>Privasi</h2>
+      <div class="highlight">
+        <p><strong>Semua data milik Anda.</strong> Tersimpan di HP
+        dan di Google Sheets pribadi. Tidak ada pihak ketiga yang
+        bisa mengakses.</p>
+      </div>
+      <div class="card">
+        <p style="font-size:12.5px;">
+          Aplikasi ini tidak mengumpulkan data analitik, tidak
+          memasang iklan, dan tidak mengirim data ke pihak mana pun
+          selain spreadsheet pribadi Anda sendiri.
+        </p>
+      </div>
+    </div>
+
+    <!-- ============ AKSI ============ -->
+    <div class="section">
+      <h2><span class="icn">📤</span>Bagikan</h2>
+      <button class="btn btn-primary" id="btnShare">
+        <svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg>
+        Bagikan Aplikasi ke Teman
+      </button>
+      <button class="btn btn-outline" id="btnSalinLink">
+        <svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+        Salin Link Aplikasi
+      </button>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- ============ KREDIT ============ -->
+    <div class="credit">
+      <div class="line">
+        Dibuat dengan <span class="heart">❤️</span><br>
+        untuk membantu pedagang kecil
+      </div>
+      <div class="sig">— Sayur App —</div>
+    </div>
+
+  `;
+
+  document.getElementById('screen').innerHTML = html;
+  attachHandlers();
+}
+
+/* ==========================================================
+   HANDLERS
+   ========================================================== */
+function attachHandlers(){
+  /* Back */
+  document.getElementById('btnBack').addEventListener('click', () => {
+    showToast('→ Kembali');
+  });
+
+  /* Bagikan */
+  const btnShare = document.getElementById('btnShare');
+  if(btnShare) btnShare.addEventListener('click', async () => {
+    const text = `Coba aplikasi Sayur App — pencatatan usaha sayur yang simple.\\n\\n` +
+      window.location.href;
+    if(navigator.share){
+      try{
+        await navigator.share({ text });
+        return;
+      }catch(e){
+        if(e.name === 'AbortError') return;
+      }
+    }
+    try{
+      await navigator.clipboard.writeText(text);
+      showToast('Disalin ke clipboard');
+    }catch(e){
+      showToast('Gagal membagikan');
+    }
+  });
+
+  /* Salin link */
+  const btnSalin = document.getElementById('btnSalinLink');
+  if(btnSalin) btnSalin.addEventListener('click', async () => {
+    try{
+      await navigator.clipboard.writeText(window.location.href);
+      showToast('Link disalin');
+    }catch(e){
+      showToast('Gagal menyalin');
+    }
+  });
+}
+
+/* ==========================================================
+   INIT
+   ========================================================== */
+render();
+</script>
+</body>
+</html>

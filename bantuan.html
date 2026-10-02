@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Bantuan — Sayur App</title>
+<link href="https://fonts.googleapis.com/css2?family=Zilla+Slab:wght@600;700&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --green-900:#1B2E1C; --green-700:#2F5233; --green-500:#4A7A4E; --green-100:#E4EBDD;
+  --rust-600:#BF4E30; --rust-700:#973B24;
+  --paper:#F6F5EF; --card:#FFFEFB;
+  --ink-900:#1F2019; --ink-700:#3F4038; --ink-600:#5B5C50; --ink-400:#8A8B7E;
+  --line:#E5E2D6; --line-soft:#EFEDE2;
+  --amber-600:#B8860B; --amber-100:#FFF4D6; --amber-700:#8A5D00;
+  --blue-600:#2563A0; --blue-100:#DCEAF6;
+  --r-sm:8px; --r-md:12px; --r-lg:16px; --r-full:999px;
+  --shadow-md:0 2px 8px rgba(31,32,25,.06);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0;overflow-x:hidden}
+body{background:var(--paper);color:var(--ink-900);
+  font-family:'Work Sans',sans-serif;font-size:15px;line-height:1.5;min-height:100vh}
+.app{width:100%;min-height:100vh;display:flex;flex-direction:column;background:var(--paper)}
+
+/* TOPBAR */
+.topbar{padding:calc(12px + env(safe-area-inset-top,0px)) 14px 11px;
+  background:var(--green-700);color:#fff;display:flex;align-items:center;
+  gap:10px;position:sticky;top:0;z-index:50}
+.btn-back{width:34px;height:34px;border-radius:50%;
+  background:rgba(255,255,255,.12);border:none;color:#fff;
+  display:flex;align-items:center;justify-content:center;cursor:pointer;flex:none}
+.btn-back:active{background:rgba(255,255,255,.22)}
+.btn-back svg{width:18px;height:18px;stroke:currentColor;fill:none;
+  stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.topbar h1{font-size:16px;color:#fff;margin:0;font-family:'Zilla Slab',serif;
+  font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:8px}
+.topbar-date{font-size:10.5px;color:#D9E3CE;white-space:nowrap}
+
+/* SCREEN */
+.screen{flex:1;padding:14px 12px 40px;
+  padding-bottom:calc(40px + env(safe-area-inset-bottom,0px));
+  max-width:560px;width:100%;margin:0 auto}
+
+/* HERO */
+.hero{background:linear-gradient(150deg,var(--green-700),var(--green-900));
+  color:#fff;border-radius:var(--r-lg);padding:20px 18px;margin-bottom:16px;
+  position:relative;overflow:hidden}
+.hero::after{content:'';position:absolute;right:-50px;top:-50px;
+  width:140px;height:140px;border-radius:50%;
+  background:rgba(255,255,255,.05);pointer-events:none}
+.hero .k{font-size:10.5px;letter-spacing:1.4px;text-transform:uppercase;
+  opacity:.7;font-weight:600}
+.hero .v{font-family:'Zilla Slab',serif;font-size:20px;font-weight:700;
+  margin-top:6px;letter-spacing:-.3px;line-height:1.3}
+.hero .s{font-size:12px;opacity:.78;margin-top:8px;line-height:1.5}
+
+/* SEARCH */
+.search-wrap{position:relative;margin-bottom:16px}
+.search-input{width:100%;padding:12px 14px 12px 40px;
+  border:1px solid var(--line);border-radius:var(--r-sm);
+  background:var(--card);font:500 14px 'Work Sans',sans-serif;
+  color:var(--ink-900)}
+.search-input:focus{outline:none;border-color:var(--green-700);
+  background:var(--card)}
+.search-icon{position:absolute;left:13px;top:50%;
+  transform:translateY(-50%);font-size:15px;
+  color:var(--ink-400);pointer-events:none}
+.search-clear{position:absolute;right:10px;top:50%;
+  transform:translateY(-50%);width:22px;height:22px;
+  border-radius:50%;border:none;background:var(--line-soft);
+  color:var(--ink-600);font-size:13px;cursor:pointer;
+  display:none;align-items:center;justify-content:center;
+  line-height:1;padding:0}
+.search-clear.show{display:flex}
+.search-clear:active{background:var(--line)}
+
+/* SECTION */
+.section{margin-bottom:18px}
+.section h2{font-family:'Zilla Slab',serif;font-size:15px;font-weight:700;
+  color:var(--ink-900);margin:0 0 10px;display:flex;align-items:center;gap:8px}
+.section h2 .icn{font-size:17px}
+
+/* FAQ */
+.faq-list{background:var(--card);border:1px solid var(--line);
+  border-radius:var(--r-md);overflow:hidden}
+.faq-item{border-bottom:1px solid var(--line-soft)}
+.faq-item:last-child{border-bottom:none}
+.faq-q{width:100%;padding:14px 14px;background:none;border:none;
+  text-align:left;cursor:pointer;font-family:inherit;
+  display:flex;align-items:flex-start;gap:10px;
+  font-size:13.5px;font-weight:600;color:var(--ink-900);
+  line-height:1.4}
+.faq-q:active{background:var(--paper)}
+.faq-q .num{font-family:'Zilla Slab',serif;font-weight:700;
+  color:var(--green-700);flex-shrink:0;font-size:13px;
+  min-width:18px}
+.faq-q .txt{flex:1}
+.faq-q .chev{color:var(--ink-400);font-size:12px;flex-shrink:0;
+  transition:transform .18s;margin-top:3px}
+.faq-item.open .faq-q .chev{transform:rotate(180deg)}
+.faq-a{display:none;padding:0 14px 14px 42px;
+  font-size:12.5px;color:var(--ink-700);line-height:1.6}
+.faq-item.open .faq-a{display:block}
+.faq-a p{margin:0 0 8px;font-size:12.5px;line-height:1.6}
+.faq-a p:last-child{margin-bottom:0}
+.faq-a strong{color:var(--ink-900);font-weight:600}
+.faq-a ul{padding-left:18px;margin:6px 0;
+  font-size:12.5px;color:var(--ink-700);line-height:1.55}
+.faq-a li{margin-bottom:4px}
+.faq-a code{background:var(--line-soft);padding:1px 6px;
+  border-radius:4px;font-family:monospace;font-size:11.5px}
+.faq-a .hl{background:linear-gradient(135deg,var(--green-100),var(--card));
+  border-left:3px solid var(--green-500);
+  padding:9px 11px;border-radius:4px;margin:8px 0;
+  font-size:12px;color:var(--green-900)}
+.faq-a .hl.warn{background:linear-gradient(135deg,var(--amber-100),var(--card));
+  border-left-color:var(--amber-600);color:var(--amber-700)}
+.faq-a .hl.info{background:linear-gradient(135deg,var(--blue-100),var(--card));
+  border-left-color:var(--blue-600);color:var(--blue-600)}
+
+/* EMPTY SEARCH */
+.empty-search{text-align:center;padding:30px 20px;
+  color:var(--ink-400);font-size:13px}
+.empty-search .em{font-size:32px;display:block;
+  margin-bottom:8px;opacity:.4}
+
+/* CONTACT CARD */
+.contact-card{background:var(--card);border:1px solid var(--line);
+  border-radius:var(--r-md);padding:16px;text-align:center}
+.contact-card .ic{font-size:30px;margin-bottom:8px}
+.contact-card .ttl{font-family:'Zilla Slab',serif;font-size:15px;
+  font-weight:700;color:var(--ink-900);margin-bottom:6px}
+.contact-card .ds{font-size:12.5px;color:var(--ink-600);
+  line-height:1.5;margin-bottom:14px}
+.contact-card .btn{width:100%;padding:12px;border:none;
+  border-radius:var(--r-sm);font:600 13.5px 'Work Sans',sans-serif;
+  cursor:pointer;display:flex;align-items:center;
+  justify-content:center;gap:8px;margin-bottom:8px}
+.contact-card .btn:last-child{margin-bottom:0}
+.contact-card .btn.wa{background:var(--green-700);color:#fff}
+.contact-card .btn.wa:active{background:var(--green-900)}
+.contact-card .btn.telp{background:var(--card);color:var(--green-700);
+  border:1.5px solid var(--green-700)}
+.contact-card .btn.telp:active{background:var(--green-100)}
+.contact-card .btn svg{width:15px;height:15px;stroke:currentColor;
+  fill:none;stroke-width:2;flex-shrink:0}
+
+/* HIGHLIGHT */
+.highlight{background:linear-gradient(135deg,var(--green-100),var(--card));
+  border:1px solid #C8D8B5;border-radius:var(--r-md);
+  padding:12px 14px;margin-bottom:12px}
+.highlight p{margin:0;color:var(--green-900);font-size:12.5px;
+  line-height:1.55}
+.highlight p strong{font-weight:700}
+.highlight.info{background:linear-gradient(135deg,var(--blue-100),var(--card));
+  border-color:#B9D2E8}
+.highlight.info p{color:var(--blue-600)}
+
+/* DIVIDER */
+.divider{height:1px;background:var(--line-soft);margin:20px 0}
+
+/* TOAST */
+.toast{position:fixed;left:50%;transform:translateX(-50%) translateY(10px);
+  bottom:30px;background:var(--ink-900);color:#fff;padding:9px 16px;
+  border-radius:var(--r-full);font-size:12.5px;opacity:0;
+  transition:opacity .2s, transform .2s;pointer-events:none;z-index:200;
+  max-width:calc(100% - 32px);text-align:center}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="topbar">
+    <button class="btn-back" id="btnBack" aria-label="Kembali">
+      <svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
+    </button>
+    <h1>Bantuan</h1>
+    <div class="topbar-right">
+      <span class="topbar-date" id="topbarDate"></span>
+    </div>
+  </div>
+
+  <div class="screen" id="screen"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ==========================================================
+   KONFIGURASI KONTAK (mock — nanti dari Pengaturan)
+   ========================================================== */
+const KONTAK = {
+  waNomor: '6281234567890',      // format internasional tanpa +
+  waTampil: '0812-3456-7890',
+  telpNomor: '08123456789'
+};
+
+/* ==========================================================
+   DATA FAQ
+   ========================================================== */
+const FAQ = [
+  {
+    kategori: 'Dasar',
+    q: 'Kapan saya harus buka aplikasi ini?',
+    a: `
+      <p>Tidak selalu. Ini alur yang paling pas:</p>
+      <ul>
+        <li><strong>Pagi</strong> — jualan, aplikasi tidak perlu dibuka.
+          Kecuali ada pembeli minta <strong>nota</strong>.</li>
+        <li><strong>Siang</strong> — pulang jualan, buka tab
+          <strong>Tutup</strong> untuk input omzet & biaya pagi.</li>
+        <li><strong>Siang</strong> — susun rencana di tab
+          <strong>Belanja → Rencana</strong>.</li>
+        <li><strong>Sore</strong> — belanja di pasar, sesuaikan di tab
+          <strong>Belanja → Aktual</strong>.</li>
+        <li><strong>Malam</strong> — koreksi & simpan final di
+          tab <strong>Tutup</strong>.</li>
+      </ul>
+      <div class="hl">Kuncinya: aplikasi mengikuti alur Anda, bukan sebaliknya.</div>
+    `
+  },
+  {
+    kategori: 'Dasar',
+    q: 'Apa bedanya "Simpan Sementara" dan "Simpan Database"?',
+    a: `
+      <p><strong>Simpan Sementara</strong> — data disimpan di HP saja.
+        Bisa diubah kapan saja. Cocok kalau dipakai sebelum pulang belanja,
+        supaya tab Belanja bisa baca batas aman.</p>
+      <p><strong>Simpan Database</strong> — data dikirim ke server.
+        Setelah ini tombol berubah jadi <strong>✏️ Edit</strong> — form
+        terkunci sampai Anda tap Edit lagi.</p>
+      <div class="hl info">Data Sementara <strong>tidak hilang</strong>
+        saat Simpan Database. Keduanya tersimpan, Database yang jadi
+        acuan final.</div>
+    `
+  },
+  {
+    kategori: 'Belanja',
+    q: 'Barang batal atau beda harga di pasar, bagaimana?',
+    a: `
+      <p>Tenang — memang begitu realitanya. Saat di pasar:</p>
+      <ul>
+        <li><strong>Barang batal beli</strong> → tap × pada kartu di
+          tab Aktual.</li>
+        <li><strong>Harga beda</strong> → langsung ubah di field harga.</li>
+        <li><strong>Barang di luar rencana</strong> → cari di kolom
+          search, tambah seperti biasa.</li>
+        <li><strong>Qty beda</strong> → ubah di field qty.</li>
+      </ul>
+      <div class="hl">Yang penting: <strong>Simpan Database</strong>
+        setelah semua selesai. Selama belum simpan, semua masih bisa
+        diubah bebas.</div>
+    `
+  },
+  {
+    kategori: 'Belanja',
+    q: 'Uang belanja kurang, ambil dari mana?',
+    a: `
+      <p>Di tab <strong>Belanja → Rencana</strong>, scroll ke bawah.
+        Ada tombol <strong>+ Tambah dari saldo</strong>.</p>
+      <ul>
+        <li>Pilih sumber: <strong>Tunai</strong> atau <strong>QRIS</strong>.</li>
+        <li>Isi jumlah yang mau diambil.</li>
+        <li>Nominal muncul di ringkasan bawah — bisa diubah kapan saja
+          dengan tombol <strong>Ubah</strong>.</li>
+      </ul>
+      <div class="hl info">Begitu <strong>Simpan Belanja</strong>
+        diklik, otomatis dibuatkan <strong>mutasi Tarik</strong> dari
+        saldo. Anda tidak perlu input manual lagi di Laporan.</div>
+    `
+  },
+  {
+    kategori: 'Belanja',
+    q: 'Pesanan pelanggan — kapan masuk omzet harian?',
+    a: `
+      <p><strong>Tidak masuk omzet harian.</strong> Pesanan itu berdiri
+        sendiri di luar jualan harian.</p>
+      <p>Uang pesanan (DP atau tunai) masuk ke <strong>saldo</strong>,
+        bukan ke uang belanja hari itu. Kalau belanja untuk pesanan,
+        ditarik dari saldo.</p>
+      <div class="hl warn">Jangan bingung kalau omzet hari itu terasa
+        kecil padahal ada pesanan besar. Uangnya ada di saldo, bukan
+        di penjualan harian.</div>
+    `
+  },
+  {
+    kategori: 'Hutang',
+    q: 'Kenapa hutang/piutang saya ada 3 jenis?',
+    a: `
+      <p>Karena sumbernya beda, dan cara pelunasannya juga beda:</p>
+      <ul>
+        <li><strong>Bon Lisan</strong> — pelanggan yang utang tanpa nota.
+          Dicatat di tab <strong>Tutup Hari</strong>.</li>
+        <li><strong>Pesanan</strong> — pesanan pelanggan yang belum
+          lunas. Otomatis dari tab <strong>Belanja → Pesanan</strong>.</li>
+        <li><strong>Supplier</strong> — hutang Anda ke supplier saat
+          belanja dengan "Bayar Nanti". Dari tab
+          <strong>Belanja → Aktual</strong>.</li>
+      </ul>
+      <div class="hl">Semua muncul digabung di <strong>Laporan → Hutang</strong>,
+        tapi dipisah per section biar jelas.</div>
+    `
+  },
+  {
+    kategori: 'Nota',
+    q: 'Nota memengaruhi omzet atau saldo tidak?',
+    a: `
+      <p><strong>Tidak.</strong> Nota itu murni catatan untuk pelanggan.</p>
+      <ul>
+        <li>Omzet tetap diinput manual di Tutup Hari.</li>
+        <li>Saldo tidak berubah otomatis.</li>
+        <li>Piutang nota juga catatan saja — bukan piutang keuangan.</li>
+      </ul>
+      <div class="hl info">Tujuan nota: supaya pelanggan punya bukti
+        pembelian, dan Anda punya <strong>arsip status</strong> —
+        sudah lunas atau belum.</div>
+    `
+  },
+  {
+    kategori: 'Offline',
+    q: 'Kalau sinyal hilang saat di pasar, data saya aman?',
+    a: `
+      <p><strong>Aman.</strong> Semua input tetap tersimpan di HP,
+        walau tanpa sinyal sama sekali.</p>
+      <ul>
+        <li>Ada indikator <strong>🟢 🟡 🔴</strong> di topbar
+          untuk melihat status.</li>
+        <li>🟡 artinya ada data menunggu dikirim — bukan hilang.</li>
+        <li>Begitu sinyal kembali, aplikasi kirim otomatis.</li>
+      </ul>
+      <div class="hl">Anda tidak perlu tap apapun untuk sinkron.
+        Berjalan sendiri di belakang.</div>
+    `
+  },
+  {
+    kategori: 'Offline',
+    q: 'Bagaimana kalau data di server berbeda dengan di HP?',
+    a: `
+      <p>Untuk aplikasi ini, <strong>HP Anda yang jadi acuan</strong>.
+        Kalau ada perbedaan, yang di HP menang.</p>
+      <p>Ini aman karena aplikasi ini untuk pemakaian sendiri —
+        tidak multi-user.</p>
+      <div class="hl warn">Kalau muncul notifikasi "ada konflik data",
+        berarti ada perubahan yang belum tersinkron. Buka
+        <strong>Pengaturan → Sinkron Sekarang</strong>.</div>
+    `
+  },
+  {
+    kategori: 'Saldo',
+    q: 'Kenapa saldo QRIS lebih kecil dari omzet QRIS?',
+    a: `
+      <p>Karena ada <strong>fee merchant 0.7%</strong> yang dipotong
+        oleh bank/penyedia QRIS.</p>
+      <p>Contoh: omzet QRIS Rp 200.000 → yang benar-benar masuk ke
+        rekening sekitar Rp 198.600.</p>
+      <div class="hl info">Aplikasi otomatis menghitung fee ini di
+        <strong>Laporan → Arus Kas</strong>. Tidak perlu hitung manual.</div>
+    `
+  },
+  {
+    kategori: 'Saldo',
+    q: 'Mutasi saldo itu apa?',
+    a: `
+      <p>Catatan uang yang keluar/masuk dari saldo — di luar penjualan
+        dan belanja harian.</p>
+      <ul>
+        <li><strong>Tarik</strong> — ambil uang dari saldo
+          (contoh: buat tambah modal belanja).</li>
+        <li><strong>Setor</strong> — tambahkan uang ke saldo
+          (contoh: dari tabungan pribadi).</li>
+      </ul>
+      <p>Ada 3 sumber mutasi:</p>
+      <ul>
+        <li><strong>Manual</strong> — Anda sendiri yang tarik/setor.</li>
+        <li><strong>Pesanan</strong> — otomatis dari tab Belanja.</li>
+        <li><strong>Modal</strong> — tambah modal dari tab Belanja → Rencana.</li>
+      </ul>
+    `
+  },
+  {
+    kategori: 'Lainnya',
+    q: 'Kalau saya salah input data yang sudah final?',
+    a: `
+      <p>Buka tab <strong>Tutup Hari</strong>, tap tombol
+        <strong>✏️ Edit</strong> di bawah. Form terbuka lagi.</p>
+      <ol style="padding-left:18px;margin:6px 0;font-size:12.5px;
+        line-height:1.6;color:var(--ink-700)">
+        <li>Perbaiki data yang salah.</li>
+        <li>Tap <strong>Simpan</strong> → pilih
+          <strong>Simpan Database</strong>.</li>
+        <li>Data lama akan <strong>ditimpa</strong>, bukan ditambah.</li>
+      </ol>
+      <div class="hl">Tidak ada data yang terkunci mati. Semua bisa
+        dikoreksi — tinggal lewat jalur yang benar.</div>
+    `
+  },
+  {
+    kategori: 'Lainnya',
+    q: 'Aplikasi bisa dipasang di HP seperti aplikasi biasa?',
+    a: `
+      <p>Bisa. Ini adalah <strong>PWA (Progressive Web App)</strong> —
+        bisa dipasang di layar utama HP.</p>
+      <p><strong>Cara pasang:</strong></p>
+      <ul>
+        <li><strong>Android (Chrome)</strong> — tap ⋮ di browser →
+          "Pasang aplikasi" / "Tambahkan ke layar utama".</li>
+        <li><strong>iPhone (Safari)</strong> — tap ikon
+          <strong>Bagikan</strong> → "Tambahkan ke Layar Utama".</li>
+      </ul>
+      <div class="hl info">Setelah dipasang, aplikasi jalan seperti
+        aplikasi biasa — tidak ada alamat bar, punya ikon sendiri,
+        bisa dibuka tanpa buka browser.</div>
+    `
+  },
+  {
+    kategori: 'Lainnya',
+    q: 'Bagaimana cara backup data?',
+    a: `
+      <p>Buka <strong>Pengaturan → Download Backup CSV</strong>. File
+        CSV akan terunduh ke HP.</p>
+      <p>Untuk backup data lengkap (belanja, omzet, hutang, dll),
+        buka <strong>Pengaturan → Sinkron Sekarang</strong> dulu,
+        lalu backup dari Google Sheets langsung.</p>
+      <div class="hl">Backup rutin sebulan sekali. Data di Sheets
+        adalah milik Anda sendiri — tidak bisa hilang kecuali
+        dihapus manual.</div>
+    `
+  }
+];
+
+/* ==========================================================
+   HELPERS
+   ========================================================== */
+function escHtml(s){
+  return String(s==null?'':s).replace(/[&<>"']/g, c =>
+    ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(t._t); t._t = setTimeout(()=>t.classList.remove('show'), 1900);
+}
+
+/* ==========================================================
+   STATE
+   ========================================================== */
+let query = '';
+let openIdx = null; // index FAQ yang sedang terbuka
+
+/* ==========================================================
+   RENDER
+   ========================================================== */
+function render(){
+  document.getElementById('topbarDate').textContent =
+    new Date().toLocaleDateString('id-ID',
+      {weekday:'short', day:'numeric', month:'short'});
+
+  /* Filter FAQ berdasarkan query */
+  const q = query.trim().toLowerCase();
+  const filtered = q
+    ? FAQ.filter(f => f.q.toLowerCase().includes(q) ||
+        f.a.replace(/<[^>]*>/g,'').toLowerCase().includes(q))
+    : FAQ;
+
+  /* Kelompokkan per kategori */
+  const byKategori = {};
+  filtered.forEach((f, i) => {
+    if(!byKategori[f.kategori]) byKategori[f.kategori] = [];
+    byKategori[f.kategori].push({ ...f, idx: FAQ.indexOf(f) });
+  });
+
+  let html = '';
+
+  /* Hero */
+  html += `
+    <div class="hero">
+      <div class="k">Butuh Bantuan?</div>
+      <div class="v">Ada yang tidak jelas?<br>Mungkin jawabannya di sini.</div>
+      <div class="s">Ketik pertanyaan di kolom pencarian, atau
+        buka salah satu topik di bawah.</div>
+    </div>`;
+
+  /* Search */
+  html += `
+    <div class="search-wrap">
+      <span class="search-icon">🔍</span>
+      <input type="text" class="search-input" id="inpSearch"
+             placeholder="Cari pertanyaan…"
+             value="${escHtml(query)}" autocomplete="off">
+      <button class="search-clear ${query ? 'show' : ''}" id="btnClear"
+              type="button">✕</button>
+    </div>`;
+
+  /* Hasil */
+  if(!filtered.length){
+    html += `
+      <div class="empty-search">
+        <span class="em">🔍</span>
+        Tidak ditemukan: "<strong>${escHtml(query)}</strong>"<br>
+        <span style="font-size:11.5px;">Coba kata lain atau hubungi kami di bawah.</span>
+      </div>`;
+  } else {
+    Object.keys(byKategori).forEach(kategori => {
+      html += `
+        <div class="section">
+          <h2><span class="icn">${kategoriIcon(kategori)}</span>${kategori}</h2>
+          <div class="faq-list">
+            ${byKategori[kategori].map(f => renderFaqItem(f)).join('')}
+          </div>
+        </div>`;
+    });
+  }
+
+  /* Kontak */
+  html += `
+    <div class="divider"></div>
+
+    <div class="section">
+      <h2><span class="icn">📞</span>Masih Bingung?</h2>
+      <div class="contact-card">
+        <div class="ic">💬</div>
+        <div class="ttl">Hubungi Kami</div>
+        <div class="ds">
+          Kalau pertanyaan Anda belum terjawab,<br>
+          langsung chat atau telepon.
+        </div>
+        <button class="btn wa" id="btnWA">
+          <svg viewBox="0 0 24 24"><path d="M21 11.5a8.4 8.4 0 0 1-8.4 8.4 8.3 8.3 0 0 1-4.2-1.1L3 20l1.3-5.2a8.4 8.4 0 1 1 16.7-3.3z"/><path d="M8.5 9.5c0 2 3 5 5 5"/></svg>
+          Chat WhatsApp
+        </button>
+        <button class="btn telp" id="btnTelp">
+          <svg viewBox="0 0 24 24"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3 19.5 19.5 0 0 1-6-6 19.8 19.8 0 0 1-3-8.7A2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.6a2 2 0 0 1-.4 2.1L8 9.9a16 16 0 0 0 6 6l1.5-1.5a2 2 0 0 1 2.1-.4c.8.3 1.7.6 2.6.7a2 2 0 0 1 1.8 2z"/></svg>
+          Telepon ${KONTAK.waTampil}
+        </button>
+      </div>
+    </div>`;
+
+  document.getElementById('screen').innerHTML = html;
+  attachHandlers();
+}
+
+function kategoriIcon(kat){
+  const map = {
+    'Dasar': '📖',
+    'Belanja': '🛒',
+    'Hutang': '💸',
+    'Nota': '🧾',
+    'Offline': '📶',
+    'Saldo': '💰',
+    'Lainnya': '📌'
+  };
+  return map[kat] || '❓';
+}
+
+function renderFaqItem(f){
+  const isOpen = openIdx === f.idx;
+  return `
+    <div class="faq-item ${isOpen?'open':''}" data-idx="${f.idx}">
+      <button class="faq-q" type="button">
+        <span class="num">${f.idx+1}.</span>
+        <span class="txt">${escHtml(f.q)}</span>
+        <span class="chev">▼</span>
+      </button>
+      <div class="faq-a">${f.a}</div>
+    </div>`;
+}
+
+/* ==========================================================
+   HANDLERS
+   ========================================================== */
+function attachHandlers(){
+  /* Back */
+  document.getElementById('btnBack').addEventListener('click', () => {
+    showToast('→ Kembali');
+  });
+
+  /* Search */
+  const inpSearch = document.getElementById('inpSearch');
+  if(inpSearch){
+    inpSearch.addEventListener('input', () => {
+      query = inpSearch.value;
+      // Update tombol clear tanpa render penuh
+      const btnClear = document.getElementById('btnClear');
+      if(btnClear) btnClear.classList.toggle('show', !!query);
+      // Render ulang hasil
+      const screen = document.getElementById('screen');
+      const currentVal = inpSearch.value;
+      const currentFocus = document.activeElement === inpSearch;
+      render();
+      // Kembalikan fokus & posisi kursor
+      const newInp = document.getElementById('inpSearch');
+      if(newInp){
+        newInp.value = currentVal;
+        if(currentFocus) newInp.focus();
+      }
+    });
+    inpSearch.addEventListener('keydown', e => {
+      if(e.key === 'Escape'){
+        query = '';
+        render();
+      }
+    });
+  }
+
+  /* Clear */
+  const btnClear = document.getElementById('btnClear');
+  if(btnClear) btnClear.addEventListener('click', () => {
+    query = '';
+    render();
+    const inp = document.getElementById('inpSearch');
+    if(inp) inp.focus();
+  });
+
+  /* FAQ toggle */
+  document.querySelectorAll('.faq-item').forEach(item => {
+    const q = item.querySelector('.faq-q');
+    q.addEventListener('click', () => {
+      const idx = Number(item.dataset.idx);
+      openIdx = (openIdx === idx) ? null : idx;
+      /* Update hanya item yang berubah, bukan render penuh */
+      document.querySelectorAll('.faq-item').forEach(el => {
+        el.classList.toggle('open', Number(el.dataset.idx) === openIdx);
+      });
+    });
+  });
+
+  /* WhatsApp */
+  const btnWA = document.getElementById('btnWA');
+  if(btnWA) btnWA.addEventListener('click', () => {
+    const pesan = encodeURIComponent('Halo, saya butuh bantuan dengan Sayur App.');
+    window.open(`https://wa.me/${KONTAK.waNomor}?text=${pesan}`, '_blank');
+  });
+
+  /* Telepon */
+  const btnTelp = document.getElementById('btnTelp');
+  if(btnTelp) btnTelp.addEventListener('click', () => {
+    window.location.href = 'tel:' + KONTAK.telpNomor;
+  });
+}
+
+/* ==========================================================
+   INIT
+   ========================================================== */
+render();
+</script>
+</body>
+</html>
