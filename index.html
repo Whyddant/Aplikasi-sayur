@@ -59,21 +59,12 @@ h1,h2,h3{font-family:'Zilla Slab',serif;margin:0;font-weight:700;letter-spacing:
 .topbar-brand{display:flex;align-items:center;gap:9px;min-width:0;flex:1}
 .topbar-logo{
   width:30px;height:30px;border-radius:50%;
-  background:#FFFFFF;
   display:flex;align-items:center;justify-content:center;
   flex:none;overflow:hidden;
-  padding:2px;
-  box-shadow:0 1px 3px rgba(0,0,0,.1);
 }
 .topbar-logo img{
   width:100%;height:100%;
-  object-fit:contain;
-  display:block;
-}
-  overflow:hidden;
-}
-.topbar-logo svg{
-  width:100%;height:100%;
+  object-fit:cover;      /* ← cover, bukan contain */
   display:block;
 }
 .topbar h1{font-size:16px;white-space:nowrap;overflow:hidden;
