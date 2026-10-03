@@ -75,6 +75,7 @@ h1,h2,h3{font-family:'Zilla Slab',serif;margin:0;font-weight:700;letter-spacing:
   background:#7FAF54;flex:none;transition:background .2s;position:relative}
 .conn-dot.pending{background:#E8B838}
 .conn-dot.offline{background:#E85B38}
+.conn-dot.failed{background:#D6402A}
 .conn-dot.pending::after{
   content:'';position:absolute;inset:-3px;border-radius:50%;
   border:1px solid #E8B838;opacity:.6;
@@ -1889,6 +1890,7 @@ body.dark .order-card.overdue{background:linear-gradient(160deg,#3A1F18,var(--ca
   <div class="conn-banner" id="connBanner">
     <span class="ic" id="connBannerIc">📡</span>
     <span class="txt" id="connBannerTxt">Menunggu sinkron…</span>
+    <button class="btn-sync" id="btnDiscardFailed" type="button" style="display:none">Buang</button>
     <button class="btn-sync" id="btnForceSync" type="button">Sync</button>
   </div>
   <div id="berandaContent"></div>
@@ -6092,6 +6094,8 @@ body.dark .order-card.overdue{background:linear-gradient(160deg,#3A1F18,var(--ca
     },
 
     openMutasiModal(tipe, metode){
+      /* data-aksi berupa huruf kecil → samakan dengan 'Tarik' / 'Setor' */
+      tipe = String(tipe).toLowerCase() === 'tarik' ? 'Tarik' : 'Setor';
       const s = this.saldoData || {saldoCash:0, saldoQris:0};
       const saldo = metode === 'QRIS' ? s.saldoQris : s.saldoCash;
 
@@ -7817,8 +7821,19 @@ body.dark .order-card.overdue{background:linear-gradient(160deg,#3A1F18,var(--ca
     const banner = document.getElementById('connBanner');
     const bannerIc = document.getElementById('connBannerIc');
     const bannerTxt = document.getElementById('connBannerTxt');
+    const btnSync = document.getElementById('btnForceSync');
+    const btnDiscard = document.getElementById('btnDiscardFailed');
     dot.className = 'conn-dot ' + status.status;
-    if(status.status === 'offline'){
+    const hasFailed = status.status === 'failed' || (status.failed || 0) > 0;
+    btnSync.textContent = hasFailed ? 'Coba lagi' : 'Sync';
+    btnDiscard.style.display = hasFailed ? '' : 'none';
+    if(status.status === 'failed'){
+      banner.classList.add('show', 'offline');
+      bannerIc.textContent = '⚠️';
+      bannerTxt.innerHTML = `<strong>${status.failed}</strong> item gagal tersinkron` +
+        (status.lastError ? ` (${String(status.lastError).replace(/</g,'&lt;')})` : '') +
+        `. Coba lagi atau buang.`;
+    } else if(status.status === 'offline'){
       banner.classList.add('show', 'offline');
       bannerIc.textContent = '📵';
       bannerTxt.innerHTML = 'Tidak ada sinyal. Data tetap tersimpan di HP.';
@@ -7826,7 +7841,8 @@ body.dark .order-card.overdue{background:linear-gradient(160deg,#3A1F18,var(--ca
       banner.classList.add('show');
       banner.classList.remove('offline');
       bannerIc.textContent = '📡';
-      bannerTxt.innerHTML = `<strong>${status.pending}</strong> item menunggu sinkron. Akan otomatis terkirim saat online.`;
+      bannerTxt.innerHTML = `<strong>${status.pending}</strong> item menunggu sinkron. Akan otomatis terkirim saat online.` +
+        (status.failed ? ` <strong>${status.failed}</strong> item gagal.` : '');
     } else {
       banner.classList.remove('show', 'offline');
     }
@@ -7837,13 +7853,14 @@ body.dark .order-card.overdue{background:linear-gradient(160deg,#3A1F18,var(--ca
       updateConnectionStatus(e.detail);
     });
     window.addEventListener('sayur:sync-done', e => {
-      const {ok, skip, error} = e.detail;
+      const {ok, skip, newlyFailed} = e.detail;
       if(ok > 0 || skip > 0){
         showToast('✓ Tersinkron: ' + (ok + skip) + ' item');
         if(App.currentTab === 'beranda') loadBeranda();
       }
-      if(error > 0){
-        showToast('⚠️ ' + error + ' item gagal tersinkron');
+      /* Toast gagal hanya sekali, saat item baru ditandai gagal permanen */
+      if(newlyFailed > 0){
+        showToast('⚠️ ' + newlyFailed + ' item gagal tersinkron');
       }
     });
     window.addEventListener('sayur:sync-error', e => {
@@ -7853,13 +7870,23 @@ body.dark .order-card.overdue{background:linear-gradient(160deg,#3A1F18,var(--ca
       if(!navigator.onLine){ showToast('Tidak ada koneksi'); return; }
       showToast('Menyinkron…');
       try{
+        /* Item gagal di-reset dulu supaya dicoba kirim lagi */
+        SayurStorage.queue.resetFailed();
         const r = await SayurStorage.processQueue();
-        if(r.ok === 0 && r.skip === 0 && r.error === 0){
+        if(r.skipped && r.reason === 'empty'){
           showToast('Semua sudah tersinkron');
         }
       }catch(e){
         showToast('Gagal sinkron');
       }
+    });
+    document.getElementById('btnDiscardFailed').addEventListener('click', () => {
+      const n = SayurStorage.queue.failedCount();
+      if(n === 0) return;
+      if(!confirm('Buang ' + n + ' item yang gagal? Data ini tidak akan masuk ke Google Sheets.')) return;
+      SayurStorage.discardFailed();
+      showToast('Item gagal dibuang');
+      if(App.currentTab === 'laporan' && Laporan.currentTab === 'saldo') Laporan.loadSaldo().catch(() => {});
     });
 
     /* Auto-refresh Laporan saat tab aktif */

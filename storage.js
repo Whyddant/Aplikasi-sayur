@@ -231,20 +231,50 @@
       this._save(arr);
     },
 
-    /* Update retry count */
-    bumpRetry(clientId){
+    /* Update retry count (+ simpan alasan error terakhir) */
+    bumpRetry(clientId, errMsg){
       const arr = this.list();
       const item = arr.find(x => x.clientId === clientId);
       if(item){
         item.retry = (item.retry || 0) + 1;
         item.lastRetry = now();
+        if(errMsg) item.lastError = String(errMsg);
         this._save(arr);
+        return item.retry;
       }
+      return 0;
     },
 
-    /* Cek item yang sudah melebihi MAX_RETRY */
+    /* Item yang sudah melebihi MAX_RETRY (berhenti dikirim otomatis) */
     getFailedItems(){
       return this.list().filter(x => (x.retry || 0) >= CONFIG.MAX_RETRY);
+    },
+
+    /* Item yang masih layak dikirim */
+    getPendingItems(){
+      return this.list().filter(x => (x.retry || 0) < CONFIG.MAX_RETRY);
+    },
+
+    pendingCount(){ return this.getPendingItems().length; },
+    failedCount(){ return this.getFailedItems().length; },
+
+    /* Reset retry item gagal supaya dicoba kirim lagi */
+    resetFailed(){
+      const arr = this.list();
+      let n = 0;
+      arr.forEach(x => {
+        if((x.retry || 0) >= CONFIG.MAX_RETRY){ x.retry = 0; n++; }
+      });
+      if(n > 0) this._save(arr);
+      return n;
+    },
+
+    /* Buang item gagal dari queue (data tidak akan terkirim) */
+    discardFailed(){
+      const arr = this.list();
+      const keep = arr.filter(x => (x.retry || 0) < CONFIG.MAX_RETRY);
+      this._save(keep);
+      return arr.length - keep.length;
     },
 
     /* Bersihkan item yang terlalu tua */
@@ -300,14 +330,19 @@
      ========================================================== */
   const Status = {
     get(){
-      const pending = Queue.count();
+      const pending = Queue.pendingCount();
+      const failedItems = Queue.getFailedItems();
+      const failed = failedItems.length;
       const isOnline = navigator.onLine;
       let status = 'online';
       if(!isOnline) status = 'offline';
       else if(pending > 0) status = 'pending';
+      else if(failed > 0) status = 'failed';
       return {
-        status: status,           // 'online' | 'pending' | 'offline'
+        status: status,           // 'online' | 'pending' | 'failed' | 'offline'
         pending: pending,
+        failed: failed,
+        lastError: failed ? (failedItems[0].lastError || '') : '',
         lastSync: Meta.get('lastSync', null),
         apiUrl: CONFIG.API_URL
       };
@@ -468,7 +503,8 @@
       return {skipped: true, reason: 'offline'};
     }
 
-    const arr = Queue.list();
+    /* Item yang sudah gagal MAX_RETRY kali tidak dikirim otomatis lagi */
+    const arr = Queue.getPendingItems();
     if(arr.length === 0){
       Meta.set('lastSync', now());
       emit(EV.STATUS_CHANGE, Status.get());
@@ -487,6 +523,7 @@
       }
 
       let totalOk = 0, totalSkip = 0, totalError = 0;
+      let newlyFailed = 0, batchError = null;
       const toRemove = [];
 
       for(const batch of batches){
@@ -499,13 +536,15 @@
             else if(h.status === 'skip'){ totalSkip++; toRemove.push(h.clientId); }
             else if(h.status === 'error'){
               totalError++;
-              Queue.bumpRetry(h.clientId);
+              const r = Queue.bumpRetry(h.clientId, h.error);
+              if(r === CONFIG.MAX_RETRY) newlyFailed++;
             }
           });
         }catch(e){
-          /* Batch gagal total → bump retry semua */
-          batch.forEach(item => Queue.bumpRetry(item.clientId));
-          totalError += batch.length;
+          /* Batch gagal total (jaringan / server sibuk) → sementara.
+             Jangan bump retry, supaya item tidak ditandai gagal
+             hanya karena sinyal jelek. */
+          batchError = String(e.message || e);
         }
       }
 
@@ -520,11 +559,15 @@
         ok: totalOk,
         skip: totalSkip,
         error: totalError,
-        pending: Queue.count()
+        newlyFailed: newlyFailed,
+        failed: Queue.failedCount(),
+        pending: Queue.pendingCount()
       });
+      if(batchError) emit(EV.SYNC_ERROR, {error: batchError});
       emit(EV.STATUS_CHANGE, Status.get());
 
-      return {ok: totalOk, skip: totalSkip, error: totalError};
+      return {ok: totalOk, skip: totalSkip, error: totalError,
+              newlyFailed: newlyFailed, failed: Queue.failedCount()};
     }catch(e){
       emit(EV.SYNC_ERROR, {error: String(e.message || e)});
       emit(EV.STATUS_CHANGE, Status.get());
@@ -539,7 +582,7 @@
   function startAutoSync(){
     if(_syncTimer) clearInterval(_syncTimer);
     _syncTimer = setInterval(() => {
-      if(navigator.onLine && Queue.count() > 0){
+      if(navigator.onLine && Queue.pendingCount() > 0){
         processQueue().catch(() => {});
       } else {
         emit(EV.STATUS_CHANGE, Status.get());
@@ -548,7 +591,7 @@
 
     /* Sync saat aplikasi pertama buka */
     setTimeout(() => {
-      if(navigator.onLine && Queue.count() > 0){
+      if(navigator.onLine && Queue.pendingCount() > 0){
         processQueue().catch(() => {});
       }
     }, 1000);
@@ -577,7 +620,7 @@
 
     /* Cek juga saat tab dibuka kembali */
     document.addEventListener('visibilitychange', () => {
-      if(!document.hidden && navigator.onLine && Queue.count() > 0){
+      if(!document.hidden && navigator.onLine && Queue.pendingCount() > 0){
         processQueue().catch(() => {});
       }
     });
@@ -689,6 +732,8 @@
 
     /* Sync */
     processQueue,
+    retryFailed(){ Queue.resetFailed(); return processQueue(); },
+    discardFailed(){ return Queue.discardFailed(); },
     startAutoSync,
     stopAutoSync,
 
