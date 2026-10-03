@@ -2177,9 +2177,106 @@ body.dark .order-card.overdue{background:linear-gradient(160deg,#3A1F18,var(--ca
   }
 
   /* ==========================================================
+     MODUL: SERVERHARI — ambil data 1 hari dari server (getDetailHari)
+     Dipakai Tutup & Belanja supaya form tidak kosong kalau data
+     lokal di HP hilang (ganti HP / storage dibersihkan).
+     ========================================================== */
+  const ServerHari = {
+    _n(v){ return Number(v) || 0; },
+
+    async ambil(tgl){
+      if(!navigator.onLine) return null;
+      try{
+        return await SayurStorage.get('getDetailHari', {tanggal: tgl}, {fresh: true});
+      }catch(e){
+        console.warn('ServerHari.ambil gagal:', e);
+        return null;
+      }
+    },
+
+    bonRaw(d){
+      return (d.Hutang || []).filter(h =>
+        h.Tipe === 'PiutangSaya' && (h.Sumber || 'Bon') === 'Bon');
+    },
+    bonDari(d){
+      return this.bonRaw(d).map(h => ({
+        id: h.ID, nama: h.Nama, jumlah: this._n(h.JumlahAwal)
+      }));
+    },
+    lainDari(d){
+      return (d.LainLain || []).map(x => ({
+        id: x.ID, ket: x.Keterangan, jumlah: this._n(x.Jumlah)
+      }));
+    },
+    modalDari(d){
+      return (d.Belanja || []).reduce((s,b) => s + this._n(b.Subtotal), 0);
+    },
+
+    /* Data milik Tab Tutup (omzet, pagi, lain-lain, bon) sudah tersimpan? */
+    tutupTersimpan(d){
+      if(!d) return false;
+      const om = d.Omzet || {}, bi = d.Biaya || {};
+      return this._n(om.Cash) + this._n(om.QRIS) > 0 ||
+        this._n(bi.pagiKresek) > 0 || this._n(bi.pagiKonsumsi) > 0 ||
+        this._n(bi.pagiIuran) > 0 || this._n(bi.pagiLain) > 0 ||
+        this.lainDari(d).length > 0 || this.bonDari(d).length > 0;
+    },
+
+    adaData(d){
+      if(!d) return false;
+      const bi = d.Biaya || {};
+      return this.tutupTersimpan(d) ||
+        this._n(bi.operasionalBelanja) > 0 || this._n(bi.bensin) > 0 ||
+        (d.Belanja || []).length > 0;
+    },
+
+    stateTutup(d){
+      const om = d.Omzet || {}, bi = d.Biaya || {};
+      const lain = [];
+      if(this._n(bi.pagiKonsumsi) > 0){
+        lain.push({id:'srv-pk', ket:'Konsumsi', jumlah: this._n(bi.pagiKonsumsi)});
+      }
+      if(this._n(bi.pagiLain) > 0){
+        lain.push({id:'srv-pl', ket:'Pagi lain', jumlah: this._n(bi.pagiLain)});
+      }
+      return {
+        omzetCash: this._n(om.Cash),
+        omzetQris: this._n(om.QRIS),
+        bon: this.bonDari(d),
+        pagi: { kantongKaret: this._n(bi.pagiKresek),
+                iuran: this._n(bi.pagiIuran), lain: lain }
+      };
+    },
+
+    /* Tulis 'pengeluaran' ke key lokal yang dipakai bersama Tutup & Belanja.
+       timpa=false → hanya kalau key lokal belum ada. */
+    tulisPengeluaran(tgl, d, timpa){
+      const key = 'sayur_belanja_biaya_' + tgl;
+      let lokal = null;
+      try{
+        const raw = localStorage.getItem(key);
+        if(raw) lokal = JSON.parse(raw);
+      }catch(e){}
+      if(lokal && !timpa) return false;
+      const bi = d.Biaya || {};
+      const peng = {
+        modalBelanja: this.modalDari(d) || Number((lokal||{}).modalBelanja) || 0,
+        opsPasar: this._n(bi.operasionalBelanja),
+        bensin: this._n(bi.bensin),
+        lain: this.lainDari(d),
+        bayarHutang: Number((lokal||{}).bayarHutang) || 0
+      };
+      try{ localStorage.setItem(key, JSON.stringify(peng)); }
+      catch(e){ return false; }
+      return true;
+    }
+  };
+
+  /* ==========================================================
      MODUL: BELANJA
      ========================================================== */
   const Belanja = {
+    _cek: {},
     tanggal: todayYmd(),
     currentSubTab: 'rencana',
     state: [],
@@ -2212,14 +2309,21 @@ body.dark .order-card.overdue{background:linear-gradient(160deg,#3A1F18,var(--ca
 
       this.tanggal = ymd;
       this.modeBackdate = !!modeBackdate;
+
+      /* Cek SEBELUM loadLocalState — fungsi itu membuat template kosong dan
+         menyimpannya, sehingga pengecekan sesudahnya selalu "ada lokal". */
+      const adaLokal = this._stateBermakna(ymd);
       this.loadLocalState();
 
-      /* Kalau mode backdate DAN lokal kosong → coba ambil dari server */
-      if(this.modeBackdate){
-        const adaLokal = localStorage.getItem(this._key(ymd));
-        if(!adaLokal){
-          await this.loadFromServer();
-        }
+      /* Lokal kosong (hari ini maupun backdate) → ambil dari server */
+      if(!adaLokal){
+        await this.loadFromServer();
+      }
+
+      /* Pengeluaran (ops, bensin, lain-lain, modal) juga dari server */
+      if(!localStorage.getItem(this._pkey(ymd))){
+        const d = await ServerHari.ambil(ymd);
+        if(d && ServerHari.adaData(d)) ServerHari.tulisPengeluaran(ymd, d, false);
       }
 
       this.loadPengeluaran();
@@ -2243,6 +2347,24 @@ body.dark .order-card.overdue{background:linear-gradient(160deg,#3A1F18,var(--ca
       this.attachHandlers();
     },
 
+    /* State lokal yang berisi data sungguhan (bukan sekadar template master) */
+    _stateBermakna(ymd){
+      try{
+        const raw = localStorage.getItem(this._key(ymd));
+        const arr = raw ? JSON.parse(raw) : null;
+        return Array.isArray(arr) && arr.some(x =>
+          x.tersimpan || x.checked || (x.qty !== '' && x.qty != null));
+      }catch(e){ return false; }
+    },
+
+    /* Batasi cek ke server: maksimal 1x per 60 detik per tanggal */
+    _sudahDicek(tgl){
+      const n = Date.now();
+      if(n - (this._cek[tgl] || 0) < 60000) return true;
+      this._cek[tgl] = n;
+      return false;
+    },
+
     keluarBackdate(){
       this.setTanggal(todayYmd(), false);
       showToast('Kembali ke hari ini');
@@ -2254,7 +2376,15 @@ body.dark .order-card.overdue{background:linear-gradient(160deg,#3A1F18,var(--ca
       this.renderAktual();
       this.updateSubtabCounts();
       await this.loadMaster();
+      const adaLokal = this._stateBermakna(this.tanggal);
       this.loadLocalState();
+      if(!adaLokal && !this._sudahDicek(this.tanggal)){
+        await this.loadFromServer();
+        if(!localStorage.getItem(this._pkey(this.tanggal))){
+          const d = await ServerHari.ambil(this.tanggal);
+          if(d && ServerHari.adaData(d)) ServerHari.tulisPengeluaran(this.tanggal, d, false);
+        }
+      }
       this.loadPengeluaran();
       await this.loadHutangSaya();
       this.loadHutangPesanan();
@@ -3677,7 +3807,6 @@ body.dark .order-card.overdue{background:linear-gradient(160deg,#3A1F18,var(--ca
           bensin: this.pengeluaran.bensin,
           bensinMetode: 'Cash',
           konsumsi: 0, konsumsiMetode: 'Cash',
-          pagiKresek: 0, pagiKonsumsi: 0, pagiIuran: 0, pagiLain: 0,
           tanggal: this.tanggal
         });
 
@@ -4937,9 +5066,19 @@ body.dark .order-card.overdue{background:linear-gradient(160deg,#3A1F18,var(--ca
     _finalKey(tgl){ return 'sayur_tutup_final_' + tgl; },
     _biayaKey(tgl){ return 'sayur_belanja_biaya_' + tgl; },
 
+    _cek: {},
+
     async load(){
       this.loadLocal();
       this.render();
+      if(this.mode === 'baru'){
+        const tgl = this.tanggal;
+        const n = Date.now();
+        if(n - (this._cek[tgl] || 0) >= 60000){
+          this._cek[tgl] = n;
+          if(await this.loadFromServer()) this.render();
+        }
+      }
     },
 
     async setTanggal(ymd, modeBackdate){
@@ -4947,7 +5086,43 @@ body.dark .order-card.overdue{background:linear-gradient(160deg,#3A1F18,var(--ca
       this.modeBackdate = !!modeBackdate;
       this.loadLocal();
       this.render();
+      if(this.mode === 'baru'){
+        this._cek[ymd] = Date.now();
+        const dimuat = await this.loadFromServer();
+        if(dimuat && this.tanggal === ymd){
+          this.render();
+          showToast('Data dimuat dari server');
+        }
+      }
+      if(this.tanggal !== ymd) return;   /* user sudah pindah tanggal */
       await Belanja.setTanggal(ymd, modeBackdate);
+    },
+
+    /* Isi form dari server kalau data lokal tanggal ini tidak ada.
+       Data lokal (draft/final) selalu menang. */
+    async loadFromServer(){
+      const tgl = this.tanggal;
+      if(this.mode !== 'baru') return false;
+      const d = await ServerHari.ambil(tgl);
+
+      /* Batal kalau user pindah tanggal / sudah mulai mengisi selama menunggu */
+      if(!d || tgl !== this.tanggal || this.mode !== 'baru') return false;
+      if(this.totalPendapatanKotor() > 0 ||
+         (this.pengeluaran.lain || []).length > 0) return false;
+
+      if(ServerHari.tutupTersimpan(d)){
+        try{
+          localStorage.setItem(this._finalKey(tgl),
+            JSON.stringify(ServerHari.stateTutup(d)));
+        }catch(e){ return false; }
+        ServerHari.tulisPengeluaran(tgl, d, true);
+      } else if(ServerHari.adaData(d)){
+        ServerHari.tulisPengeluaran(tgl, d, false);
+      } else {
+        return false;
+      }
+      this.loadLocal();
+      return true;
     },
 
     loadLocal(){
@@ -5616,26 +5791,9 @@ body.dark .order-card.overdue{background:linear-gradient(160deg,#3A1F18,var(--ca
           pagiLain: this.totalPagiLain()
         });
 
-        for(const x of (this.pengeluaran.lain || [])){
-          await SayurStorage.post('addLainLain', {
-            id: x.id || 'll-' + Date.now() + Math.random(),
-            tanggal: this.tanggal,
-            keterangan: x.ket,
-            jumlah: x.jumlah,
-            metode: 'Cash'
-          });
-        }
-
-        for(const b of (this.state.bon || [])){
-          await SayurStorage.post('addHutang', {
-            id: b.id || 'bon-' + Date.now() + Math.random(),
-            tipe: 'PiutangSaya',
-            nama: b.nama,
-            jumlah: b.jumlah,
-            catatan: 'Bon lisan',
-            sumber: 'Bon',
-            tanggal: this.tanggal
-          });
+        const bonTerkunci = await this._sinkronLainBon();
+        if(bonTerkunci > 0){
+          showToast(bonTerkunci + ' bon sudah ada pembayaran, tidak diubah');
         }
 
         this.saveFinal();
@@ -5657,6 +5815,79 @@ body.dark .order-card.overdue{background:linear-gradient(160deg,#3A1F18,var(--ca
       }catch(e){
         showToast('Gagal: ' + (e.message || 'Unknown'));
       }
+    },
+
+    /* Samakan lain-lain & bon di server dengan isi form:
+       - item baru → ditambah
+       - item berubah / dihapus → hapus dulu (lalu tambah ulang kalau berubah)
+       Bon yang sudah ada pembayarannya tidak disentuh.
+       Return: jumlah bon yang dilewati. */
+    async _sinkronLainBon(){
+      const tgl = this.tanggal;
+      const n = v => Number(v) || 0;
+
+      /* Pastikan antrean kosong & ambil kondisi server terbaru */
+      if(navigator.onLine){ try{ await SayurStorage.processQueue(); }catch(e){} }
+      const d = await ServerHari.ambil(tgl);
+      const srvLain = d ? ServerHari.lainDari(d) : [];
+      const srvBon  = d ? ServerHari.bonRaw(d) : [];
+
+      /* ---- Lain-lain ---- */
+      const lokalLain = this.pengeluaran.lain || [];
+      lokalLain.forEach(x => {
+        if(!x.id) x.id = 'lain-' + Date.now() + '-' + Math.random().toString(36).slice(2,6);
+      });
+      const srvLainById = new Map(srvLain.map(x => [x.id, x]));
+      const lokalLainById = new Map(lokalLain.map(x => [x.id, x]));
+      const bedaLain = (a, b) =>
+        String(a.ket || '') !== String(b.ket || '') || n(a.jumlah) !== n(b.jumlah);
+
+      for(const s of srvLain){
+        const l = lokalLainById.get(s.id);
+        if(!l || bedaLain(l, s)){
+          await SayurStorage.post('deleteLainLain', {id: s.id},
+            'del-' + s.id + '-' + Date.now());
+        }
+      }
+      for(const l of lokalLain){
+        const s = srvLainById.get(l.id);
+        if(!s || bedaLain(l, s)){
+          await SayurStorage.post('addLainLain', {
+            id: l.id, tanggal: tgl, keterangan: l.ket,
+            jumlah: l.jumlah, metode: 'Cash'
+          });
+        }
+      }
+
+      /* ---- Bon ---- */
+      const lokalBon = this.state.bon || [];
+      lokalBon.forEach(b => {
+        if(!b.id) b.id = 'bon-' + Date.now() + '-' + Math.random().toString(36).slice(2,6);
+      });
+      const srvBonById = new Map(srvBon.map(h => [h.ID, h]));
+      const lokalBonById = new Map(lokalBon.map(b => [b.id, b]));
+      const hapusBon = new Set();
+      let terkunci = 0;
+
+      for(const h of srvBon){
+        const l = lokalBonById.get(h.ID);
+        const berubah = !l || String(l.nama || '') !== String(h.Nama || '') ||
+                        n(l.jumlah) !== n(h.JumlahAwal);
+        if(!berubah) continue;
+        if(n(h.JumlahDibayar) > 0){ terkunci++; continue; }
+        hapusBon.add(h.ID);
+        await SayurStorage.post('hapusHutang', {id: h.ID},
+          'delh-' + h.ID + '-' + Date.now());
+      }
+      for(const b of lokalBon){
+        const h = srvBonById.get(b.id);
+        if(h && !hapusBon.has(b.id)) continue;   /* sudah ada & tidak berubah / terkunci */
+        await SayurStorage.post('addHutang', {
+          id: b.id, tipe: 'PiutangSaya', nama: b.nama, jumlah: b.jumlah,
+          catatan: 'Bon lisan', sumber: 'Bon', tanggal: tgl
+        });
+      }
+      return terkunci;
     },
 
     tawarkanLanjut(){

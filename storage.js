@@ -396,11 +396,11 @@
      2. Kalau tidak ada / kadaluarsa → coba fetch dari server
      3. Kalau fetch gagal (offline) → kembalikan cache lama kalau ada
      ========================================================== */
-  async function get(action, params){
+  async function get(action, params, opts){
     const key = _cacheKey(action, params);
 
-    /* Cek cache fresh */
-    if(Cache.isFresh(key)){
+    /* Cek cache fresh (dilewati kalau opts.fresh = true) */
+    if(!(opts && opts.fresh) && Cache.isFresh(key)){
       return Cache.load(key);
     }
 
@@ -443,9 +443,10 @@
      Pengecualian: kalau action butuh respons server
      (misal getLaporan setelah update), pakai postNow().
      ========================================================== */
-  async function post(action, data){
-    /* Tambah ke queue */
-    const clientId = data && data.id ? data.id : uid('q-');
+  async function post(action, data, clientIdOpt){
+    /* Tambah ke queue. clientIdOpt dipakai kalau 2 aksi memakai data.id
+       yang sama (mis. hapus lalu tambah ulang) supaya tidak bentrok. */
+    const clientId = clientIdOpt || (data && data.id ? data.id : uid('q-'));
     Queue.add(action, data, clientId);
 
     /* Trigger sync di background (tidak tunggu) */
