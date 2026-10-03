@@ -2005,6 +2005,37 @@ body.dark .order-card.overdue{background:linear-gradient(160deg,#3A1F18,var(--ca
   const SUSUT_RATE = 0.30;
   const TOLERANSI_SELISIH = 10000;
 
+  /* Master barang awal dari Daftar_Belanja_Sayur.xlsx
+     Format: [nama, qty acuan, modal (harga beli/satuan), harga jual]
+     Dipakai sebagai acuan selama server/kemarin belum punya data. */
+  const SEED_MASTER = [
+    ['Kol',20,7500,11000],['Kentang',0,15000,20000],['Putren',0,10000,15000],
+    ['Bawang Putih',2,37000,44000],['Kating',0,37000,44000],['Bombay',2,28000,36000],
+    ['Nipis',2,18000,23000],['Limo',0,35000,42000],['Kencur',1,35000,42000],
+    ['Jamur',0,20000,26000],['Tomat',22,12000,16000],['Buncis',5,10000,15000],
+    ['Sawi Putih',20,5000,10000],['Pokcoy',5,8000,12000],['Labu Besar',1,60000,72000],
+    ['Labu Acar',5,10000,15000],['Jengkol',0,40000,48000],['Wortel Impor',0,14000,18000],
+    ['Wortel Lokal',10,9000,14000],['Daun Bawang',8,13000,17000],['Seledri',2,30000,39000],
+    ['Bawang M',10,37000,44000],['Cabe Merah Keriting',5,30000,39000],
+    ['Rawit Merah',3,55000,66000],['Rawit Ijo',3,42000,50000],
+    ['Cabe Merah Besar',0,40000,48000],['Cabe Ijo Besar',2,25000,33000],
+    ['Cabe Ijo Keriting',2,30000,39000],['Tomat Ijo',5,10000,15000],
+    ['Timun',35,6000,9000],['Kacang Panjang',5,6000,9000],['Jagung',20,6000,9000],
+    ['Toge',20,8000,12000],['Cesim',15,4500,9000],['Bayam+Kangkung',2,60000,72000],
+    ['Kemangi',2,25000,33000],['Buah Tangkil',0,20000,26000],['Asem',2,20000,26000],
+    ['Daun Tangkil',0,20000,26000],['Pare',5,10000,15000],['Terong',0,8000,12000],
+    ['Oyong',0,10000,15000],['Kembang Kol',5,18000,23000],['Seladra',0,18000,23000],
+    ['Lengkio',0,80000,96000]
+  ];
+  /* Satuan selain kg (default kg). gb = gabung */
+  const SEED_SATUAN = {
+    'bayam+kangkung': 'ikat',
+    'bayam': 'ikat',
+    'kangkung': 'ikat',
+    'lengkio': 'gb',
+    'kemangi': 'gb'
+  };
+
   /* ==========================================================
      UTIL
      ========================================================== */
@@ -2309,6 +2340,7 @@ body.dark .order-card.overdue{background:linear-gradient(160deg,#3A1F18,var(--ca
 
       this.tanggal = ymd;
       this.modeBackdate = !!modeBackdate;
+      await this.loadMaster();
 
       /* Cek SEBELUM loadLocalState — fungsi itu membuat template kosong dan
          menyimpannya, sehingga pengecekan sesudahnya selalu "ada lokal". */
@@ -2405,18 +2437,107 @@ body.dark .order-card.overdue{background:linear-gradient(160deg,#3A1F18,var(--ca
           nama: h.NamaBarang,
           satuan: h.Satuan || 'kg',
           hargaBeli: Number(h.HargaBeli) || 0,
-          hargaJual: Number(h.HargaJual) || 0
+          hargaJual: Number(h.HargaJual) || 0,
+          defQty: ''
         }));
         if(this.master.length === 0 && names && names.length){
           this.master = names.map(n => ({
-            nama: n, satuan: 'kg', hargaBeli: 0, hargaJual: 0
+            nama: n, satuan: 'kg', hargaBeli: 0, hargaJual: 0, defQty: ''
           }));
         }
+        await this._gabungSeedDanKemarin();
         this.masterLoaded = true;
       }catch(e){
         this.master = [];
+        await this._gabungSeedDanKemarin();
         this.masterLoaded = true;
       }
+    },
+
+    /* Acuan qty & harga: belanja kemarin > master server > seed xlsx */
+    async _gabungSeedDanKemarin(){
+      const peta = {};
+      (this.master || []).forEach(m => { peta[m.nama.toLowerCase()] = m; });
+
+      /* Seed xlsx: isi barang yang belum ada, atau lengkapi yang harganya 0 */
+      SEED_MASTER.forEach(s => {
+        const key = s[0].toLowerCase();
+        const ada = peta[key];
+        if(!ada){
+          const m = {nama: s[0], satuan: SEED_SATUAN[key] || 'kg', defQty: s[1] > 0 ? String(s[1]) : '',
+                     hargaBeli: s[2], hargaJual: s[3]};
+          this.master.push(m);
+          peta[key] = m;
+        } else {
+          if(SEED_SATUAN[key] && (!ada.satuan || ada.satuan === 'kg')) ada.satuan = SEED_SATUAN[key];
+          if(!ada.hargaBeli) ada.hargaBeli = s[2];
+          if(!ada.hargaJual) ada.hargaJual = s[3];
+          if(!ada.defQty && s[1] > 0) ada.defQty = String(s[1]);
+        }
+      });
+
+      /* Belanja kemarin (kalau ada) menimpa acuan seed */
+      try{
+        const d = new Date();
+        d.setDate(d.getDate() - 1);
+        const kemarin = fmtYmd(d);
+        const list = await SayurStorage.get('getBelanja', {tanggal: kemarin});
+        (list || []).forEach(b => {
+          const key = String(b.NamaBarang || '').toLowerCase();
+          if(!key) return;
+          let m = peta[key];
+          if(!m){
+            m = {nama: b.NamaBarang, satuan: b.Satuan || 'kg',
+                 hargaBeli: 0, hargaJual: 0, defQty: ''};
+            this.master.push(m);
+            peta[key] = m;
+          }
+          if(Number(b.Qty) > 0) m.defQty = String(b.Qty);
+          if(Number(b.HargaBeli) > 0) m.hargaBeli = Number(b.HargaBeli);
+          if(Number(b.HargaJual) > 0) m.hargaJual = Number(b.HargaJual);
+          if(b.Satuan) m.satuan = b.Satuan;
+        });
+      }catch(e){}
+    },
+
+    /* Tambahkan barang master yang belum ada di state (tanpa menyentuh yang sudah ada) */
+    _lengkapiDariMaster(){
+      const ada = new Set(this.state.map(x => String(x.nama).toLowerCase()));
+      let tambah = 0;
+      (this.master || []).forEach((m, idx) => {
+        if(ada.has(m.nama.toLowerCase())) return;
+        this.state.push(this._itemDariMaster(m, 'm' + idx));
+        tambah++;
+      });
+      /* Koreksi satuan item lama (yang belum tersimpan) sesuai seed */
+      this.state.forEach(it => {
+        const sat = SEED_SATUAN[String(it.nama).toLowerCase()];
+        if(sat && !it.tersimpan && it.satuan === 'kg') it.satuan = sat;
+      });
+      this.saveLocalState();
+      /* Isi defQty untuk item lama yang belum punya */
+      this.state.forEach(it => {
+        if(it.defQty === undefined){
+          const m = (this.master || []).find(x =>
+            x.nama.toLowerCase() === String(it.nama).toLowerCase());
+          it.defQty = m ? (m.defQty || '') : '';
+        }
+      });
+      return tambah;
+    },
+
+    _itemDariMaster(m, suffix){
+      return {
+        id: 'itm-' + suffix + '-' + Date.now() + '-' + Math.random().toString(36).slice(2,5),
+        nama: m.nama,
+        satuan: m.satuan,
+        hargaBeli: m.hargaBeli,
+        hargaJual: m.hargaJual || this.hitungHargaJual(m.hargaBeli),
+        defQty: m.defQty || '',
+        qty: '', checked: false, bayarNanti: false,
+        supplier: '', tersimpan: false,
+        dariPesananID: null, dariPesananItemID: null
+      };
     },
 
     loadLocalState(){
@@ -2425,19 +2546,11 @@ body.dark .order-card.overdue{background:linear-gradient(160deg,#3A1F18,var(--ca
         const saved = raw ? JSON.parse(raw) : null;
         if(saved && Array.isArray(saved) && saved.length > 0){
           this.state = saved;
+          if(this._lengkapiDariMaster() > 0) this.saveLocalState();
           return;
         }
       }catch(e){}
-      this.state = (this.master || []).map((m, idx) => ({
-        id: 'itm-' + idx + '-' + Date.now(),
-        nama: m.nama,
-        satuan: m.satuan,
-        hargaBeli: m.hargaBeli,
-        hargaJual: m.hargaJual || this.hitungHargaJual(m.hargaBeli),
-        qty: '', checked: false, bayarNanti: false,
-        supplier: '', tersimpan: false,
-        dariPesananID: null, dariPesananItemID: null
-      }));
+      this.state = (this.master || []).map((m, idx) => this._itemDariMaster(m, String(idx)));
       this.saveLocalState();
     },
 
@@ -2468,16 +2581,7 @@ body.dark .order-card.overdue{background:linear-gradient(160deg,#3A1F18,var(--ca
 
         const masterOnly = (this.master || []).filter(m =>
           !serverNames.has(m.nama.toLowerCase())
-        ).map((m, idx) => ({
-          id: 'itm-' + idx + '-' + Date.now(),
-          nama: m.nama,
-          satuan: m.satuan,
-          hargaBeli: m.hargaBeli,
-          hargaJual: m.hargaJual || this.hitungHargaJual(m.hargaBeli),
-          qty: '', checked: false, bayarNanti: false,
-          supplier: '', tersimpan: false,
-          dariPesananID: null, dariPesananItemID: null
-        }));
+        ).map((m, idx) => this._itemDariMaster(m, String(idx)));
 
         this.state = [...serverItems, ...masterOnly];
         this.saveLocalState();
@@ -3317,6 +3421,8 @@ body.dark .order-card.overdue{background:linear-gradient(160deg,#3A1F18,var(--ca
             this.state[idx].checked = !this.state[idx].checked;
             if(!this.state[idx].checked){
               this.state[idx].qty = '';
+            } else if(!this.parseQty(this.state[idx].qty)){
+              this.state[idx].qty = this.state[idx].defQty || '1';
             }
             this.saveLocalState();
             this.renderRencana();
@@ -3507,7 +3613,7 @@ body.dark .order-card.overdue{background:linear-gradient(160deg,#3A1F18,var(--ca
             if(!item) return;
             if(!item.checked){
               item.checked = true;
-              if(!item.qty) item.qty = '1';
+              if(!item.qty) item.qty = item.defQty || '1';
             }
             inp.value = '';
             drop.classList.remove('show');
@@ -3536,26 +3642,78 @@ body.dark .order-card.overdue{background:linear-gradient(160deg,#3A1F18,var(--ca
     },
 
     tambahBarangBaru(nama){
-      const n = window.prompt('Nama barang:', nama);
-      if(!n) return;
-      const s = window.prompt('Satuan (kg/ikat/pcs):', 'kg') || 'kg';
-      const h = Number(String(window.prompt('Harga beli (Rp):', '0')).replace(/\D/g,'')) || 0;
-      if(h <= 0){ showToast('Harga tidak valid'); return; }
-      const id = 'new-' + Date.now();
-      this.state.push({
-        id, nama: n, satuan: s,
-        hargaBeli: h,
-        hargaJual: this.hitungHargaJual(h),
-        qty: '1', checked: true,
-        bayarNanti: false, supplier: '',
-        tersimpan: false,
-        dariPesananID: null, dariPesananItemID: null
+      const num = id => Number(String(document.getElementById(id).value).replace(/\D/g,'')) || 0;
+      const ov = Pesanan._buatModal({
+        title: 'Tambah Barang Baru',
+        body: `
+          <div class="field-pes">
+            <label>Nama Barang</label>
+            <input type="text" id="nb_nama" value="${escHtml(nama || '')}" autocomplete="off">
+          </div>
+          <div class="field-row-pes">
+            <div class="field-pes">
+              <label>Qty</label>
+              <input type="text" id="nb_qty" inputmode="decimal" placeholder="1" value="1">
+            </div>
+            <div class="field-pes">
+              <label>Satuan</label>
+              <input type="text" id="nb_satuan" value="kg" placeholder="kg, ikat, pcs">
+            </div>
+          </div>
+          <div class="field-pes">
+            <label>Harga Beli / satuan (Rp)</label>
+            <input type="text" class="money" id="nb_beli" inputmode="numeric" placeholder="0">
+          </div>
+          <div class="field-pes">
+            <label>Harga Jual / satuan (Rp)</label>
+            <input type="text" class="money" id="nb_jual" inputmode="numeric" placeholder="otomatis dari harga beli">
+          </div>`,
+        confirmLabel: 'Tambah',
+        onConfirm: () => {
+          const n = document.getElementById('nb_nama').value.trim();
+          const s = document.getElementById('nb_satuan').value.trim() || 'kg';
+          const qtyTxt = document.getElementById('nb_qty').value.replace(/[^\d.]/g, '');
+          const h = num('nb_beli');
+          let hj = num('nb_jual');
+          if(!n){ showToast('Nama wajib diisi'); return false; }
+          if(this.parseQty(qtyTxt) <= 0){ showToast('Isi qty'); return false; }
+          if(h <= 0){ showToast('Isi harga beli'); return false; }
+          if(hj <= 0) hj = this.hitungHargaJual(h);
+
+          const ada = this.state.find(x => x.nama.toLowerCase() === n.toLowerCase());
+          if(ada){
+            ada.checked = true;
+            ada.qty = qtyTxt;
+            ada.hargaBeli = h;
+            ada.hargaJual = hj;
+            ada.satuan = s;
+            ada.defQty = qtyTxt;
+          } else {
+            this.state.push({
+              id: 'new-' + Date.now(), nama: n, satuan: s,
+              hargaBeli: h, hargaJual: hj,
+              defQty: qtyTxt, qty: qtyTxt, checked: true,
+              bayarNanti: false, supplier: '',
+              tersimpan: false,
+              dariPesananID: null, dariPesananItemID: null
+            });
+          }
+          ov.remove();
+          this.saveLocalState();
+          this.renderRencana();
+          this.renderAktual();
+          this.updateSubtabCounts();
+          this.attachHandlers();
+          showToast(ada ? 'Barang diperbarui' : 'Barang ditambahkan');
+          return true;
+        },
+        afterRender: () => {
+          Pesanan._bindMoney('nb_beli');
+          Pesanan._bindMoney('nb_jual');
+          const i = document.getElementById('nb_nama');
+          if(i){ i.focus(); i.select(); }
+        }
       });
-      this.saveLocalState();
-      this.renderRencana();
-      this.renderAktual();
-      this.attachHandlers();
-      showToast('Barang ditambahkan');
     },
 
     updateRencanaLive(){
