@@ -488,7 +488,7 @@ body.dark .batas-banner.minus{background:#3A1F18}
 .batas-banner.kikis .amt{color:var(--rust-600)}
 .batas-banner.minus .amt{color:var(--rust-700)}
 .batas-banner.toggle{cursor:pointer;user-select:none;gap:8px;
-  position:relative;margin-bottom:36px;}
+  position:relative;margin-bottom:30px;}
 .banner-handle{position:absolute;left:50%;top:100%;transform:translateX(-50%);
   background:inherit;border-radius:0 0 12px 12px;
   display:flex;align-items:center;gap:5px;
@@ -635,33 +635,44 @@ body.dark .check-row.checked{background:rgba(38,51,42,.5)}
 
 /* FOOTER BAR */
 .bar-bottom-bel{
-  position:sticky;bottom:0;background:var(--paper);
-  padding:12px 16px;
-  padding-bottom:calc(12px + env(safe-area-inset-bottom,0px));
-  margin:16px -12px -12px;border-top:1px solid var(--line);
+  position:sticky;bottom:calc(67px + env(safe-area-inset-bottom,0px));
+  z-index:30;background:var(--paper);
+  padding:8px 16px;
+  margin:10px -12px -12px;border-top:1px solid var(--line);
   box-shadow:0 -4px 12px rgba(31,32,25,.04);
 }
 .stat-row{display:flex;justify-content:space-between;
-  align-items:baseline;padding:3px 0;font-size:12.5px}
+  align-items:baseline;padding:1px 0;font-size:12.5px;line-height:1.3}
 .stat-row .lbl{color:var(--ink-600)}
 .stat-row .amt{font-family:'Zilla Slab',serif;font-weight:700;font-size:14px}
-.stat-row.total{padding-top:8px;margin-top:6px;
+.sum-final{display:flex;align-items:center;justify-content:space-between;
+  gap:10px;padding-top:4px;margin-top:3px;border-top:1px dashed var(--line)}
+.sum-final .sum-l{display:flex;flex-direction:column;min-width:0;line-height:1.15}
+.sum-final .sum-l .lbl{font-size:12px;font-weight:700;color:var(--ink-900)}
+.sum-final .sum-l .amt{font:700 18px 'Zilla Slab',serif;color:var(--green-700);
+  white-space:nowrap}
+.stat-row.total{padding-top:4px;margin-top:3px;
   border-top:1px dashed var(--line)}
 .stat-row.total .lbl{font-weight:700;color:var(--ink-900);font-size:13.5px}
-.stat-row.total .amt{font-size:18px;color:var(--green-700)}
+.stat-row.total .amt{font-size:17px;color:var(--green-700)}
 .btn-ubah-saldo{background:none;border:none;color:var(--green-700);
   font:600 11px 'Work Sans',sans-serif;cursor:pointer;
-  padding:2px 6px;margin-left:6px;border-radius:var(--r-full)}
-.status-line{padding:10px 12px;border-radius:var(--r-sm);
-  margin-top:10px;font-size:12.5px;line-height:1.4}
+  padding:1px 6px;margin-left:6px;border-radius:var(--r-full)}
+.status-line{padding:6px 10px;border-radius:var(--r-sm);
+  margin-top:6px;font-size:12.5px;line-height:1.3}
 .status-line.aman{background:#E8F3D8;color:#3A6020}
 body.dark .status-line.aman{background:#1E2818;color:#B8E39B}
 .status-line.hampir{background:var(--amber-100);color:var(--amber-700)}
 .status-line.kikis{background:var(--amber-100);color:var(--amber-700)}
 .status-line.minus{background:#FFE3DA;color:var(--rust-700)}
-.btn-siap-belanja{width:100%;padding:13px;border:none;
+.btn-siap-belanja{flex:none;width:auto;padding:11px 18px;border:none;
   border-radius:var(--r-sm);background:var(--green-700);color:#fff;
-  font:600 14px 'Work Sans',sans-serif;cursor:pointer;margin-top:10px}
+  font:600 14px 'Work Sans',sans-serif;cursor:pointer;margin-top:0}
+
+
+/* KEYBOARD: sembunyikan footer + navbar saat mengetik di tab Rencana */
+body.kb-rencana .bar-bottom-bel{display:none}
+body.kb-rencana .navbar{display:none}
 
 /* AKTUAL — item card */
 .daftar-list{background:var(--card);border:1px solid var(--line);
@@ -2707,7 +2718,7 @@ body.dark .order-card.overdue{background:linear-gradient(160deg,#3A1F18,var(--ca
     },
 
     getKonteks(){
-      let omzetKotor = 0, pengeluaranPagi = 0;
+      let omzetKotor = 0, pengeluaranPagi = 0, bonTotal = 0;
       try{
         const raw = localStorage.getItem('sayur_tutup_draft_' + this.tanggal);
         if(raw){
@@ -2723,19 +2734,21 @@ body.dark .order-card.overdue{background:linear-gradient(160deg,#3A1F18,var(--ca
             t.bon.reduce((s,b) => s + Number(b.jumlah || 0), 0) : 0;
           omzetKotor = cash + qris + totalPagi + bon;
           pengeluaranPagi = totalPagi;
+          bonTotal = bon;
         }
       }catch(e){}
       const batasMinimal = Number(App.pengaturan.BatasMinimalLaba) || 250000;
-      return {omzetKotor, pengeluaranPagi, batasMinimal};
+      return {omzetKotor, pengeluaranPagi, bon: bonTotal, batasMinimal};
     },
 
     hitungBatas(){
       const k = this.getKonteks();
-      const modalBersih = k.omzetKotor - k.pengeluaranPagi - this.totalBiayaBelanja();
+      /* bon masuk omzet kotor tapi bukan uang di tangan, jadi tidak boleh dibelanjakan */
+      const modalBersih = k.omzetKotor - k.bon - k.pengeluaranPagi - this.totalBiayaBelanja();
       return {
         batasAman: modalBersih - k.batasMinimal,
         modalBersih,
-        nilaiHariIni: k.omzetKotor - k.pengeluaranPagi
+        nilaiHariIni: k.omzetKotor - k.bon - k.pengeluaranPagi
       };
     },
 
@@ -2743,8 +2756,7 @@ body.dark .order-card.overdue{background:linear-gradient(160deg,#3A1F18,var(--ca
       const b = this.hitungBatas();
       if(total <= 0) return {kode: 'aman', label: 'Belum ada item'};
       if(b.batasAman <= 0) return {kode: 'minus', label: 'Melebihi Modal'};
-      if(total <= b.batasAman * 0.8) return {kode: 'aman', label: 'Aman'};
-      if(total <= b.batasAman) return {kode: 'hampir', label: 'Hampir Batas'};
+      if(total <= b.batasAman) return {kode: 'aman', label: 'Aman'};
       if(total <= b.modalBersih) return {kode: 'kikis', label: 'Laba Terkikis'};
       return {kode: 'minus', label: 'Melebihi Modal'};
     },
@@ -2755,7 +2767,7 @@ body.dark .order-card.overdue{background:linear-gradient(160deg,#3A1F18,var(--ca
       /* Ada tambahan dari saldo: pakai perhitungan sisa uang (saldo ikut dihitung) */
       if(this.tambahDariSaldo > 0){
         const k = this.getKonteks();
-        const sisa = k.omzetKotor - k.pengeluaranPagi - total -
+        const sisa = k.omzetKotor - k.bon - k.pengeluaranPagi - total -
                      this.totalBiayaBelanja() + this.tambahDariSaldo;
         const target = k.batasMinimal;
         if(sisa >= target) return {kode: 'aman', label: 'Aman',
@@ -2853,7 +2865,7 @@ body.dark .order-card.overdue{background:linear-gradient(160deg,#3A1F18,var(--ca
       const total = this.totalBelanjaTunai();
       const bStatus = this.cekStatusBatas(total);
       const checked = this.state.filter(x => x.checked && !x.bayarNanti).length;
-      const sisa = (k.omzetKotor - k.pengeluaranPagi - total -
+      const sisa = (k.omzetKotor - k.bon - k.pengeluaranPagi - total -
                     this.totalBiayaBelanja() + this.tambahDariSaldo);
       const status = this.statusSisa();
 
@@ -2867,7 +2879,7 @@ body.dark .order-card.overdue{background:linear-gradient(160deg,#3A1F18,var(--ca
           </div>`;
       } else {
         html += `<div style="font-size:12px;color:var(--ink-600);
-          margin-bottom:12px;padding:0 2px;line-height:1.4;">
+          margin-bottom:8px;padding:0 2px;line-height:1.35;">
           Susun daftar belanja untuk hari ini. Belum tersimpan.
         </div>`;
       }
@@ -2891,14 +2903,18 @@ body.dark .order-card.overdue{background:linear-gradient(160deg,#3A1F18,var(--ca
               <span class="amt">${rupiah(k.omzetKotor)}</span>
             </div>
             <div class="cell minus">
+              <span class="lbl">Bon (belum diterima)</span>
+              <span class="amt">− ${rupiah(k.bon)}</span>
+            </div>
+            <div class="cell minus">
               <span class="lbl">Pengeluaran pagi</span>
               <span class="amt">− ${rupiah(k.pengeluaranPagi)}</span>
             </div>
             <div class="cell total">
               <span class="lbl">Nilai hari ini</span>
-              <span class="amt">${rupiah(k.omzetKotor - k.pengeluaranPagi)}</span>
+              <span class="amt">${rupiah(k.omzetKotor - k.bon - k.pengeluaranPagi)}</span>
             </div>
-            <div class="cell target">
+            <div class="cell target" style="grid-column:1 / -1">
               <span class="lbl">Batas minimal</span>
               <span class="amt">${rupiah(k.batasMinimal)}</span>
             </div>
@@ -3007,23 +3023,25 @@ body.dark .order-card.overdue{background:linear-gradient(160deg,#3A1F18,var(--ca
             </span>
             <span class="amt" style="color:var(--blue-600);">${rupiah(this.tambahDariSaldo)}</span>
           </div>` : `
-          <div class="stat-row" style="padding-bottom:4px;">
+          <div class="stat-row" style="padding-bottom:0;">
             <span class="lbl" style="font-size:11.5px;">Uang belanja kurang?</span>
             <button class="btn-ubah-saldo" id="belTambahSaldo" type="button"
               style="background:none;border:1px dashed var(--green-700);
               color:var(--green-700);font:600 11.5px 'Work Sans',sans-serif;
-              cursor:pointer;padding:5px 12px;border-radius:var(--r-full);">
+              cursor:pointer;padding:3px 10px;border-radius:var(--r-full);">
               + Tambah dari saldo
             </button>
           </div>`}
-          <div class="stat-row total">
-            <span class="lbl">Sisa uang</span>
-            <span class="amt" id="belSumLaba">${rupiah(sisa)}</span>
+          <div class="sum-final">
+            <div class="sum-l">
+              <span class="lbl">Sisa uang</span>
+              <span class="amt" id="belSumLaba">${rupiah(sisa)}</span>
+            </div>
+            <button class="btn-siap-belanja" id="belSiapBelanja">Siap Belanja →</button>
           </div>
           <div class="status-line ${status.kode}" id="belStatusLine">
             <strong>${status.label}.</strong> ${status.detail}
           </div>
-          <button class="btn-siap-belanja" id="belSiapBelanja">Siap Belanja →</button>
         </div>`;
 
       el.innerHTML = html;
@@ -3743,7 +3761,7 @@ body.dark .order-card.overdue{background:linear-gradient(160deg,#3A1F18,var(--ca
       const total = this.totalBelanjaTunai();
       const bStatus = this.cekStatusBatas(total);
       const checked = this.state.filter(x => x.checked && !x.bayarNanti).length;
-      const sisa = (k.omzetKotor - k.pengeluaranPagi - total -
+      const sisa = (k.omzetKotor - k.bon - k.pengeluaranPagi - total -
                     this.totalBiayaBelanja() + this.tambahDariSaldo);
       const status = this.statusSisa();
 
@@ -8407,6 +8425,27 @@ body.dark .order-card.overdue{background:linear-gradient(160deg,#3A1F18,var(--ca
     init();
   }
 
+})();
+</script>
+<script>
+(function(){
+  var vv = window.visualViewport;
+  function cur(){ return Math.min(window.innerHeight, vv ? vv.height : window.innerHeight); }
+  var base = cur();
+  function isField(el){
+    return !!el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.tagName === 'SELECT');
+  }
+  function check(){
+    var ae = document.activeElement;
+    if(!isField(ae)) base = cur();
+    var open = cur() < base * 0.75;
+    var inRencana = !!(ae && ae.closest && ae.closest('#tabBelRencana'));
+    document.body.classList.toggle('kb-rencana', open && inRencana);
+  }
+  window.addEventListener('resize', check);
+  if(vv) vv.addEventListener('resize', check);
+  document.addEventListener('focusin', function(){ setTimeout(check, 50); });
+  document.addEventListener('focusout', function(){ setTimeout(check, 100); });
 })();
 </script>
 </body>
