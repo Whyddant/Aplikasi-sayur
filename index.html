@@ -656,6 +656,7 @@ body.dark .check-row.checked{background:rgba(38,51,42,.5)}
   margin-top:10px;font-size:12.5px;line-height:1.4}
 .status-line.aman{background:#E8F3D8;color:#3A6020}
 body.dark .status-line.aman{background:#1E2818;color:#B8E39B}
+.status-line.hampir{background:var(--amber-100);color:var(--amber-700)}
 .status-line.kikis{background:var(--amber-100);color:var(--amber-700)}
 .status-line.minus{background:#FFE3DA;color:var(--rust-700)}
 .btn-siap-belanja{width:100%;padding:13px;border:none;
@@ -2750,15 +2751,35 @@ body.dark .order-card.overdue{background:linear-gradient(160deg,#3A1F18,var(--ca
 
     statusSisa(){
       const total = this.totalBelanjaTunai();
-      const sisa = this.getKonteks().omzetKotor -
-                   this.getKonteks().pengeluaranPagi -
-                   total - this.totalBiayaBelanja() + this.tambahDariSaldo;
-      const target = this.getKonteks().batasMinimal;
-      if(sisa >= target) return {kode: 'aman', label: 'Aman',
-        detail: `di atas target ${rupiah(sisa - target)}`};
-      if(sisa >= 0) return {kode: 'kikis', label: 'Di bawah target',
-        detail: `kurang ${rupiah(target - sisa)}`};
-      return {kode: 'minus', label: 'Minus', detail: `rugi ${rupiah(-sisa)}`};
+
+      /* Ada tambahan dari saldo: pakai perhitungan sisa uang (saldo ikut dihitung) */
+      if(this.tambahDariSaldo > 0){
+        const k = this.getKonteks();
+        const sisa = k.omzetKotor - k.pengeluaranPagi - total -
+                     this.totalBiayaBelanja() + this.tambahDariSaldo;
+        const target = k.batasMinimal;
+        if(sisa >= target) return {kode: 'aman', label: 'Aman',
+          detail: `di atas target ${rupiah(sisa - target)}`};
+        if(sisa >= 0) return {kode: 'kikis', label: 'Di bawah target',
+          detail: `kurang ${rupiah(target - sisa)}`};
+        return {kode: 'minus', label: 'Minus', detail: `rugi ${rupiah(-sisa)}`};
+      }
+
+      /* Tanpa saldo: sama persis dengan banner "Batas aman" (cekStatusBatas) */
+      const b = this.hitungBatas();
+      const s = this.cekStatusBatas(total);
+      const selisih = b.batasAman - total;
+      let detail = '';
+      if(total > 0){
+        if(s.kode === 'aman' || s.kode === 'hampir'){
+          detail = `di atas target ${rupiah(selisih)}`;
+        }else if(total <= b.modalBersih){
+          detail = `kurang ${rupiah(-selisih)}`;
+        }else{
+          detail = `rugi ${rupiah(total - b.modalBersih)}`;
+        }
+      }
+      return {kode: s.kode, label: s.label, detail};
     },
 
     formatMargin(n){
