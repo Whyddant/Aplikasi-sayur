@@ -5780,6 +5780,19 @@ body.dark .order-card.overdue{background:linear-gradient(160deg,#3A1F18,var(--ca
         this.savePengeluaran();
       });
 
+      /* Tombol Edit/Simpan harus aktif juga saat form terkunci */
+      const btnSave = document.getElementById('tutupBtnSave');
+      if(btnSave) btnSave.addEventListener('click', () => {
+        if(this.mode === 'final'){
+          this.mode = 'draft';
+          this.saveDraft();
+          showToast('Mode edit — bisa diubah');
+          this.render();
+          return;
+        }
+        this.openSheetSimpan();
+      });
+
       if(isLocked) return;
 
       const plAdd = document.getElementById('tutupPagiLainAdd');
@@ -5838,18 +5851,6 @@ body.dark .order-card.overdue{background:linear-gradient(160deg,#3A1F18,var(--ca
           }
           this.render();
         });
-      });
-
-      const btnSave = document.getElementById('tutupBtnSave');
-      if(btnSave) btnSave.addEventListener('click', () => {
-        if(this.mode === 'final'){
-          this.mode = 'draft';
-          this.saveDraft();
-          showToast('Mode edit — bisa diubah');
-          this.render();
-          return;
-        }
-        this.openSheetSimpan();
       });
     },
 
@@ -6822,8 +6823,9 @@ body.dark .order-card.overdue{background:linear-gradient(160deg,#3A1F18,var(--ca
       /* 1. Server dulu */
       if(navigator.onLine){
         try{
+          /* Ambil semua riwayat dari server, tidak dibatasi tanggal pertama pakai di HP ini */
           const serverData = await SayurStorage.get('getRiwayatHarian',
-            {dari: first, sampai: sampai});
+            {dari: '2000-01-01', sampai: sampai});
           if(Array.isArray(serverData) && serverData.length > 0){
             data = serverData.map(d => ({
               tanggal: d.Tanggal,
