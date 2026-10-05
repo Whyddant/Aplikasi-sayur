@@ -5670,6 +5670,20 @@ renderCardPendapatan(isLocked){
           <input type="text" inputmode="numeric" id="tutupQris"
                  value="${this.state.omzetQris ? this.state.omzetQris.toLocaleString('id-ID') : ''}"
                  placeholder="0" ${isLocked ? 'disabled' : ''}>
+
+      <div class="subtotal-row">
+        <span class="lbl">Total Pendapatan Kotor</span>
+        <span class="amt" id="tutupGrandPendapatan">${rupiah(total)}</span>
+      </div>
+
+      <div class="subtotal-row" style="border-top:none;padding-top:2px;margin-top:0;">
+        <span class="lbl" style="font-size:11px;color:var(--ink-600);
+              text-transform:none;letter-spacing:0;font-weight:500;">
+          Pendapatan Diterima
+          <small style="color:var(--ink-400);font-weight:400;">(kotor − bon)</small>
+        </span>
+        <span class="amt" id="tutupGrandPendapatanDiterima"
+              style="font-size:15px;color:var(--green-700);">${rupiah(diterima)}</span>
         </div>
       </div>
 
@@ -6071,6 +6085,7 @@ renderCardPengeluaran(isLocked){
     };
     set('tutupTotalPendapatan', pendapatan);
     set('tutupGrandPendapatan', pendapatan);
+    set('tutupGrandPendapatanDiterima', pendapatan - this.totalBon());
     set('tutupTotalOperasional', operasional);
     set('tutupSubtotalOps', operasional);
     set('tutupTotalPengeluaran', pengeluaran);
