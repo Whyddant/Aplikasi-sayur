@@ -4133,8 +4133,9 @@ body.dark .order-card.overdue{background:linear-gradient(160deg,#3A1F18,var(--ca
         this.tambahDariSaldo = 0;
         this.bayarHutangState = [];
 
-        const totalModal = items.reduce((s,x) =>
-          s + this.parseQty(x.qty) * x.hargaBeli, 0);
+        const totalModal = items
+          .filter(x => !x.bayarNanti)
+          .reduce((s,x) => s + this.parseQty(x.qty) * x.hargaBeli, 0);
         this.pengeluaran.modalBelanja = totalModal;
         this.savePengeluaran();
 
