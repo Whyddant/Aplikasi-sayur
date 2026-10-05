@@ -2740,13 +2740,17 @@ body.dark .order-card.overdue{background:linear-gradient(160deg,#3A1F18,var(--ca
         const raw = localStorage.getItem(this._pkey(this.tanggal));
         if(raw){
           const saved = JSON.parse(raw);
+          
+          const num = (v, def) =>
+            (v === undefined || v === null || v === '') ? def : (Number(v) || 0);
+
           this.pengeluaran = {
-            opsPasar: Number(saved.opsPasar) || defaultOps,
-            bensin: Number(saved.bensin) || defaultBensin,
-            konsumsiPasar: Number(saved.konsumsiPasar) || 0,  // ← tambah
+            opsPasar: num(saved.opsPasar, defaultOps),
+            bensin: num(saved.bensin, defaultBensin),
+            konsumsiPasar: num(saved.konsumsiPasar, 0),
             lain: Array.isArray(saved.lain) ? saved.lain : [],
-            bayarHutang: Number(saved.bayarHutang) || 0,
-            modalBelanja: Number(saved.modalBelanja) || 0
+            bayarHutang: num(saved.bayarHutang, 0),
+            modalBelanja: num(saved.modalBelanja, 0)
           };
           return;
         }
@@ -5468,14 +5472,18 @@ body.dark .order-card.overdue{background:linear-gradient(160deg,#3A1F18,var(--ca
         const rb = localStorage.getItem(this._biayaKey(this.tanggal));
         if(rb){
           const b = JSON.parse(rb);
-          this.pengeluaran = {
-              modalBelanja: Number(b.modalBelanja) || 0,
-              opsPasar: Number(b.opsPasar) || 100000,
-              bensin: Number(b.bensin) || 50000,
-              konsumsiPasar: Number(b.konsumsiPasar) || 0,   // ← TAMBAH
-              lain: Array.isArray(b.lain) ? b.lain : [],
-              bayarHutang: Number(b.bayarHutang) || 0
-            };
+
+          const num = (v, def) =>
+          (v === undefined || v === null || v === '') ? def : (Number(v) || 0);
+
+        this.pengeluaran = {
+          modalBelanja: num(b.modalBelanja, 0),
+          opsPasar: num(b.opsPasar, 100000),
+          bensin: num(b.bensin, 50000),
+          konsumsiPasar: num(b.konsumsiPasar, 0),
+          lain: Array.isArray(b.lain) ? b.lain : [],
+          bayarHutang: num(b.bayarHutang, 0)
+        };
         } else {
           this.pengeluaran = this.emptyPengeluaran();
         }
@@ -5754,7 +5762,10 @@ renderCardOperasional(isLocked){
   const bensin = Number(this.pengeluaran.bensin) || 0;
   const konsumsi = Number(this.pengeluaran.konsumsiPasar) || 0;
   const subtotal = modal + ops + bensin + konsumsi;
-  const labaBersih = this.totalPendapatanKotor() - subtotal;
+
+  const diterima = this.totalPendapatanKotor() - this.totalBon() - this.totalPagi();
+  const labaBersih = diterima - subtotal;
+  const labaKotor = this.totalPendapatanKotor() - subtotal;
   const labaKls = labaBersih < 0 ? 'neg' : '';
 
   return `
@@ -5807,9 +5818,25 @@ renderCardOperasional(isLocked){
         <span class="amt" id="tutupSubtotalOps">${rupiah(subtotal)}</span>
       </div>
 
-      <div class="laba-badge ${labaKls}">
-        <span class="lbl">Laba Bersih</span>
+            <div class="laba-badge ${labaKls}">
+        <span class="lbl">
+          Laba Bersih
+          <small style="display:block;font-size:9.5px;font-weight:400;
+                 text-transform:none;letter-spacing:0;opacity:.7;margin-top:1px;">
+            diterima − operasional
+          </small>
+        </span>
         <span class="amt" id="tutupLabaAmt">${rupiah(labaBersih)}</span>
+      </div>
+
+      <div class="subtotal-row" style="border-top:none;padding-top:6px;margin-top:0;">
+        <span class="lbl" style="font-size:11px;color:var(--ink-600);
+              text-transform:none;letter-spacing:0;font-weight:500;">
+          Laba Kotor
+          <small style="color:var(--ink-400);font-weight:400;">(kotor − operasional)</small>
+        </span>
+        <span class="amt" id="tutupLabaKotorAmt"
+              style="font-size:15px;color:var(--ink-700);">${rupiah(labaKotor)}</span>
       </div>
     </div>`;
 },
@@ -5856,26 +5883,27 @@ renderCardPengeluaran(isLocked){
 
       /* ========== CARD 4: SALDO AKHIR ========== */
       renderCardSaldoAkhir(){
-        const pendapatan = this.totalPendapatanKotor();
-        const operasional = (Number(this.pengeluaran.modalBelanja) || 0) +
-                            (Number(this.pengeluaran.opsPasar) || 0) +
-                            (Number(this.pengeluaran.bensin) || 0) +
-                            (Number(this.pengeluaran.konsumsiPasar) || 0);
-        const pengeluaran = this.totalLain() + Number(this.pengeluaran.bayarHutang || 0);
-        const laba = pendapatan - operasional;
-        const saldoAkhir = laba - pengeluaran;
-        const kls = saldoAkhir < 0 ? 'neg' : '';
-        return `
-          <div class="saldo-akhir-card ${kls}">
-            <div class="k">Saldo Akhir Hari Ini</div>
-            <div class="v" id="tutupSaldoAkhirAmt">${rupiah(saldoAkhir)}</div>
-            <div class="s">
-              <span>Laba ${rupiah(laba)}</span>
-              <span>·</span>
-              <span>Keluar ${rupiah(pengeluaran)}</span>
-            </div>
-          </div>`;
-      },
+      const diterima = this.totalPendapatanKotor() - this.totalBon() - this.totalPagi();
+      const operasional = (Number(this.pengeluaran.modalBelanja) || 0) +
+                          (Number(this.pengeluaran.opsPasar) || 0) +
+                          (Number(this.pengeluaran.bensin) || 0) +
+                          (Number(this.pengeluaran.konsumsiPasar) || 0);
+      const pengeluaran = this.totalLain() + Number(this.pengeluaran.bayarHutang || 0);
+      const laba = diterima - operasional;
+      const saldoAkhir = laba - pengeluaran;
+      const kls = saldoAkhir < 0 ? 'neg' : '';
+
+      return `
+        <div class="saldo-akhir-card ${kls}">
+          <div class="k">Saldo Akhir Hari Ini</div>
+          <div class="v" id="tutupSaldoAkhirAmt">${rupiah(saldoAkhir)}</div>
+          <div class="s">
+            <span>Laba ${rupiah(laba)}</span>
+            <span>·</span>
+            <span>Keluar ${rupiah(pengeluaran)}</span>
+          </div>
+        </div>`;
+    },
       renderPagiLainList(isLocked){
         const list = this.state.pagi.lain || [];
         if(!list.length) return '';
@@ -6069,41 +6097,43 @@ renderCardPengeluaran(isLocked){
     },
 
     updateLive(){
-    const pendapatan = this.totalPendapatanKotor();
-    const operasional = (Number(this.pengeluaran.modalBelanja) || 0) +
-                        (Number(this.pengeluaran.opsPasar) || 0) +
-                        (Number(this.pengeluaran.bensin) || 0) +
-                        (Number(this.pengeluaran.konsumsiPasar) || 0);
-    const pengeluaran = this.totalLain() + Number(this.pengeluaran.bayarHutang || 0);
-    const laba = pendapatan - operasional;
-    const saldoAkhir = laba - pengeluaran;
+      const pendapatan = this.totalPendapatanKotor();
+      const diterima = pendapatan - this.totalBon() - this.totalPagi();
+      const operasional = (Number(this.pengeluaran.modalBelanja) || 0) +
+                          (Number(this.pengeluaran.opsPasar) || 0) +
+                          (Number(this.pengeluaran.bensin) || 0) +
+                          (Number(this.pengeluaran.konsumsiPasar) || 0);
+      const pengeluaran = this.totalLain() + Number(this.pengeluaran.bayarHutang || 0);
+      const laba = diterima - operasional;
+      const saldoAkhir = laba - pengeluaran;
 
-    const set = (id, val) => {
-      const el = document.getElementById(id);
-      if(el) el.textContent = rupiah(val);
-    };
-    set('tutupTotalPendapatan', pendapatan - this.totalBon() - this.totalPagi());
-    set('tutupGrandPendapatan', pendapatan);
-    set('tutupGrandPendapatanDiterima', pendapatan - this.totalBon() - this.totalPagi());
-    set('tutupTotalOperasional', operasional);
-    set('tutupSubtotalOps', operasional);
-    set('tutupTotalPengeluaran', pengeluaran);
-    set('tutupGrandPengeluaran', pengeluaran);
-    set('tutupLabaAmt', laba);
-    set('tutupSaldoAkhirAmt', saldoAkhir);
+      const set = (id, val) => {
+        const el = document.getElementById(id);
+        if(el) el.textContent = rupiah(val);
+      };
+      set('tutupTotalPendapatan', diterima);
+      set('tutupGrandPendapatan', pendapatan);
+      set('tutupGrandPendapatanDiterima', diterima);
+      set('tutupTotalOperasional', operasional);
+      set('tutupSubtotalOps', operasional);
+      set('tutupTotalPengeluaran', pengeluaran);
+      set('tutupGrandPengeluaran', pengeluaran);
+      set('tutupLabaAmt', laba);
+      set('tutupLabaKotorAmt', pendapatan - operasional);
+      set('tutupSaldoAkhirAmt', saldoAkhir);
 
-    const elPlusPagi = document.getElementById('tutupPlusPagi');
-    if(elPlusPagi) elPlusPagi.textContent = '+ ' + rupiah(this.totalPagi());
+      const elPlusPagi = document.getElementById('tutupPlusPagi');
+      if(elPlusPagi) elPlusPagi.textContent = '+ ' + rupiah(this.totalPagi());
 
-    const elLaba = document.getElementById('tutupLabaAmt');
-    if(elLaba) elLaba.classList.toggle('neg', laba < 0);
-    const elLabaParent = elLaba ? elLaba.closest('.laba-badge') : null;
-    if(elLabaParent) elLabaParent.classList.toggle('neg', laba < 0);
+      const elLaba = document.getElementById('tutupLabaAmt');
+      if(elLaba) elLaba.classList.toggle('neg', laba < 0);
+      const elLabaParent = elLaba ? elLaba.closest('.laba-badge') : null;
+      if(elLabaParent) elLabaParent.classList.toggle('neg', laba < 0);
 
-    const elSaldo = document.getElementById('tutupSaldoAkhirAmt');
-    const elSaldoParent = elSaldo ? elSaldo.closest('.saldo-akhir-card') : null;
-    if(elSaldoParent) elSaldoParent.classList.toggle('neg', saldoAkhir < 0);
-  },
+      const elSaldo = document.getElementById('tutupSaldoAkhirAmt');
+      const elSaldoParent = elSaldo ? elSaldo.closest('.saldo-akhir-card') : null;
+      if(elSaldoParent) elSaldoParent.classList.toggle('neg', saldoAkhir < 0);
+    },
 
     openSheetSimpan(){
       const ov = document.createElement('div');
