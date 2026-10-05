@@ -287,6 +287,42 @@ body.dark .debt-icon{background:#2A2415}
 .chart-legend .dot.laba{background:var(--green-700)}
 .chart-summary{display:grid;grid-template-columns:1fr 1fr;gap:7px;
   margin-top:13px;padding-top:12px;border-top:1px dashed var(--line)}
+/* === Tooltip Grafik Batang === */
+.chart-bars{position:relative;}
+.chart-col{cursor:pointer;transition:opacity .12s;}
+.chart-col:active{opacity:.7;}
+.chart-tooltip{
+  position:absolute;transform:translateX(-50%);
+  background:var(--ink-900);color:var(--card);
+  padding:8px 12px;border-radius:8px;
+  font-size:11px;z-index:20;
+  box-shadow:0 4px 14px rgba(0,0,0,.22);
+  pointer-events:auto;min-width:150px;
+  animation:fadeIn .15s;
+}
+.chart-tooltip::after{
+  content:'';position:absolute;bottom:-5px;left:50%;
+  transform:translateX(-50%);
+  border:5px solid transparent;border-top-color:var(--ink-900);
+}
+.chart-tooltip .ct-date{
+  font-weight:700;margin-bottom:5px;font-size:11.5px;
+  padding-bottom:4px;border-bottom:1px solid rgba(255,255,255,.15);
+}
+.chart-tooltip .ct-row{
+  display:flex;justify-content:space-between;gap:12px;padding:2px 0;
+}
+.chart-tooltip .ct-row span{opacity:.75;}
+.chart-tooltip .ct-row b{font-family:'Zilla Slab',serif;font-weight:700;}
+body.dark .chart-tooltip{background:#E8E5DB;color:#1A1D17;}
+body.dark .chart-tooltip::after{border-top-color:#E8E5DB;}
+body.dark .chart-tooltip .ct-date{border-bottom-color:rgba(0,0,0,.15);}
+
+/* Summary sub-text */
+.summary-sub{
+  font-size:9.5px;color:var(--ink-600);margin-top:2px;line-height:1.25;
+}
+.summary-v.warn{color:var(--rust-600) !important;}
 .summary-item{background:var(--paper);border-radius:var(--r-sm);
   padding:9px 10px;min-height:56px}
 .summary-k{font-size:9.5px;color:var(--ink-600);
@@ -6144,8 +6180,18 @@ body.dark .order-card.overdue{background:linear-gradient(160deg,#3A1F18,var(--ca
 
     async load(){
       this.renderAll();
+      this._updateSubtabUI();
       this.attachSubtabs();
       await this.loadCurrentTab();
+    },
+
+    _updateSubtabUI(){
+      document.querySelectorAll('.subtabs-lap button[data-laptab]').forEach(b =>
+        b.classList.toggle('active', b.dataset.laptab === this.currentTab));
+      document.querySelectorAll('.tab-lap').forEach(t => t.classList.remove('active'));
+      const el = document.getElementById('tabLap' +
+        this.currentTab.charAt(0).toUpperCase() + this.currentTab.slice(1));
+      if(el) el.classList.add('active');
     },
 
     attachSubtabs(){
@@ -7921,7 +7967,7 @@ body.dark .order-card.overdue{background:linear-gradient(160deg,#3A1F18,var(--ca
       <section class="section">
         <div class="uang-stack">
           <button class="saldo-zone" id="zoneSaldo" type="button">
-            <div class="saldo-k">Uang tersedia</div>
+            <div class="saldo-k">Saldo</div>
             <div class="saldo-v">${rupiah(saldo.total)}</div>
             <div class="saldo-sub">
               <span class="item"><span class="dot cash"></span>Tunai ${rupiahSingkat(saldo.saldoCash)}</span>
@@ -7945,122 +7991,220 @@ body.dark .order-card.overdue{background:linear-gradient(160deg,#3A1F18,var(--ca
     }
     html += `</div></section>`;
 
-    html += renderChart(rows, batas);
+    html += renderChart(rows, batas, lap);
     container.innerHTML = html;
     attachBerandaHandlers();
   }
 
-  function renderChart(rows, batas){
-    const HARI = ['Min','Sen','Sel','Rab','Kam','Jum','Sab'];
-    const today = new Date();
-    const days = [];
-    for(let i = 6; i >= 0; i--){
-      const d = new Date(today);
-      d.setDate(d.getDate() - i);
-      const ymd = d.getFullYear() + '-' +
-        String(d.getMonth()+1).padStart(2,'0') + '-' +
-        String(d.getDate()).padStart(2,'0');
-      days.push({ymd, dow: d.getDay(), label: HARI[d.getDay()]});
-    }
-    const byDate = {};
-    (rows || []).forEach(r => {
-      if(!r.Tanggal) return;
-      const t = String(r.Tanggal).slice(0, 10);
-      if(Number(r.TotalOmzet) > 0) byDate[t] = r;
-    });
-    let maxVal = 0;
-    days.forEach(d => {
-      const r = byDate[d.ymd];
-      if(!r) return;
-      const omzet = Number(r.TotalOmzet) || 0;
-      const laba = Math.abs(Number(r.LabaBersih) || 0);
-      if(omzet > maxVal) maxVal = omzet;
-      if(laba > maxVal) maxVal = laba;
-    });
-    if(maxVal === 0){
-      return `
-        <section class="section">
-          <div class="chart-card">
-            <div class="chart-head">
-              <div class="title">Rekap 7 Hari</div>
-              <div class="sub">—</div>
-            </div>
-            <div class="chart-empty" style="text-align:center;padding:30px 20px;
-              color:var(--ink-400);font-size:13px;">Belum ada data</div>
-          </div>
-        </section>`;
-    }
+function showChartTooltip(targetEl, ymd, row){
+  /* Hapus tooltip lama */
+  document.querySelectorAll('.chart-tooltip').forEach(t => t.remove());
 
-    let barsHtml = '', labelsHtml = '';
-    let totalOmzet7 = 0, totalLaba7 = 0, countHari = 0;
-    days.forEach(d => {
-      const r = byDate[d.ymd];
-      const omzet = r ? (Number(r.TotalOmzet) || 0) : 0;
-      const labaRaw = r ? (Number(r.LabaBersih) || 0) : 0;
-      const laba = Math.abs(labaRaw);
-      const isToday = d.ymd === todayYmd();
-      const isNeg = labaRaw < 0;
-      const hOmzet = r ? Math.max(2, (omzet / maxVal) * 100) : 0;
-      const hLaba = r ? Math.max(2, (laba / maxVal) * 100) : 0;
-      const cls = ['chart-col'];
-      if(isToday) cls.push('today');
-      if(isNeg) cls.push('neg');
-      barsHtml += `<div class="${cls.join(' ')}">
-        <div class="bar-wrap">
-          ${r ? `<div class="bar omzet" style="height:${hOmzet}%"></div>` : ''}
-          ${r ? `<div class="bar laba" style="height:${hLaba}%"></div>` : ''}
-        </div>
+  const card = targetEl.closest('.chart-card');
+  if(!card) return;
+  card.style.position = 'relative';
+
+  const cardRect = card.getBoundingClientRect();
+  const targetRect = targetEl.getBoundingClientRect();
+
+  const tooltip = document.createElement('div');
+  tooltip.className = 'chart-tooltip';
+
+  const [y,m,d] = ymd.split('-').map(Number);
+  const tgl = new Date(y, m-1, d).toLocaleDateString('id-ID',
+    {weekday:'short', day:'numeric', month:'short'});
+
+  if(row){
+    const omzet = Number(row.TotalOmzet) || 0;
+    const cash  = Number(row.OmzetCash) || 0;
+    const qris  = Number(row.OmzetQris) || 0;
+    const laba  = Number(row.LabaBersih) || 0;
+    tooltip.innerHTML = `
+      <div class="ct-date">${tgl}</div>
+      <div class="ct-row"><span>Omzet</span><b>${rupiah(omzet)}</b></div>
+      <div class="ct-row"><span>· Cash</span><b>${rupiah(cash)}</b></div>
+      <div class="ct-row"><span>· QRIS</span><b>${rupiah(qris)}</b></div>
+      <div class="ct-row" style="margin-top:4px;padding-top:4px;
+           border-top:1px solid rgba(255,255,255,.15);">
+        <span>Laba</span>
+        <b style="color:${laba < 0 ? '#FFB29E' : '#B8E39B'};">
+          ${rupiah(laba)}
+        </b>
       </div>`;
-      labelsHtml += `<span class="${isToday ? 'today' : ''}">${d.label}</span>`;
-      if(r){ totalOmzet7 += omzet; totalLaba7 += labaRaw; countHari++; }
-    });
-    const avgOmzet = countHari > 0 ? Math.round(totalOmzet7 / countHari) : 0;
-    const avgLaba = countHari > 0 ? Math.round(totalLaba7 / countHari) : 0;
-    const marginAvg = totalOmzet7 > 0 ? Math.round((totalLaba7 / totalOmzet7) * 100) : 0;
-    const tglAwal = days[0].ymd, tglAkhir = days[6].ymd;
-    const fmtTgl = ymd => {
-      const [y,m,d] = ymd.split('-').map(Number);
-      return new Date(y, m-1, d).toLocaleDateString('id-ID',
-        {day:'numeric', month:'short'});
-    };
+  } else {
+    tooltip.innerHTML = `
+      <div class="ct-date">${tgl}</div>
+      <div style="font-size:10.5px;opacity:.7;">Tidak ada data</div>`;
+  }
+
+  /* Posisi: relatif ke card */
+  const left = targetRect.left - cardRect.left + (targetRect.width / 2);
+  tooltip.style.left = left + 'px';
+  tooltip.style.top = '34px';
+
+  card.appendChild(tooltip);
+
+  /* Auto close */
+  const close = () => tooltip.remove();
+  setTimeout(close, 3200);
+
+  /* Klik di luar → tutup */
+  const closeOnce = (ev) => {
+    if(!tooltip.contains(ev.target) && ev.target !== targetEl){
+      close();
+      document.removeEventListener('click', closeOnce);
+    }
+  };
+  setTimeout(() => document.addEventListener('click', closeOnce), 80);
+}
+
+  function renderChart(rows, batas, lap){
+  const HARI = ['Min','Sen','Sel','Rab','Kam','Jum','Sab'];
+  const today = new Date();
+  const days = [];
+  for(let i = 6; i >= 0; i--){
+    const d = new Date(today);
+    d.setDate(d.getDate() - i);
+    const ymd = d.getFullYear() + '-' +
+      String(d.getMonth()+1).padStart(2,'0') + '-' +
+      String(d.getDate()).padStart(2,'0');
+    days.push({ymd, dow: d.getDay(), label: HARI[d.getDay()]});
+  }
+  const byDate = {};
+  (rows || []).forEach(r => {
+    if(!r.Tanggal) return;
+    const t = String(r.Tanggal).slice(0, 10);
+    if(Number(r.TotalOmzet) > 0) byDate[t] = r;
+  });
+
+  let maxVal = 0;
+  days.forEach(d => {
+    const r = byDate[d.ymd];
+    if(!r) return;
+    const omzet = Number(r.TotalOmzet) || 0;
+    const laba = Math.abs(Number(r.LabaBersih) || 0);
+    if(omzet > maxVal) maxVal = omzet;
+    if(laba > maxVal) maxVal = laba;
+  });
+
+  if(maxVal === 0){
     return `
       <section class="section">
         <div class="chart-card">
           <div class="chart-head">
             <div class="title">Rekap 7 Hari</div>
-            <div class="sub">${fmtTgl(tglAwal)} — ${fmtTgl(tglAkhir)}</div>
+            <div class="sub">—</div>
           </div>
-          <div class="chart-hero">
-            <span class="k">Laba</span>
-            <span class="v">${rupiah(totalLaba7)}</span>
-          </div>
-          <div class="chart-bars">${barsHtml}</div>
-          <div class="chart-labels">${labelsHtml}</div>
-          <div class="chart-legend">
-            <div class="item"><span class="dot omzet"></span>Penjualan</div>
-            <div class="item"><span class="dot laba"></span>Laba</div>
-          </div>
-          <div class="chart-summary">
-            <div class="summary-item">
-              <div class="summary-k">Rata² jual</div>
-              <div class="summary-v">${rupiahSingkat(avgOmzet)}</div>
-            </div>
-            <div class="summary-item">
-              <div class="summary-k">Rata² laba</div>
-              <div class="summary-v">${rupiahSingkat(avgLaba)}</div>
-            </div>
-            <div class="summary-item">
-              <div class="summary-k">Margin</div>
-              <div class="summary-v positive">margin: ${marginAvg}%</div>
-            </div>
-            <div class="summary-item">
-              <div class="summary-k">Batas minimal</div>
-              <div class="summary-v">${rupiahSingkat(batas)}</div>
-            </div>
-          </div>
+          <div class="chart-empty">Belum ada data</div>
         </div>
       </section>`;
   }
+
+  /* === Hitung agregat untuk statistik === */
+  let totalOmzet7 = 0, totalCash7 = 0, totalQris7 = 0;
+  let totalLaba7 = 0, totalBelanja7 = 0, totalOps7 = 0;
+  let countHari = 0;
+
+  let barsHtml = '', labelsHtml = '';
+  days.forEach(d => {
+    const r = byDate[d.ymd];
+    const omzet = r ? (Number(r.TotalOmzet) || 0) : 0;
+    const cash  = r ? (Number(r.OmzetCash) || 0) : 0;
+    const qris  = r ? (Number(r.OmzetQris) || 0) : 0;
+    const labaRaw = r ? (Number(r.LabaBersih) || 0) : 0;
+    const laba = Math.abs(labaRaw);
+    const belanja = r ? (Number(r.BelanjaHarilni) || 0) : 0;
+    const ops = r ? (Number(r.TotalBiaya) || 0) : 0;
+    const isToday = d.ymd === todayYmd();
+    const isNeg = labaRaw < 0;
+    const hOmzet = r ? Math.max(2, (omzet / maxVal) * 100) : 0;
+    const hLaba  = r ? Math.max(2, (laba / maxVal) * 100) : 0;
+
+    const cls = ['chart-col'];
+    if(isToday) cls.push('today');
+    if(isNeg) cls.push('neg');
+
+    barsHtml += `<div class="${cls.join(' ')}" data-ymd="${d.ymd}">
+      <div class="bar-wrap">
+        ${r ? `<div class="bar omzet" style="height:${hOmzet}%"></div>` : ''}
+        ${r ? `<div class="bar laba" style="height:${hLaba}%"></div>` : ''}
+      </div>
+    </div>`;
+    labelsHtml += `<span class="${isToday ? 'today' : ''}">${d.label}</span>`;
+
+    if(r){
+      totalOmzet7 += omzet;
+      totalCash7 += cash;
+      totalQris7 += qris;
+      totalLaba7 += labaRaw;
+      totalBelanja7 += belanja;
+      totalOps7 += ops;
+      countHari++;
+    }
+  });
+
+  /* === Statistik baru === */
+  const avgOmzet  = countHari > 0 ? Math.round(totalOmzet7 / countHari) : 0;
+  const avgCash   = countHari > 0 ? Math.round(totalCash7 / countHari) : 0;
+  const avgQris   = countHari > 0 ? Math.round(totalQris7 / countHari) : 0;
+  const avgLaba   = countHari > 0 ? Math.round(totalLaba7 / countHari) : 0;
+  const rasioLaba = totalOmzet7 > 0 ? Math.round((totalLaba7 / totalOmzet7) * 100) : 0;
+  const marginPct = totalOmzet7 > 0
+    ? Math.round(((totalBelanja7 + totalOps7) / totalOmzet7) * 100) : 0;
+
+  /* Status sehat/waspada pakai laba bersih HARI INI */
+  const labaHariIni = Number(lap && lap.labaBersih || 0);
+  const sehat = labaHariIni >= batas;
+  const statusKls = sehat ? 'positive' : 'warn';
+  const statusTxt = sehat ? '✓ Sehat' : '⚠ Waspada';
+
+  const tglAwal = days[0].ymd, tglAkhir = days[6].ymd;
+  const fmtTgl = ymd => {
+    const [y,m,d] = ymd.split('-').map(Number);
+    return new Date(y, m-1, d).toLocaleDateString('id-ID',
+      {day:'numeric', month:'short'});
+  };
+
+  return `
+    <section class="section">
+      <div class="chart-card">
+        <div class="chart-head">
+          <div class="title">Rekap 7 Hari</div>
+          <div class="sub">${fmtTgl(tglAwal)} — ${fmtTgl(tglAkhir)}</div>
+        </div>
+        <div class="chart-bars" id="chartBarsWrap">${barsHtml}</div>
+        <div class="chart-labels">${labelsHtml}</div>
+        <div class="chart-legend">
+          <div class="item"><span class="dot omzet"></span>Omzet</div>
+          <div class="item"><span class="dot laba"></span>Laba</div>
+        </div>
+        <div style="text-align:center;font-size:10px;color:var(--ink-400);
+             margin-top:8px;">Tap batang untuk lihat nominal</div>
+        <div class="chart-summary">
+          <div class="summary-item">
+            <div class="summary-k">Rata² Omzet</div>
+            <div class="summary-v">${rupiahSingkat(avgOmzet)}</div>
+            <div class="summary-sub">Cash ${rupiahSingkat(avgCash)} · QRIS ${rupiahSingkat(avgQris)}</div>
+          </div>
+          <div class="summary-item">
+            <div class="summary-k">Rata² Laba</div>
+            <div class="summary-v positive">${rupiahSingkat(avgLaba)}</div>
+            <div class="summary-sub">${rasioLaba}% dari omzet</div>
+          </div>
+          <div class="summary-item">
+            <div class="summary-k">Margin</div>
+            <div class="summary-v">${marginPct}%</div>
+            <div class="summary-sub">(modal + ops) : omzet</div>
+          </div>
+          <div class="summary-item">
+            <div class="summary-k">Uang di Tangan</div>
+            <div class="summary-v ${statusKls}">${rupiahSingkat(labaHariIni)}</div>
+            <div class="summary-sub">${statusTxt} · target ${rupiahSingkat(batas)}</div>
+          </div>
+        </div>
+      </div>
+    </section>`;
+}
 
   function attachBerandaHandlers(){
     document.querySelectorAll('[data-go]').forEach(btn => {
@@ -8068,18 +8212,39 @@ body.dark .order-card.overdue{background:linear-gradient(160deg,#3A1F18,var(--ca
     });
     const zs = document.getElementById('zoneSaldo');
     if(zs) zs.addEventListener('click', () => {
+      Laporan.currentTab = 'saldo';
       goTab('laporan');
-      showToast('→ Tab Laporan · Saldo');
+      showToast('→ Laporan · Saldo');
     });
     const zd = document.getElementById('zoneDebt');
     if(zd) zd.addEventListener('click', () => {
+      Laporan.currentTab = 'hutang';
       goTab('laporan');
-      showToast('→ Tab Laporan · Hutang');
+      showToast('→ Laporan · Hutang');
     });
     const bbIsi = document.getElementById('bbIsi');
     if(bbIsi) bbIsi.addEventListener('click', () => openPilihHariModal());
     const bbLibur = document.getElementById('bbLibur');
     if(bbLibur) bbLibur.addEventListener('click', () => openTandaiSemuaLiburModal());
+
+    /* Tooltip grafik batang */
+    const chartWrap = document.getElementById('chartBarsWrap');
+    if(chartWrap){
+      const rows = (App.dashboard && App.dashboard.rows) || [];
+      const byDate = {};
+      rows.forEach(r => {
+        if(!r.Tanggal) return;
+        const t = String(r.Tanggal).slice(0, 10);
+        byDate[t] = r;
+      });
+
+      chartWrap.querySelectorAll('.chart-col').forEach(col => {
+        col.addEventListener('click', (e) => {
+          e.stopPropagation();
+          showChartTooltip(col, col.dataset.ymd, byDate[col.dataset.ymd] || null);
+        });
+      });
+    }
   }
 
   function openPilihHariModal(){
