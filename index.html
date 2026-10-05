@@ -2474,6 +2474,19 @@ body.dark .order-card.overdue{background:linear-gradient(160deg,#3A1F18,var(--ca
         if(d && ServerHari.adaData(d)) ServerHari.tulisPengeluaran(ymd, d, false);
       }
 
+      /* Konteks omzet untuk perhitungan "Sisa uang" — ambil final dari server
+         kalau kunci lokal (draft maupun final) belum ada. */
+      if(!localStorage.getItem('sayur_tutup_draft_' + ymd) &&
+         !localStorage.getItem('sayur_tutup_final_' + ymd)){
+        const d = await ServerHari.ambil(ymd);
+        if(d && ServerHari.tutupTersimpan(d)){
+          try{
+            localStorage.setItem('sayur_tutup_final_' + ymd,
+              JSON.stringify(ServerHari.stateTutup(d)));
+          }catch(e){}
+        }
+      }
+
       this.loadPengeluaran();
       try{
         const rawSaldo = localStorage.getItem(this._saldoKey(ymd));
@@ -2826,18 +2839,16 @@ body.dark .order-card.overdue{background:linear-gradient(160deg,#3A1F18,var(--ca
     getKonteks(){
       let omzetKotor = 0, pengeluaranPagi = 0, bonTotal = 0;
       try{
-        const raw = localStorage.getItem('sayur_tutup_draft_' + this.tanggal);
+        let raw = localStorage.getItem('sayur_tutup_draft_' + this.tanggal);
+        if(!raw) raw = localStorage.getItem('sayur_tutup_final_' + this.tanggal); // ← tambahan
         if(raw){
           const t = JSON.parse(raw);
           const cash = Number(t.omzetCash) || 0;
           const qris = Number(t.omzetQris) || 0;
           const pagi = t.pagi || {};
-          const totalPagi =
-            Number(pagi.kantongKaret || 0) +
-            Number(pagi.iuran || 0) +
-            ((pagi.lain || []).reduce((s,x) => s + Number(x.jumlah || 0), 0));
-          const bon = Array.isArray(t.bon) ?
-            t.bon.reduce((s,b) => s + Number(b.jumlah || 0), 0) : 0;
+          const totalPagi = Number(pagi.kantongKaret||0) + Number(pagi.iuran||0) +
+                            ((pagi.lain||[]).reduce((s,x)=>s+Number(x.jumlah||0),0));
+          const bon = Array.isArray(t.bon) ? t.bon.reduce((s,b)=>s+Number(b.jumlah||0),0) : 0;
           omzetKotor = cash + qris + totalPagi + bon;
           pengeluaranPagi = totalPagi;
           bonTotal = bon;
