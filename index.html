@@ -5652,7 +5652,7 @@ body.dark .order-card.overdue{background:linear-gradient(160deg,#3A1F18,var(--ca
         <div class="tutup-card card-pendapatan ${isLocked ? 'locked' : ''}">
           <div class="tutup-card-head">
             <h2>💰 Pendapatan</h2>
-            <span class="total" id="tutupTotalPendapatan">${rupiah(total)}</span>
+            <span class="total" id="tutupTotalPendapatan">${rupiah(diterima)}</span>
           </div>
 
           <div class="tutup-row">
@@ -6081,7 +6081,7 @@ renderCardPengeluaran(isLocked){
       const el = document.getElementById(id);
       if(el) el.textContent = rupiah(val);
     };
-    set('tutupTotalPendapatan', pendapatan);
+    set('tutupTotalPendapatan', pendapatan - this.totalBon());
     set('tutupGrandPendapatan', pendapatan);
     set('tutupGrandPendapatanDiterima', pendapatan - this.totalBon());
     set('tutupTotalOperasional', operasional);
