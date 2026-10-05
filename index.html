@@ -2810,7 +2810,7 @@ body.dark .order-card.overdue{background:linear-gradient(160deg,#3A1F18,var(--ca
       return hm > 0 ? hm : 0;
     },
 
-    totalLain(){
+        totalLain(){
       return (this.pengeluaran.lain || [])
         .reduce((s,x) => s + Number(x.jumlah || 0), 0);
     },
@@ -2818,9 +2818,11 @@ body.dark .order-card.overdue{background:linear-gradient(160deg,#3A1F18,var(--ca
       return this.bayarHutangState.reduce((s,x) => s + x.jumlah, 0);
     },
     totalBiayaBelanja(){
-      return this.pengeluaran.opsPasar +
-             this.pengeluaran.bensin +
-             this.totalLain() +
+      /* Hanya biaya yang benar-benar keluar SAAT belanja.
+         "Lain-lain" (gaji, dapur, jajan, dll) milik tab Tutup —
+         tidak mengurangi Batas Aman belanja. */
+      return (Number(this.pengeluaran.opsPasar) || 0) +
+             (Number(this.pengeluaran.bensin) || 0) +
              this.totalBayarHutang();
     },
     totalBelanjaTunai(){
@@ -2979,194 +2981,182 @@ body.dark .order-card.overdue{background:linear-gradient(160deg,#3A1F18,var(--ca
 
     /* RENDER */
     renderRencana(){
-      const el = document.getElementById('tabBelRencana');
-      if(!el) return;
-      const k = this.getKonteks();
-      const b = this.hitungBatas();
-      const total = this.totalBelanjaTunai();
-      const bStatus = this.cekStatusBatas(total);
-      const checked = this.state.filter(x => x.checked && !x.bayarNanti).length;
-      const sisa = (k.omzetKotor - k.bon - k.pengeluaranPagi - total -
-                    this.totalBiayaBelanja() + this.tambahDariSaldo);
-      const status = this.statusSisa();
+  const el = document.getElementById('tabBelRencana');
+  if(!el) return;
+  const k = this.getKonteks();
+  const b = this.hitungBatas();
+  const total = this.totalBelanjaTunai();
+  const bStatus = this.cekStatusBatas(total);
+  const checked = this.state.filter(x => x.checked && !x.bayarNanti).length;
+  const sisa = (k.omzetKotor - k.bon - k.pengeluaranPagi - total -
+                this.totalBiayaBelanja() + this.tambahDariSaldo);
+  const status = this.statusSisa();
 
-      let html = '';
-      if(this.modeBackdate){
-        html += `
-          <div class="backdate-banner">
-            <span class="bd-icon">📅</span>
-            <span class="bd-txt">Mode Backdate — ${fmtTanggalPanjang(this.tanggal)}</span>
-            <button class="bd-back" id="belKembaliHariIni" type="button">Hari Ini</button>
-          </div>`;
-      } else {
-        html += `<div style="font-size:12px;color:var(--ink-600);
-          margin-bottom:8px;padding:0 2px;line-height:1.35;">
-          Susun daftar belanja untuk hari ini. Belum tersimpan.
-        </div>`;
-      }
+  let html = '';
+  if(this.modeBackdate){
+    html += `
+      <div class="backdate-banner">
+        <span class="bd-icon">📅</span>
+        <span class="bd-txt">Mode Backdate — ${fmtTanggalPanjang(this.tanggal)}</span>
+        <button class="bd-back" id="belKembaliHariIni" type="button">Hari Ini</button>
+      </div>`;
+  } else {
+    html += `<div style="font-size:12px;color:var(--ink-600);
+      margin-bottom:8px;padding:0 2px;line-height:1.35;">
+      Susun daftar belanja untuk hari ini. Belum tersimpan.
+    </div>`;
+  }
 
-      html += `
-        <div class="batas-banner toggle ${bStatus.kode} ${this.infoOpen?'open':''}"
-             id="batasBanner" role="button" aria-expanded="${this.infoOpen}">
-          <span class="lbl">Batas aman: <strong>${rupiah(b.batasAman)}</strong></span>
-          <span class="amt">${bStatus.label}</span>
-          <span class="banner-handle">
-            <span id="handleText">${this.infoOpen ? 'Tutup' : 'Edit & detail'}</span>
-            <svg class="chev" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
-          </span>
-        </div>`;
+  html += `
+    <div class="batas-banner toggle ${bStatus.kode} ${this.infoOpen?'open':''}"
+         id="batasBanner" role="button" aria-expanded="${this.infoOpen}">
+      <span class="lbl">Batas aman: <strong>${rupiah(b.batasAman)}</strong></span>
+      <span class="amt">${bStatus.label}</span>
+      <span class="banner-handle">
+        <span id="handleText">${this.infoOpen ? 'Tutup' : 'Edit & detail'}</span>
+        <svg class="chev" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+      </span>
+    </div>`;
 
-      html += `
-        <div class="info-panel-bel ${this.infoOpen ? 'open' : ''}" id="infoPanelBel">
-          <div class="konteks">
-            <div class="cell">
-              <span class="lbl">Omzet kotor</span>
-              <span class="amt">${rupiah(k.omzetKotor)}</span>
+  html += `
+    <div class="info-panel-bel ${this.infoOpen ? 'open' : ''}" id="infoPanelBel">
+      <div class="konteks">
+        <div class="cell">
+          <span class="lbl">Omzet kotor</span>
+          <span class="amt">${rupiah(k.omzetKotor)}</span>
+        </div>
+        <div class="cell minus">
+          <span class="lbl">Bon (belum diterima)</span>
+          <span class="amt">− ${rupiah(k.bon)}</span>
+        </div>
+        <div class="cell minus">
+          <span class="lbl">Pengeluaran pagi</span>
+          <span class="amt">− ${rupiah(k.pengeluaranPagi)}</span>
+        </div>
+        <div class="cell total">
+          <span class="lbl">Nilai hari ini</span>
+          <span class="amt">${rupiah(k.omzetKotor - k.bon - k.pengeluaranPagi)}</span>
+        </div>
+        <div class="cell target" style="grid-column:1 / -1">
+          <span class="lbl">Batas minimal</span>
+          <span class="amt">${rupiah(k.batasMinimal)}</span>
+        </div>
+      </div>
+
+      <div class="biaya-card">
+        <div class="biaya-head">
+          <h2>Biaya Belanja</h2>
+          <span class="total">${rupiah(this.totalBiayaBelanja())}</span>
+        </div>
+        <div class="biaya-grid">
+          <div class="biaya-col">
+            <div class="biaya-row">
+              <span class="lbl">Operasional</span>
+              <button class="set-default" data-target="ops" type="button">default</button>
             </div>
-            <div class="cell minus">
-              <span class="lbl">Bon (belum diterima)</span>
-              <span class="amt">− ${rupiah(k.bon)}</span>
-            </div>
-            <div class="cell minus">
-              <span class="lbl">Pengeluaran pagi</span>
-              <span class="amt">− ${rupiah(k.pengeluaranPagi)}</span>
-            </div>
-            <div class="cell total">
-              <span class="lbl">Nilai hari ini</span>
-              <span class="amt">${rupiah(k.omzetKotor - k.bon - k.pengeluaranPagi)}</span>
-            </div>
-            <div class="cell target" style="grid-column:1 / -1">
-              <span class="lbl">Batas minimal</span>
-              <span class="amt">${rupiah(k.batasMinimal)}</span>
+            <div class="biaya-body">
+              <input type="text" inputmode="numeric" id="belOps"
+                     value="${this.pengeluaran.opsPasar ? this.pengeluaran.opsPasar.toLocaleString('id-ID') : ''}">
             </div>
           </div>
-
-          <div class="biaya-card">
-            <div class="biaya-head">
-              <h2>Biaya Belanja</h2>
-              <span class="total">${rupiah(this.totalBiayaBelanja())}</span>
+          <div class="biaya-col">
+            <div class="biaya-row">
+              <span class="lbl">Bensin</span>
+              <button class="set-default" data-target="bensin" type="button">default</button>
             </div>
-            <div class="biaya-grid">
-              <div class="biaya-col">
-                <div class="biaya-row">
-                  <span class="lbl">Operasional</span>
-                  <button class="set-default" data-target="ops" type="button">default</button>
-                </div>
-                <div class="biaya-body">
-                  <input type="text" inputmode="numeric" id="belOps"
-                         value="${this.pengeluaran.opsPasar ? this.pengeluaran.opsPasar.toLocaleString('id-ID') : ''}">
-                </div>
-              </div>
-              <div class="biaya-col">
-                <div class="biaya-row">
-                  <span class="lbl">Bensin</span>
-                  <button class="set-default" data-target="bensin" type="button">default</button>
-                </div>
-                <div class="biaya-body">
-                  <input type="text" inputmode="numeric" id="belBensin"
-                         value="${this.pengeluaran.bensin ? this.pengeluaran.bensin.toLocaleString('id-ID') : ''}">
-                </div>
-              </div>
-            </div>
-            <div class="sub-divider">
-              <div class="lain-bar">
-                <span class="sub-head">Lain-lain</span>
-                <button class="lain-toggle" id="belLainToggle" type="button">${this.lainOpen ? 'Tutup' : '+ Tambah'}</button>
-              </div>
-              <div id="belLainList">${this.renderLainList()}</div>
-              <div class="lain-add ${this.lainOpen ? 'open' : ''}" id="belLainForm">
-                <input type="text" class="nm" id="belLainKet" placeholder="Keterangan">
-                <input type="text" class="jml" id="belLainJml" inputmode="numeric" placeholder="0">
-                <button id="belLainAdd" type="button">+</button>
-              </div>
-            </div>
-            <div class="sub-divider">
-              <div class="lain-bar">
-                <span class="sub-head">Bayar hutang</span>
-                <button class="lain-toggle" id="belHutangToggle" type="button">${this.hutangOpen ? 'Tutup' : '+ Bayar'}</button>
-              </div>
-              <div id="belHutangList">${this.renderBayarHutangList()}</div>
-              <div class="lain-add ${this.hutangOpen ? 'open' : ''}" id="belHutangForm"
-                   style="flex-direction:column;">
-                <select id="belHutangSup" style="width:100%;height:38px;padding:0 11px;
-                  border:1px solid var(--line);border-radius:var(--r-sm);
-                  background:var(--paper);color:var(--ink-900);
-                  font:500 15px 'Work Sans',sans-serif;font-family:'Work Sans',sans-serif;">
-                  ${this.hutangOptionsHtml()}
-                </select>
-                <div style="font-size:11px;color:var(--ink-600);margin-top:2px;"
-                     id="belHutangHint"></div>
-                <div style="display:flex;gap:6px;">
-                  <input type="text" id="belHutangJml" inputmode="numeric"
-                         placeholder="Jumlah bayar"
-                         style="flex:1;min-width:0;height:38px;padding:0 11px;
-                         border:1px solid var(--line);border-radius:var(--r-sm);
-                         background:var(--paper);text-align:right;
-                         font:600 16px 'Zilla Slab',serif;color:var(--ink-900);
-                         font-family:'Zilla Slab',serif;">
-                  <button id="belHutangAdd" type="button"
-                          style="padding:0 14px;border:none;border-radius:var(--r-sm);
-                          background:var(--green-700);color:#fff;
-                          font:600 15px 'Work Sans',sans-serif;cursor:pointer;flex-shrink:0;">+</button>
-                </div>
-              </div>
+            <div class="biaya-body">
+              <input type="text" inputmode="numeric" id="belBensin"
+                     value="${this.pengeluaran.bensin ? this.pengeluaran.bensin.toLocaleString('id-ID') : ''}">
             </div>
           </div>
-        </div>`;
-
-      html += `
-        <div class="ac-wrap-bel">
-          <input type="text" class="ac-input-bel" id="belSearch"
-                 placeholder="Cari barang" autocomplete="off"
-                 autocorrect="off" spellcheck="false">
-          <div class="ac-drop-bel" id="belSearchDrop"></div>
-        </div>`;
-
-      html += `<div class="checklist" id="checklistBel">`;
-      html += this.state.map((item, idx) => this.renderCheckRow(item, idx)).join('');
-      html += `</div>`;
-
-      html += `
-        <div class="bar-bottom-bel">
-          <div class="stat-row">
-            <span class="lbl">Belanja tunai + biaya <span id="belSumCount">(${checked} item)</span></span>
-            <span class="amt" id="belSumBelanja">${rupiah(total + this.totalBiayaBelanja())}</span>
+        </div>
+        <div class="sub-divider">
+          <div class="lain-bar">
+            <span class="sub-head">Bayar hutang</span>
+            <button class="lain-toggle" id="belHutangToggle" type="button">${this.hutangOpen ? 'Tutup' : '+ Bayar'}</button>
           </div>
-          <div class="stat-row" id="belRowNanti"
-               style="${this.totalNanti() > 0 ? '' : 'display:none;'}">
-            <span class="lbl">Bayar nanti (belum keluar uang)</span>
-            <span class="amt" id="belSumNanti">${rupiah(this.totalNanti())}</span>
-          </div>
-          ${this.tambahDariSaldo > 0 ? `
-          <div class="stat-row" style="color:var(--blue-600);">
-            <span class="lbl">Tambah modal dari saldo ${this.tambahDariSaldoMetode}
-              <button class="btn-ubah-saldo" id="belUbahSaldo" type="button">Ubah</button>
-            </span>
-            <span class="amt" style="color:var(--blue-600);">${rupiah(this.tambahDariSaldo)}</span>
-          </div>` : `
-          <div class="stat-row" style="padding-bottom:0;">
-            <span class="lbl" style="font-size:11.5px;">Uang belanja kurang?</span>
-            <button class="btn-ubah-saldo" id="belTambahSaldo" type="button"
-              style="background:none;border:1px dashed var(--green-700);
-              color:var(--green-700);font:600 11.5px 'Work Sans',sans-serif;
-              cursor:pointer;padding:3px 10px;border-radius:var(--r-full);">
-              + Tambah dari saldo
-            </button>
-          </div>`}
-          <div class="sum-final">
-            <div class="sum-l">
-              <span class="lbl">Sisa uang</span>
-              <span class="amt" id="belSumLaba">${rupiah(sisa)}</span>
+          <div id="belHutangList">${this.renderBayarHutangList()}</div>
+          <div class="lain-add ${this.hutangOpen ? 'open' : ''}" id="belHutangForm"
+               style="flex-direction:column;">
+            <select id="belHutangSup" style="width:100%;height:38px;padding:0 11px;
+              border:1px solid var(--line);border-radius:var(--r-sm);
+              background:var(--paper);color:var(--ink-900);
+              font:500 15px 'Work Sans',sans-serif;font-family:'Work Sans',sans-serif;">
+              ${this.hutangOptionsHtml()}
+            </select>
+            <div style="font-size:11px;color:var(--ink-600);margin-top:2px;"
+                 id="belHutangHint"></div>
+            <div style="display:flex;gap:6px;">
+              <input type="text" id="belHutangJml" inputmode="numeric"
+                     placeholder="Jumlah bayar"
+                     style="flex:1;min-width:0;height:38px;padding:0 11px;
+                     border:1px solid var(--line);border-radius:var(--r-sm);
+                     background:var(--paper);text-align:right;
+                     font:600 16px 'Zilla Slab',serif;color:var(--ink-900);
+                     font-family:'Zilla Slab',serif;">
+              <button id="belHutangAdd" type="button"
+                      style="padding:0 14px;border:none;border-radius:var(--r-sm);
+                      background:var(--green-700);color:#fff;
+                      font:600 15px 'Work Sans',sans-serif;cursor:pointer;flex-shrink:0;">+</button>
             </div>
-            <button class="btn-siap-belanja" id="belSiapBelanja">Siap Belanja →</button>
           </div>
-          <div class="status-line ${status.kode}" id="belStatusLine">
-            <strong>${status.label}.</strong> ${status.detail}
-          </div>
-        </div>`;
+        </div>
+      </div>
+    </div>`;
 
-      el.innerHTML = html;
-    },
+  html += `
+    <div class="ac-wrap-bel">
+      <input type="text" class="ac-input-bel" id="belSearch"
+             placeholder="Cari barang" autocomplete="off"
+             autocorrect="off" spellcheck="false">
+      <div class="ac-drop-bel" id="belSearchDrop"></div>
+    </div>`;
+
+  html += `<div class="checklist" id="checklistBel">`;
+  html += this.state.map((item, idx) => this.renderCheckRow(item, idx)).join('');
+  html += `</div>`;
+
+  html += `
+    <div class="bar-bottom-bel">
+      <div class="stat-row">
+        <span class="lbl">Belanja tunai + biaya <span id="belSumCount">(${checked} item)</span></span>
+        <span class="amt" id="belSumBelanja">${rupiah(total + this.totalBiayaBelanja())}</span>
+      </div>
+      <div class="stat-row" id="belRowNanti"
+           style="${this.totalNanti() > 0 ? '' : 'display:none;'}">
+        <span class="lbl">Bayar nanti (belum keluar uang)</span>
+        <span class="amt" id="belSumNanti">${rupiah(this.totalNanti())}</span>
+      </div>
+      ${this.tambahDariSaldo > 0 ? `
+      <div class="stat-row" style="color:var(--blue-600);">
+        <span class="lbl">Tambah modal dari saldo ${this.tambahDariSaldoMetode}
+          <button class="btn-ubah-saldo" id="belUbahSaldo" type="button">Ubah</button>
+        </span>
+        <span class="amt" style="color:var(--blue-600);">${rupiah(this.tambahDariSaldo)}</span>
+      </div>` : `
+      <div class="stat-row" style="padding-bottom:0;">
+        <span class="lbl" style="font-size:11.5px;">Uang belanja kurang?</span>
+        <button class="btn-ubah-saldo" id="belTambahSaldo" type="button"
+          style="background:none;border:1px dashed var(--green-700);
+          color:var(--green-700);font:600 11.5px 'Work Sans',sans-serif;
+          cursor:pointer;padding:3px 10px;border-radius:var(--r-full);">
+          + Tambah dari saldo
+        </button>
+      </div>`}
+      <div class="sum-final">
+        <div class="sum-l">
+          <span class="lbl">Sisa uang</span>
+          <span class="amt" id="belSumLaba">${rupiah(sisa)}</span>
+        </div>
+        <button class="btn-siap-belanja" id="belSiapBelanja">Siap Belanja →</button>
+      </div>
+      <div class="status-line ${status.kode}" id="belStatusLine">
+        <strong>${status.label}.</strong> ${status.detail}
+      </div>
+    </div>`;
+
+  el.innerHTML = html;
+},
 
     renderCheckRow(item, idx){
       const qty = this.parseQty(item.qty);
@@ -3500,28 +3490,6 @@ body.dark .order-card.overdue{background:linear-gradient(160deg,#3A1F18,var(--ca
         });
       });
 
-      const lt = document.getElementById('belLainToggle');
-      if(lt) lt.addEventListener('click', () => {
-        this.lainOpen = !this.lainOpen;
-        const f = document.getElementById('belLainForm');
-        const k = document.getElementById('belLainKet');
-        if(f) f.classList.toggle('open', this.lainOpen);
-        lt.textContent = this.lainOpen ? 'Tutup' : '+ Tambah';
-        if(this.lainOpen && k) k.focus();
-      });
-
-      const la = document.getElementById('belLainAdd');
-      if(la) la.addEventListener('click', () => {
-        const ket = document.getElementById('belLainKet').value.trim();
-        const jml = Number(document.getElementById('belLainJml').value.replace(/\D/g,'')) || 0;
-        if(!ket){ showToast('Isi keterangan'); return; }
-        if(jml <= 0){ showToast('Isi jumlah'); return; }
-        this.pengeluaran.lain.push({ket, jumlah: jml});
-        this.savePengeluaran();
-        this.renderRencana();
-        this.attachHandlers();
-      });
-
       const ht = document.getElementById('belHutangToggle');
       if(ht) ht.addEventListener('click', () => {
         this.hutangOpen = !this.hutangOpen;
@@ -3562,7 +3530,7 @@ body.dark .order-card.overdue{background:linear-gradient(160deg,#3A1F18,var(--ca
         this.attachHandlers();
       });
 
-      ['belLainJml', 'belHutangJml'].forEach(id => {
+      ['belHutangJml'].forEach(id => {
         const el = document.getElementById(id);
         if(!el) return;
         el.addEventListener('input', () => {
