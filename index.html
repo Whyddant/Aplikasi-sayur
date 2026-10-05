@@ -5644,109 +5644,107 @@ body.dark .order-card.overdue{background:linear-gradient(160deg,#3A1F18,var(--ca
     this.attachHandlers();
   },
       /* ========== CARD 1: PENDAPATAN ========== */
-renderCardPendapatan(isLocked){
-  const total = this.totalPendapatanKotor();
-  return `
-    <div class="tutup-card card-pendapatan ${isLocked ? 'locked' : ''}">
-      <div class="tutup-card-head">
-        <h2>💰 Pendapatan</h2>
-        <span class="total" id="tutupTotalPendapatan">${rupiah(total)}</span>
-      </div>
+    renderCardPendapatan(isLocked){
+      const total = this.totalPendapatanKotor();
+      const bon = this.totalBon();
+      const diterima = total - bon;
+      return `
+        <div class="tutup-card card-pendapatan ${isLocked ? 'locked' : ''}">
+          <div class="tutup-card-head">
+            <h2>💰 Pendapatan</h2>
+            <span class="total" id="tutupTotalPendapatan">${rupiah(total)}</span>
+          </div>
 
-      <div class="tutup-row">
-        <span class="lbl">Tunai</span>
-        <div class="money-in">
-          <span class="rp">Rp</span>
-          <input type="text" inputmode="numeric" id="tutupCash"
-                 value="${this.state.omzetCash ? this.state.omzetCash.toLocaleString('id-ID') : ''}"
-                 placeholder="0" ${isLocked ? 'disabled' : ''}>
-        </div>
-      </div>
+          <div class="tutup-row">
+            <span class="lbl">Tunai</span>
+            <div class="money-in">
+              <span class="rp">Rp</span>
+              <input type="text" inputmode="numeric" id="tutupCash"
+                     value="${this.state.omzetCash ? this.state.omzetCash.toLocaleString('id-ID') : ''}"
+                     placeholder="0" ${isLocked ? 'disabled' : ''}>
+            </div>
+          </div>
 
-      <div class="tutup-row">
-        <span class="lbl">QRIS</span>
-        <div class="money-in">
-          <span class="rp">Rp</span>
-          <input type="text" inputmode="numeric" id="tutupQris"
-                 value="${this.state.omzetQris ? this.state.omzetQris.toLocaleString('id-ID') : ''}"
-                 placeholder="0" ${isLocked ? 'disabled' : ''}>
+          <div class="tutup-row">
+            <span class="lbl">QRIS</span>
+            <div class="money-in">
+              <span class="rp">Rp</span>
+              <input type="text" inputmode="numeric" id="tutupQris"
+                     value="${this.state.omzetQris ? this.state.omzetQris.toLocaleString('id-ID') : ''}"
+                     placeholder="0" ${isLocked ? 'disabled' : ''}>
+            </div>
+          </div>
 
-      <div class="subtotal-row">
-        <span class="lbl">Total Pendapatan Kotor</span>
-        <span class="amt" id="tutupGrandPendapatan">${rupiah(total)}</span>
-      </div>
+          <div class="group-label-tutup">
+            <span>📦 Pengeluaran Pagi</span>
+            <span class="plus" id="tutupPlusPagi">+ ${rupiah(this.totalPagi())}</span>
+          </div>
+          <div class="info-tiny-tutup">
+            Uang yang sudah keluar pagi — ditambahkan kembali ke pendapatan kotor.
+          </div>
 
-      <div class="subtotal-row" style="border-top:none;padding-top:2px;margin-top:0;">
-        <span class="lbl" style="font-size:11px;color:var(--ink-600);
-              text-transform:none;letter-spacing:0;font-weight:500;">
-          Pendapatan Diterima
-          <small style="color:var(--ink-400);font-weight:400;">(kotor − bon)</small>
-        </span>
-        <span class="amt" id="tutupGrandPendapatanDiterima"
-              style="font-size:15px;color:var(--green-700);">${rupiah(diterima)}</span>
-        </div>
-      </div>
+          <div class="tutup-row">
+            <span class="lbl">Kantong & Karet</span>
+            <div class="money-in">
+              <span class="rp">Rp</span>
+              <input type="text" inputmode="numeric" id="tutupPagiKK"
+                     value="${this.state.pagi.kantongKaret ? this.state.pagi.kantongKaret.toLocaleString('id-ID') : ''}"
+                     placeholder="0" ${isLocked ? 'disabled' : ''}>
+            </div>
+          </div>
 
-      <div class="group-label-tutup">
-        <span>📦 Pengeluaran Pagi</span>
-        <span class="plus" id="tutupPlusPagi">+ ${rupiah(this.totalPagi())}</span>
-      </div>
-      <div class="info-tiny-tutup">
-        Uang yang sudah keluar pagi — ditambahkan kembali ke pendapatan kotor.
-      </div>
+          <div class="tutup-row">
+            <span class="lbl">Iuran Kebersihan</span>
+            <div class="money-in">
+              <span class="rp">Rp</span>
+              <input type="text" inputmode="numeric" id="tutupPagiIuran"
+                     value="${this.state.pagi.iuran ? this.state.pagi.iuran.toLocaleString('id-ID') : ''}"
+                     placeholder="0" ${isLocked ? 'disabled' : ''}>
+            </div>
+          </div>
 
-      <div class="tutup-row">
-        <span class="lbl">Kantong & Karet</span>
-        <div class="money-in">
-          <span class="rp">Rp</span>
-          <input type="text" inputmode="numeric" id="tutupPagiKK"
-                 value="${this.state.pagi.kantongKaret ? this.state.pagi.kantongKaret.toLocaleString('id-ID') : ''}"
-                 placeholder="0" ${isLocked ? 'disabled' : ''}>
-        </div>
-      </div>
+          <div class="group-label-tutup" style="margin-top:8px;">
+            <span>Lain-lain Pagi</span>
+          </div>
+          <div id="tutupPagiLainList">${this.renderPagiLainList(isLocked)}</div>
+          ${!isLocked ? `
+          <div class="tutup-add-row">
+            <input type="text" class="nm" id="tutupPagiLainKet"
+                   placeholder="Keterangan" autocomplete="off">
+            <input type="text" class="jml" id="tutupPagiLainJml"
+                   inputmode="numeric" placeholder="0">
+            <button type="button" id="tutupPagiLainAdd">+</button>
+          </div>` : ''}
 
-      <div class="tutup-row">
-        <span class="lbl">Iuran Kebersihan</span>
-        <div class="money-in">
-          <span class="rp">Rp</span>
-          <input type="text" inputmode="numeric" id="tutupPagiIuran"
-                 value="${this.state.pagi.iuran ? this.state.pagi.iuran.toLocaleString('id-ID') : ''}"
-                 placeholder="0" ${isLocked ? 'disabled' : ''}>
-        </div>
-      </div>
+          <div class="group-label-tutup" style="margin-top:12px;">
+            <span>📝 Bon Hari Ini</span>
+          </div>
+          <div id="tutupBonList">${this.renderBonList(isLocked)}</div>
+          ${!isLocked ? `
+          <div class="tutup-add-row">
+            <input type="text" class="nm" id="tutupBonNama"
+                   placeholder="Nama pelanggan" autocomplete="off">
+            <input type="text" class="jml" id="tutupBonJml"
+                   inputmode="numeric" placeholder="0">
+            <button type="button" id="tutupBonAdd">+</button>
+          </div>` : ''}
 
-      <div class="group-label-tutup" style="margin-top:8px;">
-        <span>Lain-lain Pagi</span>
-      </div>
-      <div id="tutupPagiLainList">${this.renderPagiLainList(isLocked)}</div>
-      ${!isLocked ? `
-      <div class="tutup-add-row">
-        <input type="text" class="nm" id="tutupPagiLainKet"
-               placeholder="Keterangan" autocomplete="off">
-        <input type="text" class="jml" id="tutupPagiLainJml"
-               inputmode="numeric" placeholder="0">
-        <button type="button" id="tutupPagiLainAdd">+</button>
-      </div>` : ''}
+          <div class="subtotal-row">
+            <span class="lbl">Total Pendapatan Kotor</span>
+            <span class="amt" id="tutupGrandPendapatan">${rupiah(total)}</span>
+          </div>
 
-      <div class="group-label-tutup" style="margin-top:12px;">
-        <span>📝 Bon Hari Ini</span>
-      </div>
-      <div id="tutupBonList">${this.renderBonList(isLocked)}</div>
-      ${!isLocked ? `
-      <div class="tutup-add-row">
-        <input type="text" class="nm" id="tutupBonNama"
-               placeholder="Nama pelanggan" autocomplete="off">
-        <input type="text" class="jml" id="tutupBonJml"
-               inputmode="numeric" placeholder="0">
-        <button type="button" id="tutupBonAdd">+</button>
-      </div>` : ''}
-
-      <div class="subtotal-row">
-        <span class="lbl">Total Pendapatan Kotor</span>
-        <span class="amt" id="tutupGrandPendapatan">${rupiah(total)}</span>
-      </div>
-    </div>`;
-},
+          <div class="subtotal-row" style="border-top:none;padding-top:2px;margin-top:0;">
+            <span class="lbl" style="font-size:11px;color:var(--ink-600);
+                  text-transform:none;letter-spacing:0;font-weight:500;">
+              Pendapatan Diterima
+              <small style="color:var(--ink-400);font-weight:400;">(kotor − bon)</small>
+            </span>
+            <span class="amt" id="tutupGrandPendapatanDiterima"
+                  style="font-size:15px;color:var(--green-700);">${rupiah(diterima)}</span>
+          </div>
+        </div>`;
+    },
 
 /* ========== CARD 2: OPERASIONAL BELANJA ========== */
 renderCardOperasional(isLocked){
