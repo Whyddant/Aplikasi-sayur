@@ -2488,18 +2488,30 @@ body.dark .order-card.overdue{background:linear-gradient(160deg,#3A1F18,var(--ca
       }
 
       this.loadPengeluaran();
-      try{
-        const rawSaldo = localStorage.getItem(this._saldoKey(ymd));
-        if(rawSaldo){
-          const s = JSON.parse(rawSaldo);
-          this.tambahDariSaldo = Number(s.jumlah) || 0;
-          this.tambahDariSaldoMetode = s.metode || 'Cash';
-        } else {
+
+      /* Prioritas: cek mutasi modal yang sudah tersimpan di server.
+         Kalau ada, pakai nilai server sebagai state (state absolut).
+         Kalau tidak ada, fallback ke localStorage (belum tersimpan). */
+      const mutasiSaldo = await this._muatSaldoDariServer();
+      if(mutasiSaldo){
+        this.tambahDariSaldo = Number(mutasiSaldo.Jumlah) || 0;
+        this.tambahDariSaldoMetode = mutasiSaldo.Metode || 'Cash';
+        this._saldoTersimpan = true;
+      } else {
+        this._saldoTersimpan = false;
+        try{
+          const rawSaldo = localStorage.getItem(this._saldoKey(ymd));
+          if(rawSaldo){
+            const s = JSON.parse(rawSaldo);
+            this.tambahDariSaldo = Number(s.jumlah) || 0;
+            this.tambahDariSaldoMetode = s.metode || 'Cash';
+          } else {
+            this.tambahDariSaldo = 0;
+            this.tambahDariSaldoMetode = 'Cash';
+          }
+        }catch(e){
           this.tambahDariSaldo = 0;
-          this.tambahDariSaldoMetode = 'Cash';
         }
-      }catch(e){
-        this.tambahDariSaldo = 0;
       }
       this.expandedItems = new Set();
       this.renderRencana();
@@ -2776,6 +2788,22 @@ body.dark .order-card.overdue{background:linear-gradient(160deg,#3A1F18,var(--ca
         this.hutangSayaCache = (list || []).filter(h => h.Status !== 'Lunas');
       }catch(e){
         this.hutangSayaCache = [];
+      }
+    },
+
+    async _muatSaldoDariServer(){
+      if(!navigator.onLine) return null;
+      try{
+        const list = await SayurStorage.get('getMutasiSaldo',
+          {limit: 200}, {fresh: true});
+        return (list || []).find(m =>
+          m.Tanggal === this.tanggal &&
+          String(m.Sumber || '').toLowerCase() === 'modal' &&
+          String(m.Tipe).trim() === 'Tarik'
+        ) || null;
+      }catch(e){
+        console.warn('_muatSaldoDariServer gagal:', e);
+        return null;
       }
     },
 
@@ -3133,7 +3161,13 @@ body.dark .order-card.overdue{background:linear-gradient(160deg,#3A1F18,var(--ca
           <button class="btn-ubah-saldo" id="belUbahSaldo" type="button">Ubah</button>
         </span>
         <span class="amt" style="color:var(--blue-600);">${rupiah(this.tambahDariSaldo)}</span>
-      </div>` : `
+      </div>
+      ${this._saldoTersimpan ? `
+      <div style="font-size:10px;color:var(--green-700);
+           margin:-2px 0 4px;padding:0 2px;">
+        ✓ Sudah tersimpan di server
+      </div>` : ''}
+      ` : `
       <div class="stat-row" style="padding-bottom:0;">
         <span class="lbl" style="font-size:11.5px;">Uang belanja kurang?</span>
         <button class="btn-ubah-saldo" id="belTambahSaldo" type="button"
@@ -4106,17 +4140,40 @@ body.dark .order-card.overdue{background:linear-gradient(160deg,#3A1F18,var(--ca
           pagiLain: this.totalPagiLain()
         });
 
-        if(this.tambahDariSaldo > 0){
-          await SayurStorage.post('tambahMutasi', {
-            id: 'm-saldo-' + Date.now(),
-            tipe: 'Tarik',
-            metode: this.tambahDariSaldoMetode,
-            jumlah: this.tambahDariSaldo,
-            tujuan: 'Modal',
-            catatan: 'Tambah modal belanja',
-            sumber: 'Modal',
-            tanggal: this.tanggal
-          });
+                /* Sinkron mutasi saldo modal dengan server (state absolut).
+           - Sudah ada & nominal sama   → skip
+           - Sudah ada & nominal beda   → hapus lama, kirim baru
+           - Sudah ada & nominal 0      → hapus lama
+           - Belum ada & nominal > 0    → kirim baru
+           - Belum ada & nominal 0      → skip */
+        const mutasiSaldoLama = await this._muatSaldoDariServer();
+        const nominalLama = mutasiSaldoLama
+          ? (Number(mutasiSaldoLama.Jumlah) || 0) : 0;
+        const nominalBaru = this.tambahDariSaldo;
+
+        const bedaNominal = Math.abs(nominalBaru - nominalLama) >= 1;
+        const bedaMetode  = mutasiSaldoLama &&
+          (mutasiSaldoLama.Metode || 'Cash') !== this.tambahDariSaldoMetode;
+
+        if(mutasiSaldoLama && !bedaNominal && !bedaMetode){
+          /* Sama — tidak perlu apa-apa */
+        } else {
+          if(mutasiSaldoLama){
+            await SayurStorage.post('hapusMutasi', {id: mutasiSaldoLama.ID},
+              'delsaldo-' + mutasiSaldoLama.ID + '-' + Date.now());
+          }
+          if(nominalBaru > 0){
+            await SayurStorage.post('tambahMutasi', {
+              id: 'm-saldo-' + Date.now(),
+              tipe: 'Tarik',
+              metode: this.tambahDariSaldoMetode,
+              jumlah: nominalBaru,
+              tujuan: 'Modal',
+              catatan: 'Tambah modal belanja',
+              sumber: 'Modal',
+              tanggal: this.tanggal
+            });
+          }
         }
 
         for(const bh of this.bayarHutangState){
@@ -4130,7 +4187,6 @@ body.dark .order-card.overdue{background:linear-gradient(160deg,#3A1F18,var(--ca
         }
 
         this.saveLocalState();
-        this.tambahDariSaldo = 0;
         this.bayarHutangState = [];
 
         const totalModal = items
