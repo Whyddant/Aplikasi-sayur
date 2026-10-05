@@ -4072,6 +4072,11 @@ body.dark .order-card.overdue{background:linear-gradient(160deg,#3A1F18,var(--ca
           await SayurStorage.post('addBelanja', payload);
           item.serverId = payload.id;
           item.tersimpan = true;
+          this.saveLocalState();
+          const totalModalSementara = items.reduce((s,x) =>
+            s + this.parseQty(x.qty) * x.hargaBeli, 0);
+          this.pengeluaran.modalBelanja = totalModalSementara;
+          this.savePengeluaran();
 
           if(item.bayarNanti && item.supplier){
             await SayurStorage.post('addHutang', {
@@ -4143,6 +4148,8 @@ body.dark .order-card.overdue{background:linear-gradient(160deg,#3A1F18,var(--ca
 
       }catch(e){
         showToast('Gagal: ' + (e.message || 'Unknown'));
+        this.saveLocalState();     // ← tetap simpan apa yang sudah berhasil
+        this.savePengeluaran();
       }finally{
         if(btn){ btn.disabled = false; btn.textContent = 'Simpan Belanja'; }
       }
