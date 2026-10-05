@@ -1224,6 +1224,74 @@ body.dark .order-card.overdue{background:linear-gradient(160deg,#3A1F18,var(--ca
   font-weight:700;font-size:16px;flex-shrink:0}
 .tutup-card-head .total.green{color:var(--green-700)}
 .tutup-card-head .total.rust{color:var(--rust-600)}
+/* === 3 Card Pembeda Tab Tutup === */
+.tutup-card.card-pendapatan{
+  background:linear-gradient(160deg,var(--green-100),var(--card));
+  border-color:#C8D8B5 !important;
+}
+.tutup-card.card-pendapatan .tutup-card-head h2{color:var(--green-700);}
+.tutup-card.card-pendapatan .tutup-card-head .total{color:var(--green-700);}
+
+.tutup-card.card-operasional{
+  background:linear-gradient(160deg,var(--blue-100),var(--card));
+  border-color:#B9D2E8 !important;
+}
+.tutup-card.card-operasional .tutup-card-head h2{color:var(--blue-600);}
+.tutup-card.card-operasional .tutup-card-head .total{color:var(--blue-600);}
+
+.tutup-card.card-pengeluaran{
+  background:linear-gradient(160deg,#FFEDE5,var(--card));
+  border-color:#E8BBA6 !important;
+}
+.tutup-card.card-pengeluaran .tutup-card-head h2{color:var(--rust-700);}
+.tutup-card.card-pengeluaran .tutup-card-head .total{color:var(--rust-700);}
+
+.tutup-card .subtotal-row{
+  display:flex;justify-content:space-between;align-items:baseline;
+  padding:10px 0 2px;margin-top:8px;border-top:1.5px dashed var(--line);
+}
+.tutup-card .subtotal-row .lbl{
+  font-weight:700;font-size:12.5px;color:var(--ink-900);
+  text-transform:uppercase;letter-spacing:.5px;
+}
+.tutup-card .subtotal-row .amt{
+  font-family:'Zilla Slab',serif;font-weight:700;font-size:17px;white-space:nowrap;
+}
+.tutup-card.card-pendapatan .subtotal-row .amt{color:var(--green-700);}
+.tutup-card.card-operasional .subtotal-row .amt{color:var(--blue-600);}
+.tutup-card.card-pengeluaran .subtotal-row .amt{color:var(--rust-700);}
+
+.laba-badge{
+  display:flex;justify-content:space-between;align-items:baseline;
+  padding:12px 14px;margin-top:10px;
+  background:var(--card);border-radius:var(--r-sm);
+  border:1.5px solid var(--green-700);
+}
+.laba-badge.neg{border-color:var(--rust-600);background:#FFF3EF;}
+.laba-badge .lbl{font-size:11px;font-weight:700;
+  text-transform:uppercase;letter-spacing:.6px;color:var(--green-700);}
+.laba-badge.neg .lbl{color:var(--rust-700);}
+.laba-badge .amt{font-family:'Zilla Slab',serif;font-size:20px;
+  font-weight:700;color:var(--green-700);letter-spacing:-.5px;}
+.laba-badge.neg .amt{color:var(--rust-700);}
+
+.saldo-akhir-card{
+  background:linear-gradient(150deg,var(--green-700),var(--green-900));
+  color:#fff;border-radius:var(--r-md);padding:16px;
+  margin-bottom:12px;text-align:center;position:relative;overflow:hidden;
+}
+.saldo-akhir-card.neg{background:linear-gradient(150deg,var(--rust-600),var(--rust-700));}
+.saldo-akhir-card .k{font-size:10.5px;letter-spacing:1.4px;
+  text-transform:uppercase;opacity:.7;font-weight:600;}
+.saldo-akhir-card .v{font-family:'Zilla Slab',serif;font-size:28px;
+  font-weight:700;letter-spacing:-.8px;margin-top:4px;line-height:1.1;}
+.saldo-akhir-card .s{font-size:11px;opacity:.75;margin-top:6px;
+  display:flex;justify-content:center;gap:12px;flex-wrap:wrap;}
+
+/* Info text kecil di dalam card */
+.info-tiny-tutup{
+  font-size:10px;color:var(--ink-600);margin:-2px 0 6px;line-height:1.4;
+}
 .tutup-row{display:flex;align-items:center;gap:8px;padding:8px 0;
   border-bottom:1px solid var(--line-soft);min-width:0}
 .tutup-row:last-child{border-bottom:none}
@@ -2662,6 +2730,7 @@ body.dark .order-card.overdue{background:linear-gradient(160deg,#3A1F18,var(--ca
           this.pengeluaran = {
             opsPasar: Number(saved.opsPasar) || defaultOps,
             bensin: Number(saved.bensin) || defaultBensin,
+            konsumsiPasar: Number(saved.konsumsiPasar) || 0,  // ← tambah
             lain: Array.isArray(saved.lain) ? saved.lain : [],
             bayarHutang: Number(saved.bayarHutang) || 0,
             modalBelanja: Number(saved.modalBelanja) || 0
@@ -2672,6 +2741,7 @@ body.dark .order-card.overdue{background:linear-gradient(160deg,#3A1F18,var(--ca
       this.pengeluaran = {
         opsPasar: defaultOps,
         bensin: defaultBensin,
+        konsumsiPasar: 0,
         lain: [], bayarHutang: 0, modalBelanja: 0
       };
     },
@@ -4035,12 +4105,17 @@ body.dark .order-card.overdue{background:linear-gradient(160deg,#3A1F18,var(--ca
         }
 
         await SayurStorage.post('setBiayaOperasional', {
-          operasionalBelanja: this.pengeluaran.opsPasar,
+          tanggal: this.tanggal,
+          operasionalBelanja: Number(this.pengeluaran.opsPasar) || 0,
           operasionalMetode: 'Cash',
-          bensin: this.pengeluaran.bensin,
+          bensin: Number(this.pengeluaran.bensin) || 0,
           bensinMetode: 'Cash',
-          konsumsi: 0, konsumsiMetode: 'Cash',
-          tanggal: this.tanggal
+          konsumsi: Number(this.pengeluaran.konsumsiPasar) || 0,
+          konsumsiMetode: 'Cash',
+          pagiKresek: Number(this.state.pagi.kantongKaret) || 0,
+          pagiKonsumsi: 0,
+          pagiIuran: Number(this.state.pagi.iuran) || 0,
+          pagiLain: this.totalPagiLain()
         });
 
         if(this.tambahDariSaldo > 0){
@@ -5383,12 +5458,13 @@ body.dark .order-card.overdue{background:linear-gradient(160deg,#3A1F18,var(--ca
         if(rb){
           const b = JSON.parse(rb);
           this.pengeluaran = {
-            modalBelanja: Number(b.modalBelanja) || 0,
-            opsPasar: Number(b.opsPasar) || 100000,
-            bensin: Number(b.bensin) || 50000,
-            lain: Array.isArray(b.lain) ? b.lain : [],
-            bayarHutang: Number(b.bayarHutang) || 0
-          };
+              modalBelanja: Number(b.modalBelanja) || 0,
+              opsPasar: Number(b.opsPasar) || 100000,
+              bensin: Number(b.bensin) || 50000,
+              konsumsiPasar: Number(b.konsumsiPasar) || 0,   // ← TAMBAH
+              lain: Array.isArray(b.lain) ? b.lain : [],
+              bayarHutang: Number(b.bayarHutang) || 0
+            };
         } else {
           this.pengeluaran = this.emptyPengeluaran();
         }
@@ -5411,6 +5487,7 @@ body.dark .order-card.overdue{background:linear-gradient(160deg,#3A1F18,var(--ca
         modalBelanja: 0,
         opsPasar: Number((App.pengaturan||{}).OperasionalBelanja) || 100000,
         bensin: Number((App.pengaturan||{}).Bensin) || 50000,
+        konsumsiPasar: 0,
         lain: [], bayarHutang: 0
       };
     },
@@ -5501,258 +5578,303 @@ body.dark .order-card.overdue{background:linear-gradient(160deg,#3A1F18,var(--ca
     },
 
     render(){
-      const el = document.getElementById('tutupContent');
-      if(!el) return;
-      const isLocked = this.mode === 'final';
-      let html = '';
+    const el = document.getElementById('tutupContent');
+    if(!el) return;
+    const isLocked = this.mode === 'final';
+    let html = '';
 
-      if(this.modeBackdate){
-        html += `
-          <div class="backdate-banner">
-            <span class="bd-icon">📅</span>
-            <span class="bd-txt">Mode Backdate — ${fmtTanggalPanjang(this.tanggal)}</span>
-            <button class="bd-back" id="tutupKembaliHariIni" type="button">Hari Ini</button>
-          </div>`;
-      }
-
+    if(this.modeBackdate){
       html += `
-        <div class="tutup-date-field">
-          <label>Tanggal</label>
-          <input type="date" id="tutupTanggal" value="${this.tanggal}"
-                 max="${todayYmd()}">
+        <div class="backdate-banner">
+          <span class="bd-icon">📅</span>
+          <span class="bd-txt">Mode Backdate — ${fmtTanggalPanjang(this.tanggal)}</span>
+          <button class="bd-back" id="tutupKembaliHariIni" type="button">Hari Ini</button>
         </div>`;
+    }
 
-      if(this.mode === 'final'){
-        html += `<div class="status-badge-tutup final">
-          <span class="dot"></span> Tersimpan Database
-        </div>`;
-      } else if(this.mode === 'draft'){
-        html += `<div class="status-badge-tutup draft">
-          <span class="dot"></span> Draft — Belum Database
-        </div>`;
-      }
+    html += `
+      <div class="tutup-date-field">
+        <label>Tanggal</label>
+        <input type="date" id="tutupTanggal" value="${this.tanggal}" max="${todayYmd()}">
+      </div>`;
 
-      if(!isLocked && this.pengeluaran.modalBelanja <= 0){
-        html += `
-          <button type="button" id="tutupInputBelanja"
-            style="width:100%;padding:11px 14px;background:var(--card);
-            border:1.5px dashed var(--green-700);border-radius:var(--r-md);
-            color:var(--green-700);font:600 13px 'Work Sans',sans-serif;
-            cursor:pointer;margin-bottom:12px;">
-            🛒 Belum ada belanja. Input Belanja ${fmtTanggalPendek(this.tanggal)}
-          </button>`;
-      }
+    if(this.mode === 'final'){
+      html += `<div class="status-badge-tutup final">
+        <span class="dot"></span> Tersimpan Database
+      </div>`;
+    } else if(this.mode === 'draft'){
+      html += `<div class="status-badge-tutup draft">
+        <span class="dot"></span> Draft — Belum Database
+      </div>`;
+    }
 
+    if(!isLocked && this.pengeluaran.modalBelanja <= 0){
       html += `
-        <div class="tutup-card ${isLocked ? 'locked' : ''}">
-          <div class="tutup-card-head">
-            <h2>💰 Pendapatan Kotor</h2>
-            <span class="total green" id="tutupTotalPendapatan">
-              ${rupiah(this.totalPendapatanKotor())}
-            </span>
-          </div>
-
-          <div class="tutup-row">
-            <span class="lbl">Tunai</span>
-            <div class="money-in">
-              <span class="rp">Rp</span>
-              <input type="text" inputmode="numeric" id="tutupCash"
-                     value="${this.state.omzetCash ? this.state.omzetCash.toLocaleString('id-ID') : ''}"
-                     placeholder="0" ${isLocked ? 'disabled' : ''}>
-            </div>
-          </div>
-
-          <div class="tutup-row">
-            <span class="lbl">QRIS</span>
-            <div class="money-in">
-              <span class="rp">Rp</span>
-              <input type="text" inputmode="numeric" id="tutupQris"
-                     value="${this.state.omzetQris ? this.state.omzetQris.toLocaleString('id-ID') : ''}"
-                     placeholder="0" ${isLocked ? 'disabled' : ''}>
-            </div>
-          </div>
-
-          <div class="group-label-tutup">
-            <span>📦 Operasional Pagi</span>
-            <span class="plus" id="tutupPlusPagi">+ ${rupiah(this.totalPagi())}</span>
-          </div>
-          <div class="info-tiny-tutup">
-            Uang yang sudah keluar pagi — ditambahkan kembali ke pendapatan kotor.
-          </div>
-
-          <div class="tutup-row">
-            <span class="lbl">Kantong dan Karet</span>
-            <div class="money-in">
-              <span class="rp">Rp</span>
-              <input type="text" inputmode="numeric" id="tutupPagiKK"
-                     value="${this.state.pagi.kantongKaret ? this.state.pagi.kantongKaret.toLocaleString('id-ID') : ''}"
-                     placeholder="0" ${isLocked ? 'disabled' : ''}>
-            </div>
-          </div>
-
-          <div class="tutup-row">
-            <span class="lbl">Iuran Kebersihan</span>
-            <div class="money-in">
-              <span class="rp">Rp</span>
-              <input type="text" inputmode="numeric" id="tutupPagiIuran"
-                     value="${this.state.pagi.iuran ? this.state.pagi.iuran.toLocaleString('id-ID') : ''}"
-                     placeholder="0" ${isLocked ? 'disabled' : ''}>
-            </div>
-          </div>
-
-          <div class="group-label-tutup" style="margin-top:8px;">
-            <span>Lain-lain Pagi</span>
-          </div>
-          <div id="tutupPagiLainList">${this.renderPagiLainList(isLocked)}</div>
-          ${!isLocked ? `
-          <div class="tutup-add-row">
-            <input type="text" class="nm" id="tutupPagiLainKet"
-                   placeholder="Keterangan" autocomplete="off">
-            <input type="text" class="jml" id="tutupPagiLainJml"
-                   inputmode="numeric" placeholder="0">
-            <button type="button" id="tutupPagiLainAdd">+</button>
-          </div>` : ''}
-
-          <div class="group-label-tutup" style="margin-top:12px;">
-            <span>📝 Bon Hari Ini</span>
-          </div>
-          <div id="tutupBonList">${this.renderBonList(isLocked)}</div>
-          ${!isLocked ? `
-          <div class="tutup-add-row">
-            <input type="text" class="nm" id="tutupBonNama"
-                   placeholder="Nama pelanggan" autocomplete="off">
-            <input type="text" class="jml" id="tutupBonJml"
-                   inputmode="numeric" placeholder="0">
-            <button type="button" id="tutupBonAdd">+</button>
-          </div>` : ''}
-
-          <div class="grand-total-tutup">
-            <span class="lbl">Total Pendapatan Kotor</span>
-            <span class="amt" id="tutupGrandPendapatan">
-              ${rupiah(this.totalPendapatanKotor())}
-            </span>
-          </div>
-        </div>`;
-
-      const hasModal = this.pengeluaran.modalBelanja > 0;
-      html += `
-        <div class="tutup-card ${isLocked ? 'locked' : ''}">
-          <div class="tutup-card-head">
-            <h2>💸 Pengeluaran</h2>
-            <span class="total rust" id="tutupTotalPengeluaran">
-              ${rupiah(this.totalPengeluaran())}
-            </span>
-          </div>
-
-          <div class="tutup-row">
-            <span class="lbl">
-              Modal Belanja
-              <small>${hasModal ? 'dari tab Belanja' : 'belum ada belanja tersimpan'}</small>
-            </span>
-            <span class="amt-display muted" id="tutupDispModal">
-              ${rupiah(this.pengeluaran.modalBelanja)}
-            </span>
-          </div>
-
-          <div class="tutup-row">
-            <span class="lbl">Operasional Belanja</span>
-            <div class="money-in">
-              <span class="rp">Rp</span>
-              <input type="text" inputmode="numeric" id="tutupOps"
-                     value="${this.pengeluaran.opsPasar ? this.pengeluaran.opsPasar.toLocaleString('id-ID') : ''}"
-                     placeholder="0" ${isLocked ? 'disabled' : ''}>
-            </div>
-          </div>
-
-          <div class="tutup-row">
-            <span class="lbl">Bensin</span>
-            <div class="money-in">
-              <span class="rp">Rp</span>
-              <input type="text" inputmode="numeric" id="tutupBensin"
-                     value="${this.pengeluaran.bensin ? this.pengeluaran.bensin.toLocaleString('id-ID') : ''}"
-                     placeholder="0" ${isLocked ? 'disabled' : ''}>
-            </div>
-          </div>
-
-          <div class="group-label-tutup">
-            <span>📋 Biaya Lain-lain</span>
-          </div>
-          <div id="tutupLainList">${this.renderLainList(isLocked)}</div>
-          ${!isLocked ? `
-          <div class="tutup-add-row">
-            <input type="text" class="nm" id="tutupLainKet"
-                   placeholder="Keterangan (mis. Konsumsi)" autocomplete="off">
-            <input type="text" class="jml" id="tutupLainJml"
-                   inputmode="numeric" placeholder="0">
-            <button type="button" id="tutupLainAdd">+</button>
-          </div>` : ''}
-
-          ${this.pengeluaran.bayarHutang > 0 ? `
-          <div class="tutup-row" style="margin-top:6px;">
-            <span class="lbl">
-              Bayar Hutang
-              <small>dari tab Belanja</small>
-            </span>
-            <span class="amt-display muted">${rupiah(this.pengeluaran.bayarHutang)}</span>
-          </div>` : ''}
-
-          <div class="grand-total-tutup rust">
-            <span class="lbl">Total Pengeluaran</span>
-            <span class="amt" id="tutupGrandPengeluaran">
-              ${rupiah(this.totalPengeluaran())}
-            </span>
-          </div>
-        </div>`;
-
-      const laba = this.labaBersih();
-      const labaKelas = laba >= 0 ? '' : 'neg';
-      html += `
-        <div class="tutup-card tutup-summary-card">
-          <div class="tutup-card-head head">
-            <h2>📊 Laba Bersih Hari Ini</h2>
-          </div>
-          <div class="laba-amt ${labaKelas}" id="tutupLabaAmt">
-            ${rupiah(laba)}
-          </div>
-          <div class="laba-sub" id="tutupLabaSub">
-            ${laba >= 0 ?
-              'Dari pendapatan kotor ' + rupiah(this.totalPendapatanKotor()) :
-              'Rugi — periksa pengeluaran'}
-          </div>
-        </div>`;
-
-      html += `
-        <button class="btn-save-tutup ${isLocked ? 'edit-mode' : ''}" id="tutupBtnSave">
-          ${isLocked ? '✏️ Edit' : '💾 Simpan'}
+        <button type="button" id="tutupInputBelanja"
+          style="width:100%;padding:11px 14px;background:var(--card);
+          border:1.5px dashed var(--green-700);border-radius:var(--r-md);
+          color:var(--green-700);font:600 13px 'Work Sans',sans-serif;
+          cursor:pointer;margin-bottom:12px;">
+          🛒 Belum ada belanja. Input Belanja ${fmtTanggalPendek(this.tanggal)}
         </button>`;
+    }
 
-      el.innerHTML = html;
-      this.attachHandlers();
-    },
+    html += this.renderCardPendapatan(isLocked);
+    html += this.renderCardOperasional(isLocked);
+    html += this.renderCardPengeluaran(isLocked);
+    html += this.renderCardSaldoAkhir();
 
-    renderPagiLainList(isLocked){
-      const list = this.state.pagi.lain || [];
-      if(!list.length) return '';
-      return list.map((x,i) => `
-        <div class="tutup-list-item">
-          <span class="nm">${escHtml(x.ket)}</span>
-          <span class="amt">${rupiah(x.jumlah)}</span>
-          ${!isLocked ? `<button class="del" data-type="pagiLain" data-idx="${i}" type="button">×</button>` : ''}
+    html += `
+      <button class="btn-save-tutup ${isLocked ? 'edit-mode' : ''}" id="tutupBtnSave">
+        ${isLocked ? '✏️ Edit' : '💾 Simpan'}
+      </button>`;
+
+    el.innerHTML = html;
+    this.attachHandlers();
+  },
+      /* ========== CARD 1: PENDAPATAN ========== */
+renderCardPendapatan(isLocked){
+  const total = this.totalPendapatanKotor();
+  return `
+    <div class="tutup-card card-pendapatan ${isLocked ? 'locked' : ''}">
+      <div class="tutup-card-head">
+        <h2>💰 Pendapatan</h2>
+        <span class="total" id="tutupTotalPendapatan">${rupiah(total)}</span>
+      </div>
+
+      <div class="tutup-row">
+        <span class="lbl">Tunai</span>
+        <div class="money-in">
+          <span class="rp">Rp</span>
+          <input type="text" inputmode="numeric" id="tutupCash"
+                 value="${this.state.omzetCash ? this.state.omzetCash.toLocaleString('id-ID') : ''}"
+                 placeholder="0" ${isLocked ? 'disabled' : ''}>
         </div>
-      `).join('');
-    },
+      </div>
 
-    renderBonList(isLocked){
-      const list = this.state.bon || [];
-      if(!list.length) return '';
-      return list.map((b,i) => `
-        <div class="tutup-list-item">
-          <span class="nm">${escHtml(b.nama)}</span>
-          <span class="amt">${rupiah(b.jumlah)}</span>
-          ${!isLocked ? `<button class="del" data-type="bon" data-idx="${i}" type="button">×</button>` : ''}
+      <div class="tutup-row">
+        <span class="lbl">QRIS</span>
+        <div class="money-in">
+          <span class="rp">Rp</span>
+          <input type="text" inputmode="numeric" id="tutupQris"
+                 value="${this.state.omzetQris ? this.state.omzetQris.toLocaleString('id-ID') : ''}"
+                 placeholder="0" ${isLocked ? 'disabled' : ''}>
         </div>
-      `).join('');
-    },
+      </div>
+
+      <div class="group-label-tutup">
+        <span>📦 Pengeluaran Pagi</span>
+        <span class="plus" id="tutupPlusPagi">+ ${rupiah(this.totalPagi())}</span>
+      </div>
+      <div class="info-tiny-tutup">
+        Uang yang sudah keluar pagi — ditambahkan kembali ke pendapatan kotor.
+      </div>
+
+      <div class="tutup-row">
+        <span class="lbl">Kantong & Karet</span>
+        <div class="money-in">
+          <span class="rp">Rp</span>
+          <input type="text" inputmode="numeric" id="tutupPagiKK"
+                 value="${this.state.pagi.kantongKaret ? this.state.pagi.kantongKaret.toLocaleString('id-ID') : ''}"
+                 placeholder="0" ${isLocked ? 'disabled' : ''}>
+        </div>
+      </div>
+
+      <div class="tutup-row">
+        <span class="lbl">Iuran Kebersihan</span>
+        <div class="money-in">
+          <span class="rp">Rp</span>
+          <input type="text" inputmode="numeric" id="tutupPagiIuran"
+                 value="${this.state.pagi.iuran ? this.state.pagi.iuran.toLocaleString('id-ID') : ''}"
+                 placeholder="0" ${isLocked ? 'disabled' : ''}>
+        </div>
+      </div>
+
+      <div class="group-label-tutup" style="margin-top:8px;">
+        <span>Lain-lain Pagi</span>
+      </div>
+      <div id="tutupPagiLainList">${this.renderPagiLainList(isLocked)}</div>
+      ${!isLocked ? `
+      <div class="tutup-add-row">
+        <input type="text" class="nm" id="tutupPagiLainKet"
+               placeholder="Keterangan" autocomplete="off">
+        <input type="text" class="jml" id="tutupPagiLainJml"
+               inputmode="numeric" placeholder="0">
+        <button type="button" id="tutupPagiLainAdd">+</button>
+      </div>` : ''}
+
+      <div class="group-label-tutup" style="margin-top:12px;">
+        <span>📝 Bon Hari Ini</span>
+      </div>
+      <div id="tutupBonList">${this.renderBonList(isLocked)}</div>
+      ${!isLocked ? `
+      <div class="tutup-add-row">
+        <input type="text" class="nm" id="tutupBonNama"
+               placeholder="Nama pelanggan" autocomplete="off">
+        <input type="text" class="jml" id="tutupBonJml"
+               inputmode="numeric" placeholder="0">
+        <button type="button" id="tutupBonAdd">+</button>
+      </div>` : ''}
+
+      <div class="subtotal-row">
+        <span class="lbl">Total Pendapatan Kotor</span>
+        <span class="amt" id="tutupGrandPendapatan">${rupiah(total)}</span>
+      </div>
+    </div>`;
+},
+
+/* ========== CARD 2: OPERASIONAL BELANJA ========== */
+renderCardOperasional(isLocked){
+  const modal = Number(this.pengeluaran.modalBelanja) || 0;
+  const ops = Number(this.pengeluaran.opsPasar) || 0;
+  const bensin = Number(this.pengeluaran.bensin) || 0;
+  const konsumsi = Number(this.pengeluaran.konsumsiPasar) || 0;
+  const subtotal = modal + ops + bensin + konsumsi;
+  const labaBersih = this.totalPendapatanKotor() - subtotal;
+  const labaKls = labaBersih < 0 ? 'neg' : '';
+
+  return `
+    <div class="tutup-card card-operasional ${isLocked ? 'locked' : ''}">
+      <div class="tutup-card-head">
+        <h2>🛒 Operasional Belanja</h2>
+        <span class="total" id="tutupTotalOperasional">${rupiah(subtotal)}</span>
+      </div>
+
+      <div class="tutup-row">
+        <span class="lbl">
+          Modal Belanja
+          <small>${modal > 0 ? 'dari tab Belanja' : 'belum ada belanja tersimpan'}</small>
+        </span>
+        <span class="amt-display muted" id="tutupDispModal">${rupiah(modal)}</span>
+      </div>
+
+      <div class="tutup-row">
+        <span class="lbl">Operasional Pasar</span>
+        <div class="money-in">
+          <span class="rp">Rp</span>
+          <input type="text" inputmode="numeric" id="tutupOps"
+                 value="${ops ? ops.toLocaleString('id-ID') : ''}"
+                 placeholder="0" ${isLocked ? 'disabled' : ''}>
+        </div>
+      </div>
+
+      <div class="tutup-row">
+        <span class="lbl">Bensin</span>
+        <div class="money-in">
+          <span class="rp">Rp</span>
+          <input type="text" inputmode="numeric" id="tutupBensin"
+                 value="${bensin ? bensin.toLocaleString('id-ID') : ''}"
+                 placeholder="0" ${isLocked ? 'disabled' : ''}>
+        </div>
+      </div>
+
+      <div class="tutup-row">
+        <span class="lbl">Konsumsi Pasar</span>
+        <div class="money-in">
+          <span class="rp">Rp</span>
+          <input type="text" inputmode="numeric" id="tutupKonsumsi"
+                 value="${konsumsi ? konsumsi.toLocaleString('id-ID') : ''}"
+                 placeholder="0" ${isLocked ? 'disabled' : ''}>
+        </div>
+      </div>
+
+      <div class="subtotal-row">
+        <span class="lbl">Subtotal Operasional</span>
+        <span class="amt" id="tutupSubtotalOps">${rupiah(subtotal)}</span>
+      </div>
+
+      <div class="laba-badge ${labaKls}">
+        <span class="lbl">Laba Bersih</span>
+        <span class="amt" id="tutupLabaAmt">${rupiah(labaBersih)}</span>
+      </div>
+    </div>`;
+},
+
+/* ========== CARD 3: PENGELUARAN DARI SALDO ========== */
+renderCardPengeluaran(isLocked){
+  const total = this.totalLain() + Number(this.pengeluaran.bayarHutang || 0);
+  return `
+    <div class="tutup-card card-pengeluaran ${isLocked ? 'locked' : ''}">
+      <div class="tutup-card-head">
+        <h2>💸 Pengeluaran dari Saldo</h2>
+        <span class="total" id="tutupTotalPengeluaran">${rupiah(total)}</span>
+      </div>
+
+      <div class="info-tiny-tutup" style="margin-top:-4px;margin-bottom:8px;">
+        Gaji, dapur, jajan, rokok, dll — mengurangi saldo, <strong>tidak mengurangi laba</strong>.
+      </div>
+
+      <div id="tutupLainList">${this.renderLainList(isLocked)}</div>
+      ${!isLocked ? `
+      <div class="tutup-add-row">
+        <input type="text" class="nm" id="tutupLainKet"
+               placeholder="Keterangan (mis. Gaji Ucup)" autocomplete="off">
+        <input type="text" class="jml" id="tutupLainJml"
+               inputmode="numeric" placeholder="0">
+        <button type="button" id="tutupLainAdd">+</button>
+      </div>` : ''}
+
+      ${this.pengeluaran.bayarHutang > 0 ? `
+      <div class="tutup-row" style="margin-top:6px;">
+        <span class="lbl">
+          Bayar Hutang
+          <small>dari tab Belanja</small>
+        </span>
+        <span class="amt-display muted">${rupiah(this.pengeluaran.bayarHutang)}</span>
+      </div>` : ''}
+
+      <div class="subtotal-row">
+        <span class="lbl">Subtotal Pengeluaran</span>
+        <span class="amt" id="tutupGrandPengeluaran">${rupiah(total)}</span>
+      </div>
+    </div>`;
+},
+
+      /* ========== CARD 4: SALDO AKHIR ========== */
+      renderCardSaldoAkhir(){
+        const pendapatan = this.totalPendapatanKotor();
+        const operasional = (Number(this.pengeluaran.modalBelanja) || 0) +
+                            (Number(this.pengeluaran.opsPasar) || 0) +
+                            (Number(this.pengeluaran.bensin) || 0) +
+                            (Number(this.pengeluaran.konsumsiPasar) || 0);
+        const pengeluaran = this.totalLain() + Number(this.pengeluaran.bayarHutang || 0);
+        const laba = pendapatan - operasional;
+        const saldoAkhir = laba - pengeluaran;
+        const kls = saldoAkhir < 0 ? 'neg' : '';
+        return `
+          <div class="saldo-akhir-card ${kls}">
+            <div class="k">Saldo Akhir Hari Ini</div>
+            <div class="v" id="tutupSaldoAkhirAmt">${rupiah(saldoAkhir)}</div>
+            <div class="s">
+              <span>Laba ${rupiah(laba)}</span>
+              <span>·</span>
+              <span>Keluar ${rupiah(pengeluaran)}</span>
+            </div>
+          </div>`;
+      },
+      renderPagiLainList(isLocked){
+        const list = this.state.pagi.lain || [];
+        if(!list.length) return '';
+        return list.map((x,i) => `
+          <div class="tutup-list-item">
+            <span class="nm">${escHtml(x.ket)}</span>
+            <span class="amt">${rupiah(x.jumlah)}</span>
+            ${!isLocked ? `<button class="del" data-type="pagiLain" data-idx="${i}" type="button">×</button>` : ''}
+          </div>
+        `).join('');
+      },
+
+      renderBonList(isLocked){
+        const list = this.state.bon || [];
+        if(!list.length) return '';
+        return list.map((b,i) => `
+          <div class="tutup-list-item">
+            <span class="nm">${escHtml(b.nama)}</span>
+            <span class="amt">${rupiah(b.jumlah)}</span>
+            ${!isLocked ? `<button class="del" data-type="bon" data-idx="${i}" type="button">×</button>` : ''}
+          </div>
+        `).join('');
+      },
 
     renderLainList(isLocked){
       const list = this.pengeluaran.lain || [];
@@ -5813,6 +5935,10 @@ body.dark .order-card.overdue{background:linear-gradient(160deg,#3A1F18,var(--ca
       });
       this._bindMoney('tutupBensin', v => {
         this.pengeluaran.bensin = v;
+        this.savePengeluaran();
+      });
+      this._bindMoney('tutupKonsumsi', v => {
+        this.pengeluaran.konsumsiPasar = v;
         this.savePengeluaran();
       });
 
@@ -5919,32 +6045,40 @@ body.dark .order-card.overdue{background:linear-gradient(160deg,#3A1F18,var(--ca
     },
 
     updateLive(){
-      const totalPendapatan = this.totalPendapatanKotor();
-      const totalPengeluaran = this.totalPengeluaran();
-      const laba = this.labaBersih();
-      const elPendapatan = document.getElementById('tutupTotalPendapatan');
-      const elGrandP = document.getElementById('tutupGrandPendapatan');
-      const elPlusPagi = document.getElementById('tutupPlusPagi');
-      const elPengeluaran = document.getElementById('tutupTotalPengeluaran');
-      const elGrandPeng = document.getElementById('tutupGrandPengeluaran');
-      const elLabaAmt = document.getElementById('tutupLabaAmt');
-      const elLabaSub = document.getElementById('tutupLabaSub');
+    const pendapatan = this.totalPendapatanKotor();
+    const operasional = (Number(this.pengeluaran.modalBelanja) || 0) +
+                        (Number(this.pengeluaran.opsPasar) || 0) +
+                        (Number(this.pengeluaran.bensin) || 0) +
+                        (Number(this.pengeluaran.konsumsiPasar) || 0);
+    const pengeluaran = this.totalLain() + Number(this.pengeluaran.bayarHutang || 0);
+    const laba = pendapatan - operasional;
+    const saldoAkhir = laba - pengeluaran;
 
-      if(elPendapatan) elPendapatan.textContent = rupiah(totalPendapatan);
-      if(elGrandP) elGrandP.textContent = rupiah(totalPendapatan);
-      if(elPlusPagi) elPlusPagi.textContent = '+ ' + rupiah(this.totalPagi());
-      if(elPengeluaran) elPengeluaran.textContent = rupiah(totalPengeluaran);
-      if(elGrandPeng) elGrandPeng.textContent = rupiah(totalPengeluaran);
-      if(elLabaAmt){
-        elLabaAmt.textContent = rupiah(laba);
-        elLabaAmt.classList.toggle('neg', laba < 0);
-      }
-      if(elLabaSub){
-        elLabaSub.textContent = laba >= 0 ?
-          'Dari pendapatan kotor ' + rupiah(totalPendapatan) :
-          'Rugi — periksa pengeluaran';
-      }
-    },
+    const set = (id, val) => {
+      const el = document.getElementById(id);
+      if(el) el.textContent = rupiah(val);
+    };
+    set('tutupTotalPendapatan', pendapatan);
+    set('tutupGrandPendapatan', pendapatan);
+    set('tutupTotalOperasional', operasional);
+    set('tutupSubtotalOps', operasional);
+    set('tutupTotalPengeluaran', pengeluaran);
+    set('tutupGrandPengeluaran', pengeluaran);
+    set('tutupLabaAmt', laba);
+    set('tutupSaldoAkhirAmt', saldoAkhir);
+
+    const elPlusPagi = document.getElementById('tutupPlusPagi');
+    if(elPlusPagi) elPlusPagi.textContent = '+ ' + rupiah(this.totalPagi());
+
+    const elLaba = document.getElementById('tutupLabaAmt');
+    if(elLaba) elLaba.classList.toggle('neg', laba < 0);
+    const elLabaParent = elLaba ? elLaba.closest('.laba-badge') : null;
+    if(elLabaParent) elLabaParent.classList.toggle('neg', laba < 0);
+
+    const elSaldo = document.getElementById('tutupSaldoAkhirAmt');
+    const elSaldoParent = elSaldo ? elSaldo.closest('.saldo-akhir-card') : null;
+    if(elSaldoParent) elSaldoParent.classList.toggle('neg', saldoAkhir < 0);
+  },
 
     openSheetSimpan(){
       const ov = document.createElement('div');
@@ -6019,7 +6153,8 @@ body.dark .order-card.overdue{background:linear-gradient(160deg,#3A1F18,var(--ca
           operasionalMetode: 'Cash',
           bensin: Number(this.pengeluaran.bensin) || 0,
           bensinMetode: 'Cash',
-          konsumsi: 0, konsumsiMetode: 'Cash',
+          konsumsi: Number(this.pengeluaran.konsumsiPasar) || 0,
+          konsumsiMetode: 'Cash',
           pagiKresek: Number(this.state.pagi.kantongKaret) || 0,
           pagiKonsumsi: 0,
           pagiIuran: Number(this.state.pagi.iuran) || 0,
@@ -6954,18 +7089,21 @@ body.dark .order-card.overdue{background:linear-gradient(160deg,#3A1F18,var(--ca
                               ((pagi.lain || []).reduce((s,x) => s + Number(x.jumlah || 0), 0));
             const bon = (t.bon || []).reduce((s,b) => s + Number(b.jumlah || 0), 0);
             const totalOmzet = omzetCash + omzetQris + pagiTotal + bon;
-            const totalPengeluaran =
+            const totalOperasional =
               (Number(biaya.modalBelanja) || 0) +
               (Number(biaya.opsPasar) || 0) +
               (Number(biaya.bensin) || 0) +
+              (Number(biaya.konsumsiPasar) || 0);
+            const totalPengeluaran =
               ((biaya.lain || []).reduce((s,x) => s + Number(x.jumlah || 0), 0)) +
               (Number(biaya.bayarHutang) || 0);
             data.push({
               tanggal: ymd,
               omzet: totalOmzet,
               pengeluaran: totalPengeluaran,
-              laba: totalOmzet - totalPengeluaran,
-              adaData: true, dariServer: false
+              laba: totalOmzet - totalOperasional,
+              adaData: true,                // ← tambah
+              dariServer: false             // ← tambah
             });
           }catch(e){}
         }
@@ -7283,6 +7421,7 @@ body.dark .order-card.overdue{background:linear-gradient(160deg,#3A1F18,var(--ca
         modalBelanja: r.Belanja || 0,
         opsPasar: Number(biaya.operasionalBelanja) || 0,
         bensin: Number(biaya.bensin) || 0,
+        konsumsiPasar: Number(biaya.konsumsi) || 0,
         lainArr, lainTotal,
         bayarHutang: 0,
         totalPengeluaran: r.Pengeluaran || 0,
@@ -7331,8 +7470,10 @@ body.dark .order-card.overdue{background:linear-gradient(160deg,#3A1F18,var(--ca
       }));
       const lainTotal = lainArr.reduce((s,x) => s + Number(x.jumlah || 0), 0);
       const bayarHutang = Number(belanjaBiaya.bayarHutang) || 0;
-      const totalPengeluaran = modalBelanja + opsPasar + bensin + lainTotal + bayarHutang;
-      const laba = totalPendapatan - totalPengeluaran;
+      const konsumsiPasar = Number(belanjaBiaya.konsumsiPasar) || 0;
+      const totalOperasional = modalBelanja + opsPasar + bensin + konsumsiPasar;
+      const totalPengeluaran = lainTotal + bayarHutang;
+      const laba = totalPendapatan - totalOperasional;
 
       const itemsBelanja = (belanjaState || []).filter(x =>
         x.tersimpan && Number(String(x.qty).replace(/[^\d.]/g,'')) > 0);
@@ -7350,8 +7491,12 @@ body.dark .order-card.overdue{background:linear-gradient(160deg,#3A1F18,var(--ca
         pagiKK, pagiIuran, pagiKonsumsi: 0, pagiLainArr, pagiTotal,
         bonArr, bonTotal, totalPendapatan,
         itemsBelanja, totalBeliTunai, totalNanti, potensiJual,
-        modalBelanja, opsPasar, bensin, lainArr, lainTotal, bayarHutang,
-        totalPengeluaran, laba,
+        modalBelanja, opsPasar, bensin, konsumsiPasar,
+        lainArr, lainTotal, bayarHutang,
+        totalOperasional,
+        totalPengeluaran,
+        totalKeluar: totalOperasional + totalPengeluaran,
+        laba,
         hutangBaru: (this.apiHutang || []).filter(h =>
           String(h.Tanggal).slice(0,10) === ymd),
         mutasiHari: (this.apiMutasi || []).filter(m =>
@@ -7400,53 +7545,21 @@ body.dark .order-card.overdue{background:linear-gradient(160deg,#3A1F18,var(--ca
           ${d.bonTotal > 0 ? `<div class="dh-row"><span class="lbl">Bon (belum diterima, tidak dihitung)</span><span class="amt" style="color:var(--ink-600);">${rupiah(d.bonTotal)}</span></div>` : ''}
         </div>`;
 
-      body += `<div class="dh-section">
-        <div class="dh-title">
-          <span>🛒 Belanja (${d.itemsBelanja.length} item)</span>
-          <strong>${rupiah(d.totalBeliTunai + d.totalNanti)}</strong>
-        </div>`;
-      if(!d.itemsBelanja.length){
-        body += `<div class="dh-empty">Tidak ada item belanja</div>`;
-      } else {
-        d.itemsBelanja.forEach((it, i) => {
-          const qty = Number(String(it.qty).replace(/[^\d.]/g,'')) || 0;
-          const subBeli = qty * (it.hargaBeli || 0);
-          const subJual = qty * (it.hargaJual || 0);
-          body += `
-            <div class="dh-belanja-item">
-              <div class="nama">
-                <span>${i+1}. ${escHtml(it.nama)}${it.supplier ?
-                  ` <small style="color:var(--ink-600);font-weight:400;">→ ${escHtml(it.supplier)}</small>` : ''}</span>
-                ${it.bayarNanti ? '<span class="badge-hutang">HUTANG</span>' : ''}
-              </div>
-              <div class="rincian">
-                <span>${escHtml(it.qty)} ${escHtml(it.satuan)} × ${(it.hargaBeli||0).toLocaleString('id-ID')}</span>
-                <span class="kanan">${rupiah(subBeli)}</span>
-              </div>
-              ${subJual > 0 ? `
-              <div class="rincian" style="margin-top:2px;">
-                <span>jual ${(it.hargaJual||0).toLocaleString('id-ID')}</span>
-                <span class="kanan" style="color:var(--blue-600);">${rupiah(subJual)}</span>
-              </div>` : ''}
-            </div>`;
-        });
-        body += `
-          <div class="dh-row total"><span class="lbl">Tunai</span><span class="amt">${rupiah(d.totalBeliTunai)}</span></div>
-          ${d.totalNanti > 0 ? `<div class="dh-row"><span class="lbl">Bayar nanti</span><span class="amt" style="color:var(--amber-700);">${rupiah(d.totalNanti)}</span></div>` : ''}
-          ${d.potensiJual > 0 ? `<div class="dh-row"><span class="lbl">Potensi jual</span><span class="amt" style="color:var(--blue-600);">${rupiah(d.potensiJual)}</span></div>` : ''}`;
-      }
-      body += `</div>`;
-
       body += `
-        <div class="dh-section">
-          <div class="dh-title">💸 Pengeluaran</div>
-          <div class="dh-row"><span class="lbl">Modal Belanja</span><span class="amt">${rupiah(d.modalBelanja)}</span></div>
-          <div class="dh-row"><span class="lbl">Operasional</span><span class="amt">${rupiah(d.opsPasar)}</span></div>
-          <div class="dh-row"><span class="lbl">Bensin</span><span class="amt">${rupiah(d.bensin)}</span></div>
-          <div class="dh-row"><span class="lbl">Lain-lain</span><span class="amt">${rupiah(d.lainTotal)}</span></div>
-          ${d.bayarHutang > 0 ? `<div class="dh-row"><span class="lbl">Bayar hutang</span><span class="amt">${rupiah(d.bayarHutang)}</span></div>` : ''}
-          <div class="dh-row total rust"><span class="lbl">Total</span><span class="amt">${rupiah(d.totalPengeluaran)}</span></div>
-        </div>`;
+  <div class="dh-section">
+    <div class="dh-title"><span>🛒 Operasional Belanja</span><strong>${rupiah((d.modalBelanja||0)+(d.opsPasar||0)+(d.bensin||0)+(d.konsumsiPasar||0))}</strong></div>
+    <div class="dh-row"><span class="lbl">Modal Belanja</span><span class="amt">${rupiah(d.modalBelanja)}</span></div>
+    <div class="dh-row"><span class="lbl">Operasional Pasar</span><span class="amt">${rupiah(d.opsPasar)}</span></div>
+    <div class="dh-row"><span class="lbl">Bensin</span><span class="amt">${rupiah(d.bensin)}</span></div>
+    <div class="dh-row"><span class="lbl">Konsumsi Pasar</span><span class="amt">${rupiah(d.konsumsiPasar || 0)}</span></div>
+  </div>`;
+
+body += `
+  <div class="dh-section">
+    <div class="dh-title"><span>💸 Pengeluaran dari Saldo</span><strong>${rupiah((d.lainTotal||0)+(d.bayarHutang||0))}</strong></div>
+    ${(d.lainArr || []).map(x => `<div class="dh-row"><span class="lbl">${escHtml(x.ket)}</span><span class="amt">${rupiah(x.jumlah)}</span></div>`).join('')}
+    ${d.bayarHutang > 0 ? `<div class="dh-row"><span class="lbl">Bayar Hutang</span><span class="amt">${rupiah(d.bayarHutang)}</span></div>` : ''}
+  </div>`;
 
       if(d.hutangBaru.length){
         body += `<div class="dh-section">
@@ -7924,7 +8037,9 @@ body.dark .order-card.overdue{background:linear-gradient(160deg,#3A1F18,var(--ca
       const neg = laba < 0;
       const totalBelanja = Number(lap.belanjaHariIni) || 0;
       const totalBiaya = Number(lap.totalBiaya) || 0;
-      const totalPengeluaran = totalBelanja + totalBiaya;
+      const totalKeluar = (Number(lap.belanjaHariIni) || 0)
+                  + (Number(lap.totalBiaya) || 0)
+                  + (Number(lap.TotalPengeluaran) || 0);
 
       html += `
         <section class="section">
@@ -7939,10 +8054,10 @@ body.dark .order-card.overdue{background:linear-gradient(160deg,#3A1F18,var(--ca
                   <div class="flow-v">${rupiahSingkat(totalOmzet)}</div>
                   <div class="flow-sub">Tunai ${rupiahSingkat(lap.omzetCash)} · QRIS ${rupiahSingkat(lap.omzetQris)}</div>
                 </div>
-                <div class="flow-item">
-                  <div class="flow-k">Pengeluaran</div>
-                  <div class="flow-v">${rupiahSingkat(totalPengeluaran)}</div>
-                  <div class="flow-sub">Belanja ${rupiahSingkat(totalBelanja)} · Biaya ${rupiahSingkat(totalBiaya)}</div>
+                <div class="flow-item"> 
+                  <div class="flow-k">Keluar</div>
+                  <div class="flow-v">${rupiahSingkat(totalKeluar)}</div>
+                  <div class="flow-sub">Belanja ${rupiahSingkat(totalBelanja)} · Ops ${rupiahSingkat(totalBiaya)} · Peng. ${rupiahSingkat(lap.TotalPengeluaran)}</div>
                 </div>
               </div>
             </div>
