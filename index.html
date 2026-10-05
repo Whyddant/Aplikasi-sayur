@@ -5483,7 +5483,7 @@ body.dark .order-card.overdue{background:linear-gradient(160deg,#3A1F18,var(--ca
         <div class="tutup-date-field">
           <label>Tanggal</label>
           <input type="date" id="tutupTanggal" value="${this.tanggal}"
-                 max="${todayYmd()}" ${isLocked ? 'disabled' : ''}>
+                 max="${todayYmd()}">
         </div>`;
 
       if(this.mode === 'final'){
@@ -5740,7 +5740,7 @@ body.dark .order-card.overdue{background:linear-gradient(160deg,#3A1F18,var(--ca
       });
 
       const inpTanggal = document.getElementById('tutupTanggal');
-      if(inpTanggal && !isLocked){
+      if(inpTanggal){
         inpTanggal.addEventListener('change', async () => {
           if(!inpTanggal.value) return;
           const val = inpTanggal.value;
@@ -5786,7 +5786,8 @@ body.dark .order-card.overdue{background:linear-gradient(160deg,#3A1F18,var(--ca
         if(this.mode === 'final'){
           this.mode = 'draft';
           this.saveDraft();
-          showToast('Mode edit — bisa diubah');
+          try{ localStorage.removeItem(this._finalKey(this.tanggal)); }catch(e){}
+          showToast('Mode edit: silakan ubah, lalu Simpan');
           this.render();
           return;
         }
@@ -7219,7 +7220,9 @@ body.dark .order-card.overdue{background:linear-gradient(160deg,#3A1F18,var(--ca
         omzetQris: r.OmzetQris || 0,
         pagiKK: Number(biaya.pagiKresek) || 0,
         pagiIuran: Number(biaya.pagiIuran) || 0,
-        pagiLainArr: [],
+        pagiKonsumsi: Number(biaya.pagiKonsumsi) || 0,
+        pagiLainArr: (Number(biaya.pagiLain) || 0) > 0
+          ? [{ket: 'Lain-lain pagi', jumlah: Number(biaya.pagiLain)}] : [],
         pagiTotal: (Number(biaya.pagiKresek) || 0) +
                    (Number(biaya.pagiIuran) || 0) +
                    (Number(biaya.pagiLain) || 0) +
@@ -7272,7 +7275,7 @@ body.dark .order-card.overdue{background:linear-gradient(160deg,#3A1F18,var(--ca
       const pagiTotal = pagiKK + pagiIuran + pagiLain;
       const bonArr = tutupFinal.bon || [];
       const bonTotal = bonArr.reduce((s,b) => s + Number(b.jumlah || 0), 0);
-      const totalPendapatan = omzetCash + omzetQris + pagiTotal + bonTotal;
+      const totalPendapatan = omzetCash + omzetQris;
 
       const modalBelanja = Number(belanjaBiaya.modalBelanja) || 0;
       const opsPasar = Number(belanjaBiaya.opsPasar) || 0;
@@ -7298,7 +7301,7 @@ body.dark .order-card.overdue{background:linear-gradient(160deg,#3A1F18,var(--ca
       return {
         tanggal: ymd, dariServer: false,
         omzetCash, omzetQris,
-        pagiKK, pagiIuran, pagiLainArr, pagiTotal,
+        pagiKK, pagiIuran, pagiKonsumsi: 0, pagiLainArr, pagiTotal,
         bonArr, bonTotal, totalPendapatan,
         itemsBelanja, totalBeliTunai, totalNanti, potensiJual,
         modalBelanja, opsPasar, bensin, lainArr, lainTotal, bayarHutang,
@@ -7347,9 +7350,8 @@ body.dark .order-card.overdue{background:linear-gradient(160deg,#3A1F18,var(--ca
           <div class="dh-title">💰 Pendapatan</div>
           <div class="dh-row"><span class="lbl">Tunai</span><span class="amt">${rupiah(d.omzetCash)}</span></div>
           <div class="dh-row"><span class="lbl">QRIS</span><span class="amt">${rupiah(d.omzetQris)}</span></div>
-          ${d.pagiTotal > 0 ? `<div class="dh-row"><span class="lbl">Pagi</span><span class="amt">${rupiah(d.pagiTotal)}</span></div>` : ''}
-          ${d.bonTotal > 0 ? `<div class="dh-row"><span class="lbl">Bon</span><span class="amt">${rupiah(d.bonTotal)}</span></div>` : ''}
           <div class="dh-row total"><span class="lbl">Total</span><span class="amt">${rupiah(d.totalPendapatan)}</span></div>
+          ${d.bonTotal > 0 ? `<div class="dh-row"><span class="lbl">Bon (belum diterima, tidak dihitung)</span><span class="amt" style="color:var(--ink-600);">${rupiah(d.bonTotal)}</span></div>` : ''}
         </div>`;
 
       body += `<div class="dh-section">
@@ -7437,11 +7439,15 @@ body.dark .order-card.overdue{background:linear-gradient(160deg,#3A1F18,var(--ca
         </div>`;
       }
 
-      if(d.pagiKK > 0 || d.pagiIuran > 0 || d.pagiLainArr.length){
+      if(d.pagiTotal > 0){
         body += `<div class="dh-section">
-          <div class="dh-title">📝 Catatan Pagi</div>`;
+          <div class="dh-title"><span>📝 Pengeluaran Pagi</span><strong>${rupiah(d.pagiTotal)}</strong></div>
+          <div style="font-size:10.5px;color:var(--ink-600);margin-bottom:6px;line-height:1.4;">
+            Sudah dipotong dari omzet tunai, jadi tidak dihitung lagi sebagai pengeluaran.
+          </div>`;
         if(d.pagiKK > 0) body += `<div class="dh-row"><span class="lbl">Kantong & Karet</span><span class="amt">${rupiah(d.pagiKK)}</span></div>`;
         if(d.pagiIuran > 0) body += `<div class="dh-row"><span class="lbl">Iuran</span><span class="amt">${rupiah(d.pagiIuran)}</span></div>`;
+        if(d.pagiKonsumsi > 0) body += `<div class="dh-row"><span class="lbl">Konsumsi</span><span class="amt">${rupiah(d.pagiKonsumsi)}</span></div>`;
         (d.pagiLainArr || []).forEach(x => {
           body += `<div class="dh-row"><span class="lbl">${escHtml(x.ket)}</span><span class="amt">${rupiah(x.jumlah)}</span></div>`;
         });
@@ -7594,10 +7600,24 @@ body.dark .order-card.overdue{background:linear-gradient(160deg,#3A1F18,var(--ca
       lines.push(dash);
       lines.push(this._pad('Tunai', rupiah(d.omzetCash), L));
       lines.push(this._pad('QRIS', rupiah(d.omzetQris), L));
-      if(d.pagiTotal > 0) lines.push(this._pad('Pagi', rupiah(d.pagiTotal), L));
-      if(d.bonTotal > 0) lines.push(this._pad('Bon Lisan', rupiah(d.bonTotal), L));
       lines.push(this._pad('Total', rupiah(d.totalPendapatan), L));
+      if(d.bonTotal > 0) lines.push(this._pad('Bon (belum diterima)', rupiah(d.bonTotal), L));
       lines.push('');
+
+      if(d.pagiTotal > 0){
+        lines.push('PENGELUARAN PAGI');
+        lines.push(dash);
+        if(d.pagiKK > 0) lines.push(this._pad('Kantong & Karet', rupiah(d.pagiKK), L));
+        if(d.pagiIuran > 0) lines.push(this._pad('Iuran', rupiah(d.pagiIuran), L));
+        if(d.pagiKonsumsi > 0) lines.push(this._pad('Konsumsi', rupiah(d.pagiKonsumsi), L));
+        (d.pagiLainArr || []).forEach(x => {
+          lines.push(this._pad(String(x.ket).slice(0, 26), rupiah(x.jumlah), L));
+        });
+        lines.push(dash);
+        lines.push(this._pad('Total Pagi', rupiah(d.pagiTotal), L));
+        lines.push('(sudah dipotong dari omzet tunai)');
+        lines.push('');
+      }
 
       lines.push('BELANJA (' + d.itemsBelanja.length + ' item)');
       lines.push(dash);
