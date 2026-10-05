@@ -5645,9 +5645,10 @@ body.dark .order-card.overdue{background:linear-gradient(160deg,#3A1F18,var(--ca
   },
       /* ========== CARD 1: PENDAPATAN ========== */
         renderCardPendapatan(isLocked){
-      const total = this.totalPendapatanKotor();
-      const bon = this.totalBon();
-      const diterima = total - bon;
+          const total = this.totalPendapatanKotor();
+          const bon = this.totalBon();
+          const pagi = this.totalPagi();
+          const diterima = total - bon - pagi;
       return `
         <div class="tutup-card card-pendapatan ${isLocked ? 'locked' : ''}">
           <div class="tutup-card-head">
@@ -5738,7 +5739,7 @@ body.dark .order-card.overdue{background:linear-gradient(160deg,#3A1F18,var(--ca
             <span class="lbl" style="font-size:11px;color:var(--ink-600);
                   text-transform:none;letter-spacing:0;font-weight:500;">
               Pendapatan Diterima
-              <small style="color:var(--ink-400);font-weight:400;">(kotor − bon)</small>
+              <small style="color:var(--ink-400);font-weight:400;">(kotor − bon − pagi)</small>
             </span>
             <span class="amt" id="tutupGrandPendapatanDiterima"
                   style="font-size:15px;color:var(--green-700);">${rupiah(diterima)}</span>
@@ -6081,9 +6082,9 @@ renderCardPengeluaran(isLocked){
       const el = document.getElementById(id);
       if(el) el.textContent = rupiah(val);
     };
-    set('tutupTotalPendapatan', pendapatan - this.totalBon());
+    set('tutupTotalPendapatan', pendapatan - this.totalBon() - this.totalPagi());
     set('tutupGrandPendapatan', pendapatan);
-    set('tutupGrandPendapatanDiterima', pendapatan - this.totalBon());
+    set('tutupGrandPendapatanDiterima', pendapatan - this.totalBon() - this.totalPagi());
     set('tutupTotalOperasional', operasional);
     set('tutupSubtotalOps', operasional);
     set('tutupTotalPengeluaran', pengeluaran);
