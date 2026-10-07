@@ -2958,7 +2958,9 @@ body.dark .order-card.overdue{background:linear-gradient(160deg,#3A1F18,var(--ca
 
     /* Auto-save backdate */
     _scheduleAutoSave(itemId){
-      if(!this.modeBackdate) return;
+      const it = this.state.find(x => x.id === itemId);
+      /* Mode backdate ATAU item yang sudah tersimpan di server */
+      if(!this.modeBackdate && !(it && it.tersimpan)) return;
       if(itemId) this._dirtyItems.add(itemId);
       if(this._saveTimer) clearTimeout(this._saveTimer);
       this._setSaveStatus('saving');
@@ -2966,14 +2968,18 @@ body.dark .order-card.overdue{background:linear-gradient(160deg,#3A1F18,var(--ca
     },
 
     async _autoSaveNow(){
-      if(!this.modeBackdate) return;
       if(this._dirtyItems.size === 0){ this._setSaveStatus('idle'); return; }
       const dirtyIds = Array.from(this._dirtyItems);
       this._dirtyItems.clear();
       let okCount = 0, errCount = 0;
+
       for(const id of dirtyIds){
         const item = this.state.find(x => x.id === id);
         if(!item || !item.tersimpan) continue;
+
+        const supplier = item.bayarNanti ? String(item.supplier || '').trim() : '';
+        if(item.bayarNanti && !supplier) continue;   /* tunggu supplier diisi */
+
         try{
           await SayurStorage.post('updateBelanja', {
             id: item.serverId || item.id,
@@ -2981,14 +2987,33 @@ body.dark .order-card.overdue{background:linear-gradient(160deg,#3A1F18,var(--ca
             hargaBeli: item.hargaBeli,
             hargaJual: item.hargaJual || 0,
             bayarNanti: item.bayarNanti === true,
-            supplier: item.bayarNanti ? (item.supplier || '') : ''
+            supplier: supplier
           });
+
+          const hid = 'ht-' + (item.serverId || item.id);
+          if(item.bayarNanti && !item.hutangId){
+            await SayurStorage.post('addHutang', {
+              id: hid,
+              tipe: 'HutangSaya',
+              nama: supplier,
+              jumlah: this.parseQty(item.qty) * item.hargaBeli,
+              catatan: item.nama + ' ' + item.qty + ' ' + item.satuan,
+              sumber: 'Supplier',
+              tanggal: this.tanggal
+            });
+            item.hutangId = hid;
+          } else if(!item.bayarNanti && item.hutangId){
+            await SayurStorage.post('hapusHutang', {id: item.hutangId});
+            item.hutangId = null;
+          }
+          this.saveLocalState();
           okCount++;
         }catch(e){
           errCount++;
           this._dirtyItems.add(id);
         }
       }
+
       if(errCount > 0){ this._setSaveStatus('error'); }
       else if(okCount > 0){
         this._setSaveStatus('saved');
@@ -4081,6 +4106,12 @@ body.dark .order-card.overdue{background:linear-gradient(160deg,#3A1F18,var(--ca
         showToast('Semua sudah tersimpan');
         return;
       }
+      
+      const tanpaSupplier = draft.find(x => x.bayarNanti && !String(x.supplier || '').trim());
+      if(tanpaSupplier){
+        showToast('Isi nama supplier untuk ' + tanpaSupplier.nama);
+        return;
+      }
 
       if(!confirm(`Simpan ${draft.length} item belanja?\n\nData akan dikirim ke server.`)) return;
 
@@ -4113,16 +4144,18 @@ body.dark .order-card.overdue{background:linear-gradient(160deg,#3A1F18,var(--ca
           this.savePengeluaran();
 
           if(item.bayarNanti && item.supplier){
-            await SayurStorage.post('addHutang', {
-              id: 'ht-' + item.id + '-' + Date.now(),
-              tipe: 'HutangSaya',
-              nama: item.supplier,
-              jumlah: this.parseQty(item.qty) * item.hargaBeli,
-              catatan: item.nama + ' ' + item.qty + ' ' + item.satuan,
-              sumber: 'Supplier',
-              tanggal: this.tanggal
-            });
-          }
+          const hid = 'ht-' + item.id + '-' + Date.now();
+          await SayurStorage.post('addHutang', {
+            id: hid,
+            tipe: 'HutangSaya',
+            nama: item.supplier,
+            jumlah: this.parseQty(item.qty) * item.hargaBeli,
+            catatan: item.nama + ' ' + item.qty + ' ' + item.satuan,
+            sumber: 'Supplier',
+            tanggal: this.tanggal
+          });
+          item.hutangId = hid;
+        }
           okCount++;
         }
 
@@ -4133,19 +4166,14 @@ body.dark .order-card.overdue{background:linear-gradient(160deg,#3A1F18,var(--ca
           bensin: Number(this.pengeluaran.bensin) || 0,
           bensinMetode: 'Cash',
           konsumsi: Number(this.pengeluaran.konsumsiPasar) || 0,
-          konsumsiMetode: 'Cash',
-          pagiKresek: Number(this.state.pagi.kantongKaret) || 0,
-          pagiKonsumsi: 0,
-          pagiIuran: Number(this.state.pagi.iuran) || 0,
-          pagiLain: this.totalPagiLain()
+          konsumsiMetode: 'Cash'
         });
 
-                /* Sinkron mutasi saldo modal dengan server (state absolut).
-           - Sudah ada & nominal sama   → skip
-           - Sudah ada & nominal beda   → hapus lama, kirim baru
-           - Sudah ada & nominal 0      → hapus lama
-           - Belum ada & nominal > 0    → kirim baru
-           - Belum ada & nominal 0      → skip */
+        /* Sinkron mutasi saldo modal dengan server (state absolut).
+          ID tetap per tanggal supaya Simpan berulang tidak membuat mutasi ganda. */
+        if(navigator.onLine){ try{ await SayurStorage.processQueue(); }catch(e){} }
+
+        const idModal = 'm-modal-' + this.tanggal;
         const mutasiSaldoLama = await this._muatSaldoDariServer();
         const nominalLama = mutasiSaldoLama
           ? (Number(mutasiSaldoLama.Jumlah) || 0) : 0;
@@ -4155,16 +4183,20 @@ body.dark .order-card.overdue{background:linear-gradient(160deg,#3A1F18,var(--ca
         const bedaMetode  = mutasiSaldoLama &&
           (mutasiSaldoLama.Metode || 'Cash') !== this.tambahDariSaldoMetode;
 
+        /* Buang antrean lama untuk mutasi modal tanggal ini yang belum terkirim */
+        SayurStorage.queue.list()
+          .filter(q => q.action === 'tambahMutasi' && q.data && q.data.id === idModal)
+          .forEach(q => SayurStorage.queue.remove(q.clientId));
+
         if(mutasiSaldoLama && !bedaNominal && !bedaMetode){
-          /* Sama — tidak perlu apa-apa */
+          /* Sama, tidak perlu apa-apa */
         } else {
           if(mutasiSaldoLama){
-            await SayurStorage.post('hapusMutasi', {id: mutasiSaldoLama.ID},
-              'delsaldo-' + mutasiSaldoLama.ID + '-' + Date.now());
+            await SayurStorage.post('hapusMutasi', {id: mutasiSaldoLama.ID});
           }
           if(nominalBaru > 0){
             await SayurStorage.post('tambahMutasi', {
-              id: 'm-saldo-' + Date.now(),
+              id: idModal,
               tipe: 'Tarik',
               metode: this.tambahDariSaldoMetode,
               jumlah: nominalBaru,
