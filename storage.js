@@ -444,9 +444,8 @@
      (misal getLaporan setelah update), pakai postNow().
      ========================================================== */
   async function post(action, data, clientIdOpt){
-    /* Tambah ke queue. clientIdOpt dipakai kalau 2 aksi memakai data.id
-       yang sama (mis. hapus lalu tambah ulang) supaya tidak bentrok. */
-    const clientId = clientIdOpt || (data && data.id ? data.id : uid('q-'));
+   /* clientId selalu unik. Anti-dobel dijaga server lewat data.id. */
+    const clientId = clientIdOpt || uid('q-');
     Queue.add(action, data, clientId);
 
     /* Trigger sync di background (tidak tunggu) */
