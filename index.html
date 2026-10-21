@@ -8629,7 +8629,7 @@ Pages.tutup = {title: 'Tutup Hari — H. Mawih Sayur', run: function(){
       '</div>';
     h += readOnlyRow('Operasional Pasar','parkir, kuli angkut, retribusi', state.opsPasar, 'ops');
     h += readOnlyRow('Bensin', '', state.bensin, 'biayaBensin');
-    h += readOnlyRow('Lain-lain', state.lainBelanja, 'biayaLain');
+    h += readOnlyRow('Lain-lain', 'diluar operasional masuk mutasi  saldo', state.lainBelanja, 'biayaLain');
     h += '<div class="total-row">' +
       '<span class="k">Subtotal</span>' +
       '<span class="v">' + rp(subtotal) + '</span>' +
