@@ -8,7 +8,7 @@
      (karena SayurStorage sudah handle cache di localStorage)
    ========================================================== */
 
-const CACHE_VERSION = 'sayur-v10';
+const CACHE_VERSION = 'sayur-v11';
 const APP_SHELL = [
   './',
   './index.html',
